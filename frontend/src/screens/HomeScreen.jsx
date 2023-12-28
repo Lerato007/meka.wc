@@ -9,9 +9,9 @@ const HomeScreen = () => {
   return (
     <>
       {isLoading ? (
-        <h2>Loading...</h2>
+        <div>Loading...</div>
       ) : error ? (
-        <div>{error?.data?.message || error.error}</div>
+        <div>{error?.data.message || error.error}</div>
       ) : (
         <>
           <h1>Latest Products</h1>
