@@ -16,7 +16,7 @@ const UserListScreen = () => {
   const [deleteUser, { isLoading: loadingDelete }] = useDeleteUserMutation();
 
   const deleteHandler = async (id) => {
-    if (window.confirm("ARe you sure?")) {
+    if (window.confirm("Are you sure?")) {
       try {
         await deleteUser(id);
         toast.success("User deleted");
