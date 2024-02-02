@@ -23,7 +23,7 @@ const HomeScreen = () => {
         <img
           src={process.env.PUBLIC_URL + "/images/Hero.png"}
           alt=""
-          srcset=""
+          srcSet=""
         />
       </div>
 
