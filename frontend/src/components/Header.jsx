@@ -44,6 +44,12 @@ const Header = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
+              <LinkContainer to="/contact">
+                <Navbar.Brand>
+                  {/**<img src={logo} alt="ProShop" />**/}
+                  Contact Us
+                </Navbar.Brand>
+              </LinkContainer>
               <LinkContainer to="/cart">
                 <Nav.Link>
                   <FaShoppingCart /> Cart
