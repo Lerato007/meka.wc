@@ -8,6 +8,7 @@ import Loader from "../components/Loader";
 import { useLoginMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
 import { toast } from "react-toastify";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ const LoginScreen = () => {
 
   const [login, { isLoading }] = useLoginMutation();
 
+  const onChange = () => {};
   const { userInfo } = useSelector((state) => state.auth);
 
   const { search } = useLocation();
@@ -64,6 +66,11 @@ const LoginScreen = () => {
             onChange={(e) => setPassword(e.target.value)}
           ></Form.Control>
         </Form.Group>
+
+        <ReCAPTCHA
+          sitekey="6Le_Sn8pAAAAALTafNKsPbgL-Plw6iRYTb9vvKP6"
+          onChange={onChange}
+        />
 
         <Button
           type="submit"
