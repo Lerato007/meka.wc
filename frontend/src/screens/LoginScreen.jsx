@@ -13,6 +13,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -34,6 +35,18 @@ const LoginScreen = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    const regExp = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,}$/;
+
+    if (password === "") {
+      setMessage("Please enter password");
+    } else if (regExp.test(password)) {
+      setMessage("Password is Valid");
+    } else if (!regExp.test(password)) {
+      setMessage("Password is Not Valid");
+    } else {
+      setMessage("");
+    }
+
     try {
       const res = await login({ email, password }).unwrap();
       dispatch(setCredentials({ ...res }));
@@ -65,6 +78,7 @@ const LoginScreen = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           ></Form.Control>
+          <p>{message}</p>
         </Form.Group>
 
         <ReCAPTCHA

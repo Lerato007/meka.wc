@@ -7,6 +7,7 @@ import Product from "../components/Product";
 import Loader from "../components/Loader";
 import Message from "../components/Message";
 import Paginate from "../components/Paginate";
+import ProductCarousel from "../components/ProductCarousel";
 import Meta from "../components/Meta";
 //import ProductCarousel from "../components/ProductCarousel";
 
@@ -19,13 +20,20 @@ const HomeScreen = () => {
 
   return (
     <>
-      <div className="Hero">
+      {/* <div className="Hero">
         <img
           src={process.env.PUBLIC_URL + "/images/Hero.png"}
           alt=""
           srcSet=""
         />
-      </div>
+      </div> */}
+      {!keyword ? (
+        <ProductCarousel />
+      ) : (
+        <Link to="/" className="btn btn-light mb-4">
+          Go Back
+        </Link>
+      )}
 
       {isLoading ? (
         <Loader />
@@ -42,11 +50,7 @@ const HomeScreen = () => {
               </Col>
             ))}
           </Row>
-          <Paginate
-            pages={data.pages}
-            page={data.page}
-            keyword={keyword ? keyword : ""}
-          />
+          <Paginate pages={data.pages} page={data.page} />
         </>
       )}
     </>

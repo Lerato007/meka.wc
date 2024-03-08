@@ -33,11 +33,11 @@ const Footer = () => {
                   <FaInfoCircle /> About Us
                 </a>
               </li>
-              <li>
+              {/* <li>
                 <a href="/products">
                   <FaShoppingCart /> Products
                 </a>
-              </li>
+              </li> */}
               <li>
                 <a href="/contact">
                   <FaEnvelope /> Contact Us
