@@ -37,7 +37,7 @@ const Header = () => {
           <LinkContainer to="/">
             <Navbar.Brand>
               {/**<img src={logo} alt="ProShop" />**/}
-              TextBook Go
+              MEKA
             </Navbar.Brand>
           </LinkContainer>
           <SearchBox />
