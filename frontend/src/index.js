@@ -9,6 +9,7 @@ import {
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { HelmetProvider } from "react-helmet-async";
 import { Provider } from "react-redux";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import store from "./store";
 // import "bootstrap/dist/css/bootstrap.min.css";
 import "./assets/styles/bootstrap.custom.css";
@@ -36,7 +37,7 @@ import EmailContactForm from "./routes/Contact";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route path="/" element={<App />}>
+  <Route path="/" element={<App />}>
       <Route index={true} path="/" element={<HomeScreen />} />
       <Route path="/search/:keyword" element={<HomeScreen />} />
       <Route path="/page/:pageNumber" element={<HomeScreen />} />
@@ -78,9 +79,11 @@ root.render(
   <React.StrictMode>
     <HelmetProvider>
       <Provider store={store}>
+      <GoogleOAuthProvider clientId="589927020191-5veddi0u0un0lhvohvf1p05aji0ejshs.apps.googleusercontent.com">
         <PayPalScriptProvider deferLoading={true}>
           <RouterProvider router={router} />
         </PayPalScriptProvider>
+        </GoogleOAuthProvider>
       </Provider>
     </HelmetProvider>
   </React.StrictMode>

@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useLogoutMutation } from "../slices/usersApiSlice";
 import { logout } from "../slices/authSlice";
 import SearchBox from "./SearchBox";
-import logo from "../assets/logo.png";
+import mekalogo from "../assets/mekalogo.jpg";
 import { resetCart } from "../slices/cartSlice";
 
 const Header = () => {
@@ -32,24 +32,24 @@ const Header = () => {
 
   return (
     <header>
-      <Navbar bg="primary" variant="dark" expand="md" collapseOnSelect>
+      <Navbar style={{ backgroundColor: '#409118' }} variant="dark" expand="md" collapseOnSelect>
         <Container>
           <LinkContainer to="/">
             <Navbar.Brand>
-              {/**<img src={logo} alt="ProShop" />**/}
-              MEKA
+              <img src={mekalogo} alt="Meka.WC" />
+              {/* MEKA.WC */}
             </Navbar.Brand>
           </LinkContainer>
           <SearchBox />
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <LinkContainer to="/contact">
+              {/* <LinkContainer to="/contact">
                 <Navbar.Brand>
-                  {/**<img src={logo} alt="ProShop" />**/}
+                  <img src={logo} alt="ProShop" />
                   Contact Us
                 </Navbar.Brand>
-              </LinkContainer>
+              </LinkContainer> */}
               <LinkContainer to="/cart">
                 <Nav.Link>
                   <FaShoppingCart /> Cart

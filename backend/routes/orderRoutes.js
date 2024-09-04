@@ -9,6 +9,7 @@ import {
 } from "../controllers/orderController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
+/*** CODE STARTS HERE ***/
 const router = express.Router();
 
 router.route("/").post(protect, addOrderItems).get(protect, admin, getOrders);

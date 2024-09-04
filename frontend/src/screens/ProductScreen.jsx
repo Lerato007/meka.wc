@@ -22,6 +22,7 @@ import Message from "../components/Message";
 import { addToCart } from "../slices/cartSlice";
 import Meta from "../components/Meta";
 
+/*** CODE STARTS HERE ***/
 const ProductScreen = () => {
   const { id: productId } = useParams();
   const dispatch = useDispatch();

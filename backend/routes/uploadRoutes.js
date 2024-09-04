@@ -1,6 +1,8 @@
 import path from "path";
 import express from "express";
 import multer from "multer";
+
+/*** CODE STARTS HERE ***/
 const router = express.Router();
 
 const storage = multer.diskStorage({

@@ -126,7 +126,7 @@ const OrderScreen = () => {
                 <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
               </p>
               <p>
-                <strong>Address:</strong>
+                <strong>Address: </strong>
                 {order.shippingAddress.address}, {order.shippingAddress.city}{" "}
                 {order.shippingAddress.postalCode},{" "}
                 {order.shippingAddress.country}
@@ -235,9 +235,9 @@ const OrderScreen = () => {
 
                       <div>
                         <PayPalButtons
-                          createOrder={createOrder}
-                          onApprove={onApprove}
-                          onError={onError}
+                          createOrder={ createOrder }
+                          onApprove= {onApprove }
+                          onError={ onError }
                         ></PayPalButtons>
                       </div>
                     </div>

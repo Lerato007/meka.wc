@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 
+/*** CODE STARTS HERE ***/
 const reviewSchema = mongoose.Schema(
   {
     name: { type: String, required: true },

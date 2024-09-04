@@ -1,5 +1,6 @@
 import { isValidObjectId } from "mongoose";
 
+/*** CODE STARTS HERE ***/
 function checkObjectId(req, res, next) {
   if (!isValidObjectId(req.params.id)) {
     res.status(404);

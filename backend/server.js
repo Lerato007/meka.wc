@@ -11,6 +11,7 @@ import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 
+/*** CODE STARTS HERE ***/
 const port = process.env.PORT || 5000;
 
 connectDB();

@@ -11,7 +11,7 @@ const Meta = ({ title, description, keywords }) => {
 };
 
 Meta.defaultProps = {
-  title: "MEKA",
+  title: "MEKA.WC",
   description: "Lifestyle streetwear brand.",
   keywords: "clothes, fashion, T-Shirts",
 };

@@ -11,6 +11,7 @@ import { setCredentials } from "../slices/authSlice";
 import { FaTimes } from "react-icons/fa";
 import { useGetMyOrdersQuery } from "../slices/ordersApiSlice";
 
+/*** CODE STARTS HERE ***/
 const ProfileScreen = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

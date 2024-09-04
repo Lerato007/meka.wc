@@ -1,3 +1,4 @@
+/*** CODE STARTS HERE ***/
 const products = [
   {
     name: "PHP Programming with MySQL",

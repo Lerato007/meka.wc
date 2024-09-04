@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import emailjs from "@emailjs/browser";
 import "../styles/contact.css";
 
+/*** CODE STARTS HERE ***/
 const EmailContactForm = () => {
   const form = useRef();
 

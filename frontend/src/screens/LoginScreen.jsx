@@ -14,15 +14,17 @@ const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [recaptchaValue, setRecaptchaValue] = useState(""); // Add state for ReCAPTCHA
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const [login, { isLoading }] = useLoginMutation();
 
-  const onChange = () => {};
-  const { userInfo } = useSelector((state) => state.auth);
+  const onChange = (value) => {
+    setRecaptchaValue(value); // Update state with ReCAPTCHA response
+  };
 
+  const { userInfo } = useSelector((state) => state.auth);
   const { search } = useLocation();
   const sp = new URLSearchParams(search);
   const redirect = sp.get("redirect") || "/";
@@ -47,6 +49,12 @@ const LoginScreen = () => {
       setMessage("");
     }
 
+    // Check if ReCAPTCHA is completed
+    if (!recaptchaValue) {
+      toast.error("Please complete the ReCAPTCHA");
+      return;
+    }
+
     try {
       const res = await login({ email, password }).unwrap();
       dispatch(setCredentials({ ...res }));
@@ -55,6 +63,7 @@ const LoginScreen = () => {
       toast.error(err?.data?.message || err.error);
     }
   };
+
   return (
     <FormContainer>
       <h1>Sign In</h1>
@@ -90,7 +99,7 @@ const LoginScreen = () => {
           type="submit"
           variant="primary"
           className="mt-2"
-          disabled={isLoading}
+          disabled={isLoading || !recaptchaValue} // Disable if ReCAPTCHA is not completed
         >
           Sign In
         </Button>

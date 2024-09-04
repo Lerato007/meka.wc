@@ -8,6 +8,7 @@ import Product from "./models/productModel.js";
 import Order from "./models/orderModel.js";
 import connectDB from "./config/db.js";
 
+/*** CODE STARTS HERE ***/
 dotenv.config();
 
 connectDB();
@@ -55,3 +56,9 @@ if (process.argv[2] === "-d") {
 } else {
   importData();
 }
+
+// if (process.argv[2] === '-d'){
+//   destroyData();
+// } else {
+//   importData();
+// }

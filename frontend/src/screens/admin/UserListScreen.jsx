@@ -10,6 +10,7 @@ import {
 } from "../../slices/usersApiSlice";
 import { toast } from "react-toastify";
 
+/*** CODE STARTS HERE ***/
 const UserListScreen = () => {
   const { data: users, refetch, isLoading, error } = useGetUsersQuery();
 
