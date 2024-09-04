@@ -50,10 +50,10 @@ const LoginScreen = () => {
     }
 
     // Check if ReCAPTCHA is completed
-    if (!recaptchaValue) {
-      toast.error("Please complete the ReCAPTCHA");
-      return;
-    }
+    // if (!recaptchaValue) {
+    //   toast.error("Please complete the ReCAPTCHA");
+    //   return;
+    // }
 
     try {
       const res = await login({ email, password }).unwrap();
