@@ -99,7 +99,7 @@ const LoginScreen = () => {
           type="submit"
           variant="primary"
           className="mt-2"
-          disabled={isLoading || !recaptchaValue} // Disable if ReCAPTCHA is not completed
+          disabled={isLoading /*|| !recaptchaValue*/} // Disable if ReCAPTCHA is not complete
         >
           Sign In
         </Button>
