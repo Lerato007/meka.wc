@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Form, Button, Row, Col } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,16 +12,15 @@ import ReCAPTCHA from "react-google-recaptcha";
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [passwordStrength, setPasswordStrength] = useState(""); // State for password strength
-  const [recaptchaValue, setRecaptchaValue] = useState(""); // Add state for ReCAPTCHA
+  const [passwordStrength, setPasswordStrength] = useState("");
+  const [recaptchaValue, setRecaptchaValue] = useState(""); 
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [login, { isLoading }] = useLoginMutation();
 
   const onChange = (value) => {
-    setRecaptchaValue(value); // Update state with ReCAPTCHA response
+    setRecaptchaValue(value);
   };
 
   const { userInfo } = useSelector((state) => state.auth);
@@ -36,36 +34,22 @@ const LoginScreen = () => {
     }
   }, [userInfo, redirect, navigate]);
 
-  // Password strength function
-  const checkPasswordStrength = (password) => {
+  // Password strength checker
+  const evaluatePasswordStrength = (password) => {
     if (password.length < 6) {
-      return "Weak";
-    } else if (password.length >= 6 && password.length < 10) {
-      return "Medium";
-    } else if (
-      password.length >= 10 &&
-      /[A-Z]/.test(password) &&
-      /[a-z]/.test(password) &&
-      /\d/.test(password) &&
-      /[!@#$%^&*]/.test(password)
-    ) {
-      return "Strong";
+      setPasswordStrength("weak");
+    } else if (password.length < 10) {
+      setPasswordStrength("medium");
+    } else if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
+      setPasswordStrength("strong");
     } else {
-      return "Medium";
+      setPasswordStrength("weak");
     }
-  };
-
-  const handlePasswordChange = (e) => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-    const strength = checkPasswordStrength(newPassword);
-    setPasswordStrength(strength);
   };
 
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    //Check if ReCAPTCHA is completed
     if (!recaptchaValue) {
       toast.error("Please complete the ReCAPTCHA");
       return;
@@ -91,7 +75,8 @@ const LoginScreen = () => {
             type="email"
             placeholder="Enter email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}></Form.Control>
+            onChange={(e) => setEmail(e.target.value)}
+          ></Form.Control>
         </Form.Group>
 
         <Form.Group controlId="password" className="my-3">
@@ -100,9 +85,15 @@ const LoginScreen = () => {
             type="password"
             placeholder="Enter password"
             value={password}
-            onChange={handlePasswordChange}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              evaluatePasswordStrength(e.target.value);
+            }}
           ></Form.Control>
-          <p>Password Strength: {passwordStrength}</p>
+          <div className="password-strength">
+            <div className={`strength-bar ${passwordStrength}`}></div>
+            <p>{passwordStrength && `Password strength: ${passwordStrength}`}</p>
+          </div>
         </Form.Group>
 
         <ReCAPTCHA
@@ -114,7 +105,7 @@ const LoginScreen = () => {
           type="submit"
           variant="primary"
           className="mt-2"
-          disabled={isLoading || !recaptchaValue} // Disable if ReCAPTCHA is not complete
+          disabled={isLoading || !recaptchaValue}
         >
           Sign In
         </Button>
