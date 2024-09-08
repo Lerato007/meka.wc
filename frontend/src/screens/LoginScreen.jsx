@@ -39,15 +39,15 @@ const LoginScreen = () => {
     e.preventDefault();
     const regExp = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,}$/;
 
-    if (password === "") {
-      setMessage("Please enter password");
-    } else if (regExp.test(password)) {
-      setMessage("Password is Valid");
-    } else if (!regExp.test(password)) {
-      setMessage("Password is Not Valid");
-    } else {
-      setMessage("");
-    }
+    // if (password === "") {
+    //   setMessage("Please enter password");
+    // } else if (regExp.test(password)) {
+    //   setMessage("Password is Valid");
+    // } else if (!regExp.test(password)) {
+    //   setMessage("Password is Not Valid");
+    // } else {
+    //   setMessage("");
+    // }
 
     //Check if ReCAPTCHA is completed
     if (!recaptchaValue) {
