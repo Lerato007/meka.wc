@@ -49,11 +49,11 @@ const LoginScreen = () => {
       setMessage("");
     }
 
-    // Check if ReCAPTCHA is completed
-    // if (!recaptchaValue) {
-    //   toast.error("Please complete the ReCAPTCHA");
-    //   return;
-    // }
+    //Check if ReCAPTCHA is completed
+    if (!recaptchaValue) {
+      toast.error("Please complete the ReCAPTCHA");
+      return;
+    }
 
     try {
       const res = await login({ email, password }).unwrap();
@@ -99,7 +99,7 @@ const LoginScreen = () => {
           type="submit"
           variant="primary"
           className="mt-2"
-          disabled={isLoading /*|| !recaptchaValue*/} // Disable if ReCAPTCHA is not complete
+          disabled={isLoading || !recaptchaValue} // Disable if ReCAPTCHA is not complete
         >
           Sign In
         </Button>
