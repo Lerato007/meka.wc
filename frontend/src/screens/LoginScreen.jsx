@@ -14,6 +14,7 @@ const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState(""); // State for password strength
   const [recaptchaValue, setRecaptchaValue] = useState(""); // Add state for ReCAPTCHA
 
   const dispatch = useDispatch();
@@ -35,19 +36,34 @@ const LoginScreen = () => {
     }
   }, [userInfo, redirect, navigate]);
 
+  // Password strength function
+  const checkPasswordStrength = (password) => {
+    if (password.length < 6) {
+      return "Weak";
+    } else if (password.length >= 6 && password.length < 10) {
+      return "Medium";
+    } else if (
+      password.length >= 10 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /\d/.test(password) &&
+      /[!@#$%^&*]/.test(password)
+    ) {
+      return "Strong";
+    } else {
+      return "Medium";
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    const strength = checkPasswordStrength(newPassword);
+    setPasswordStrength(strength);
+  };
+
   const submitHandler = async (e) => {
     e.preventDefault();
-    const regExp = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]{8,}$/;
-
-    // if (password === "") {
-    //   setMessage("Please enter password");
-    // } else if (regExp.test(password)) {
-    //   setMessage("Password is Valid");
-    // } else if (!regExp.test(password)) {
-    //   setMessage("Password is Not Valid");
-    // } else {
-    //   setMessage("");
-    // }
 
     //Check if ReCAPTCHA is completed
     if (!recaptchaValue) {
@@ -75,8 +91,7 @@ const LoginScreen = () => {
             type="email"
             placeholder="Enter email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          ></Form.Control>
+            onChange={(e) => setEmail(e.target.value)}></Form.Control>
         </Form.Group>
 
         <Form.Group controlId="password" className="my-3">
@@ -85,9 +100,9 @@ const LoginScreen = () => {
             type="password"
             placeholder="Enter password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={handlePasswordChange}
           ></Form.Control>
-          <p>{message}</p>
+          <p>Password Strength: {passwordStrength}</p>
         </Form.Group>
 
         <ReCAPTCHA
