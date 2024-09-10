@@ -109,7 +109,7 @@ const LoginScreen = () => {
         >
           Sign In {"    "}
         </Button>
-        <Link to={redirect ? `/forgotPassword?redirect=${    redirect}` : "/forgotPassword"}>Forgot Password</Link>
+        <Link to={redirect ? `/forgotPassword?redirect=${    redirect}` : "/forgotPassword"} className="mt-3 d-block">Forgot Password</Link>
 
         {isLoading && <Loader />}
       </Form>
