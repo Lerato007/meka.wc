@@ -107,10 +107,8 @@ const LoginScreen = () => {
           className="mt-2"
           disabled={isLoading || !recaptchaValue}
         >
-          Sign In {"    "}
+          Sign In
         </Button>
-        <Link to={redirect ? `/forgotPassword?redirect=${    redirect}` : "/forgotPassword"} className="mt-3 d-block">Forgot Password</Link>
-
         {isLoading && <Loader />}
       </Form>
 
