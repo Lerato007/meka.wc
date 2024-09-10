@@ -9,7 +9,7 @@ import { setCredentials } from "../slices/authSlice";
 import { toast } from "react-toastify";
 import ReCAPTCHA from "react-google-recaptcha";
 
-const LoginScreen = () => {
+const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordStrength, setPasswordStrength] = useState("");
@@ -66,7 +66,7 @@ const LoginScreen = () => {
 
   return (
     <FormContainer>
-      <h1>Sign In</h1>
+      <h1>Password Reset</h1>
 
       <Form onSubmit={submitHandler}>
         <Form.Group controlId="email" className="my-3">
@@ -79,35 +79,15 @@ const LoginScreen = () => {
           ></Form.Control>
         </Form.Group>
 
-        <Form.Group controlId="password" className="my-3">
-          <Form.Label>Password</Form.Label>
-          <Form.Control
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              evaluatePasswordStrength(e.target.value);
-            }}
-          ></Form.Control>
-          <div className="password-strength">
-            <div className={`strength-bar ${passwordStrength}`}></div>
-            {passwordStrength && `${passwordStrength}`}
-          </div>
-        </Form.Group>
-
-        <ReCAPTCHA
-          sitekey="6Le_Sn8pAAAAALTafNKsPbgL-Plw6iRYTb9vvKP6"
-          onChange={onChange}
-        />
+        
 
         <Button
           type="submit"
           variant="primary"
           className="mt-2"
-          disabled={isLoading || !recaptchaValue}
+          disabled={isLoading}
         >
-          Sign In
+          Send link
         </Button>
 
         {isLoading && <Loader />}
@@ -128,4 +108,4 @@ const LoginScreen = () => {
   );
 };
 
-export default LoginScreen;
+export default ForgotPasswordScreen;
