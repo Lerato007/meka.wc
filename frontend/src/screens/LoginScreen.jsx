@@ -108,7 +108,10 @@ const LoginScreen = () => {
           disabled={isLoading || !recaptchaValue}
         >
           Sign In
-        </Button> {`  Forgot Password`}
+        </Button> 
+        <Link to={redirect ? `/forgotPassword?redirect=${redirect}` : "/forgotPassword"}>
+            Forgot Password
+          </Link>
 
         {isLoading && <Loader />}
       </Form>
@@ -118,9 +121,6 @@ const LoginScreen = () => {
           New Customer?{" "}
           <Link to={redirect ? `/register?redirect=${redirect}` : "/register"}>
             Register
-          </Link>
-          <Link to={redirect ? `/register?redirect=${redirect}` : "/register"}>
-            Forgot Password
           </Link>
         </Col>
       </Row>
