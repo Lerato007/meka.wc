@@ -108,7 +108,7 @@ const LoginScreen = () => {
           disabled={isLoading || !recaptchaValue}
         >
           Sign In
-        </Button>
+        </Button> {`  Forgot Password`}
 
         {isLoading && <Loader />}
       </Form>
