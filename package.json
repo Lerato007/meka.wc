@@ -1,7 +1,7 @@
 {
   "name": "proshop-v2",
   "version": "1.0.0",
-  "description": "eCommerce application build with MERN stack",
+  "description": "MekaWC application build with MERN stack",
   "type": "module",
   "main": "server.js",
   "scripts": {
