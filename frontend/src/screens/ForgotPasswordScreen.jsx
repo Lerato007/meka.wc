@@ -11,13 +11,10 @@ import ReCAPTCHA from "react-google-recaptcha";
 
 const ForgotPasswordScreen = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordStrength, setPasswordStrength] = useState("");
-  const [recaptchaValue, setRecaptchaValue] = useState(""); 
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [login, { isLoading }] = useLoginMutation();
+  const [forgotPassword, { isLoading }] = useLoginMutation();
 
   const onChange = (value) => {
     setRecaptchaValue(value);
@@ -34,18 +31,7 @@ const ForgotPasswordScreen = () => {
     }
   }, [userInfo, redirect, navigate]);
 
-  // Password strength checker
-  const evaluatePasswordStrength = (password) => {
-    if (password.length < 6) {
-      setPasswordStrength("Weak");
-    } else if (password.length < 10) {
-      setPasswordStrength("Medium");
-    } else if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
-      setPasswordStrength("Strong");
-    } else {
-      setPasswordStrength("weak");
-    }
-  };
+
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -95,11 +81,7 @@ const ForgotPasswordScreen = () => {
 
       <Row className="py-3">
         <Col>
-          New Customer?{" "}
-          <Link to={redirect ? `/register?redirect=${redirect}` : "/register"}>
-            Register
-          </Link>
-          <Link to={redirect ? `/register?redirect=${redirect}` : "/register"}>
+          <Link to={redirect ? `/forgotPassword?redirect=${redirect}` : "/forgotPassword"}>
             Forgot Password
           </Link>
         </Col>
