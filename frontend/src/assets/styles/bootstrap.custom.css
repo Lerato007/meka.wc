@@ -12121,7 +12121,7 @@ fieldset:disabled .btn {
   }
 }
 
-.password-strength {
+/* .password-strength {
   margin-top: 10px;
   position: relative;
 }
@@ -12172,4 +12172,4 @@ p {
   margin-top: 5px;
   font-size: 0.9rem;
   color: #6c757d;
-}
+} */
