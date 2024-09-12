@@ -37,13 +37,13 @@ const LoginScreen = () => {
   // Password strength checker
   const evaluatePasswordStrength = (password) => {
     if (password.length < 6) {
-      setPasswordStrength("weak");
+      setPasswordStrength("Weak");
     } else if (password.length < 10) {
-      setPasswordStrength("medium");
+      setPasswordStrength("Medium");
     } else if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
-      setPasswordStrength("strong");
+      setPasswordStrength("Strong");
     } else {
-      setPasswordStrength("weak");
+      setPasswordStrength("Weak");
     }
   };
 
