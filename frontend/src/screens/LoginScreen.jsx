@@ -37,13 +37,13 @@ const LoginScreen = () => {
   // Password strength checker
   const evaluatePasswordStrength = (password) => {
     if (password.length < 6) {
-      setPasswordStrength("Weak");
+      setPasswordStrength("weak");
     } else if (password.length < 10) {
-      setPasswordStrength("Medium");
+      setPasswordStrength("medium");
     } else if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
-      setPasswordStrength("Strong");
+      setPasswordStrength("strong");
     } else {
-      setPasswordStrength("Weak");
+      setPasswordStrength("weak");
     }
   };
 
@@ -80,23 +80,21 @@ const LoginScreen = () => {
         </Form.Group>
 
         <Form.Group controlId="password" className="my-3">
-  <Form.Label>Password</Form.Label>
-  <Form.Control
-    type="password"
-    placeholder="Enter password"
-    value={password}
-    onChange={(e) => {
-      setPassword(e.target.value);
-      evaluatePasswordStrength(e.target.value);
-    }}
-  ></Form.Control>
-
-  <div className="password-strength-container">
-    {/* Ensure the strength bar always renders */}
-    <div className={`strength-bar ${passwordStrength || ""}`}></div> 
-    <p>{passwordStrength && `Password strength: ${passwordStrength}`}</p>
-  </div>
-</Form.Group>
+          <Form.Label>Password</Form.Label>
+          <Form.Control
+            type="password"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              evaluatePasswordStrength(e.target.value);
+            }}
+          ></Form.Control>
+          <div className="password-strength">
+            <div className={`strength-bar ${passwordStrength}`}></div>
+            <p>{passwordStrength && `Password strength: ${passwordStrength}`}</p>
+          </div>
+        </Form.Group>
 
         <ReCAPTCHA
           sitekey="6Le_Sn8pAAAAALTafNKsPbgL-Plw6iRYTb9vvKP6"
