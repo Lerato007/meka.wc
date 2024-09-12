@@ -93,7 +93,7 @@ const LoginScreen = () => {
           ></Form.Control>
           <div className="password-strength">
             <div className={`strength-bar ${passwordStrength}`}></div>
-            {passwordStrength && `Password strength: ${passwordStrength}`}
+            {passwordStrength && `${passwordStrength}`}
           </div>
         </Form.Group>
 
