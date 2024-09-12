@@ -90,12 +90,13 @@ const LoginScreen = () => {
       evaluatePasswordStrength(e.target.value);
     }}
   ></Form.Control>
-          {/* Strength bar container */}
+
   <div className="password-strength-container">
-    <div className={`strength-bar ${passwordStrength}`}></div>
+    {/* Ensure the strength bar always renders */}
+    <div className={`strength-bar ${passwordStrength || ""}`}></div> 
     <p>{passwordStrength && `Password strength: ${passwordStrength}`}</p>
   </div>
-        </Form.Group>
+</Form.Group>
 
         <ReCAPTCHA
           sitekey="6Le_Sn8pAAAAALTafNKsPbgL-Plw6iRYTb9vvKP6"
