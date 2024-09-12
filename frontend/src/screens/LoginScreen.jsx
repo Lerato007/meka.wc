@@ -43,7 +43,7 @@ const LoginScreen = () => {
     } else if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
       setPasswordStrength("Strong");
     } else {
-      setPasswordStrength("weak");
+      setPasswordStrength("Weak");
     }
   };
 
@@ -92,7 +92,7 @@ const LoginScreen = () => {
           ></Form.Control>
           <div className="password-strength">
             <div className={`strength-bar ${passwordStrength}`}></div>
-            {passwordStrength && `${passwordStrength}`}
+            <p>{passwordStrength && `Password strength: ${passwordStrength}`}</p>
           </div>
         </Form.Group>
 
@@ -109,6 +109,7 @@ const LoginScreen = () => {
         >
           Sign In
         </Button>
+
         {isLoading && <Loader />}
       </Form>
 
