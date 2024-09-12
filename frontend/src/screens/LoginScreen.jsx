@@ -80,20 +80,21 @@ const LoginScreen = () => {
         </Form.Group>
 
         <Form.Group controlId="password" className="my-3">
-          <Form.Label>Password</Form.Label>
-          <Form.Control
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              evaluatePasswordStrength(e.target.value);
-            }}
-          ></Form.Control>
-          <div className="password-strength">
-            <div className={`strength-bar ${passwordStrength}`}></div>
-            <p>{passwordStrength && `Password strength: ${passwordStrength}`}</p>
-          </div>
+  <Form.Label>Password</Form.Label>
+  <Form.Control
+    type="password"
+    placeholder="Enter password"
+    value={password}
+    onChange={(e) => {
+      setPassword(e.target.value);
+      evaluatePasswordStrength(e.target.value);
+    }}
+  ></Form.Control>
+          {/* Strength bar container */}
+  <div className="password-strength-container">
+    <div className={`strength-bar ${passwordStrength}`}></div>
+    <p>{passwordStrength && `Password strength: ${passwordStrength}`}</p>
+  </div>
         </Form.Group>
 
         <ReCAPTCHA

@@ -113,36 +113,48 @@ footer ul li a:hover {
 }
 
 
-.password-strength {
+/* Style for the container of the password strength */
+.password-strength-container {
   margin-top: 10px;
-  position: relative;
 }
 
+/* Default styling for the strength bar */
 .strength-bar {
-  height: 5px;
+  height: 8px;
   width: 100%;
+  background-color: #e0e0e0; /* Background for weak password */
   border-radius: 5px;
-  transition: width 0.5s ease-in-out;
+  transition: all 0.5s ease-in-out;
 }
 
+/* Different strength colors and widths */
 .strength-bar.weak {
-  background-color: #ff4d4d;
   width: 33%;
+  background-color: #ff4d4d; /* Red for weak password */
 }
 
 .strength-bar.medium {
-  background-color: #ffcc00;
   width: 66%;
+  background-color: #ffcc00; /* Yellow for medium password */
 }
 
 .strength-bar.strong {
-  background-color: #4caf50;
   width: 100%;
+  background-color: #4caf50; /* Green for strong password */
 }
 
-.strength-bar.weak::before,
-.strength-bar.medium::before,
-.strength-bar.strong::before {
+/* Add subtle pulsing animation to the strength bar */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+/* Apply pulsing effect to the strength bar */
+.strength-bar::before {
   content: "";
   display: block;
   height: 100%;
@@ -151,15 +163,7 @@ footer ul li a:hover {
   animation: pulse 1s infinite alternate;
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.5;
-  }
-}
-
+/* Style for the strength text */
 p {
   margin-top: 5px;
   font-size: 0.9rem;
