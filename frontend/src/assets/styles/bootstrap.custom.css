@@ -12120,6 +12120,7 @@ fieldset:disabled .btn {
     display: none !important;
   }
 }
+ /*** Password strength ***/
 
 .password-strength {
   margin-top: 10px;

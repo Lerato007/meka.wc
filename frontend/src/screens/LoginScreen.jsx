@@ -79,6 +79,7 @@ const LoginScreen = () => {
           ></Form.Control>
         </Form.Group>
 
+        {/* Password Strength */}
         <Form.Group controlId="password" className="my-3">
           <Form.Label>Password</Form.Label>
           <Form.Control
