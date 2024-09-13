@@ -1,3 +1,5 @@
+PRODUCTCONTROLLER.JS
+
 import asyncHandler from "../middleware/asyncHandler.js";
 import Product from "../models/productModel.js";
 
@@ -133,39 +135,6 @@ const createProductReview = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Delete a review
-// @route   DELETE /api/products/:id/reviews/:reviewId
-// @access  Private/Admin
-const deleteProductReview = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id);
-
-  if (product) {
-    const reviewIndex = product.reviews.findIndex(
-      (review) => review._id.toString() === req.params.reviewId.toString()
-    );
-
-    if (reviewIndex === -1) {
-      res.status(404);
-      throw new Error("Review not found");
-    }
-
-    product.reviews.splice(reviewIndex, 1);
-
-    product.numReviews = product.reviews.length;
-
-    product.rating =
-      product.reviews.reduce((acc, review) => acc + review.rating, 0) /
-      product.reviews.length;
-
-    await product.save();
-    res.status(200).json({ message: "Review deleted" });
-  } else {
-    res.status(404);
-    throw new Error("Product not found");
-  }
-});
-
-
 // @desc    Get top rated produtcs
 // @route   GET /api/products/top
 // @access  Public
@@ -181,6 +150,5 @@ export {
   updateProduct,
   deleteProduct,
   createProductReview,
-  deleteProductReview,
   getTopProducts,
 };

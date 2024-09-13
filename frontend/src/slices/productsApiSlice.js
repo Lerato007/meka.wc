@@ -1,3 +1,6 @@
+PRODUCTAPISLICE.JS
+
+
 import { PRODUCTS_URL, UPLOADS_URL } from "../constants";
 import { apiSlice } from "./apiSlice";
 
@@ -58,13 +61,6 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Product"],
     }),
-    deleteReview: builder.mutation({
-      query: ({ productId, reviewId }) => ({
-        url: `${PRODUCTS_URL}/${productId}/reviews/${reviewId}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["Product"],
-    }),
     getTopProducts: builder.query({
       query: () => ({
         url: `${PRODUCTS_URL}/top`,
@@ -82,6 +78,5 @@ export const {
   useUploadProductImageMutation,
   useDeleteProductMutation,
   useCreateReviewMutation,
-  useDeleteReviewMutation,
   useGetTopProductsQuery,
 } = productsApiSlice;
