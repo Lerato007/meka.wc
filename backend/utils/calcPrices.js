@@ -18,17 +18,17 @@ export function calcPrices(orderItems) {
   // Calculate the shipping price
   const shippingPrice = itemsPrice > 500 ? 0 : 100;
 
-  // Calculate the tax price
-  const taxPrice = 0.15 * itemsPrice;
+  // Calculate the vat price
+  const vatPrice = 0.15 * itemsPrice;
 
   // Calculate the total price
-  const totalPrice = itemsPrice + shippingPrice + taxPrice;
+  const totalPrice = itemsPrice + shippingPrice + vatPrice;
 
   // return prices as strings fixed to 2 decimal places
   return {
     itemsPrice: addDecimals(itemsPrice),
     shippingPrice: addDecimals(shippingPrice),
-    taxPrice: addDecimals(taxPrice),
+    vatPrice: addDecimals(vatPrice),
     totalPrice: addDecimals(totalPrice),
   };
 }

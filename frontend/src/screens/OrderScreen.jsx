@@ -206,8 +206,8 @@ const OrderScreen = () => {
               </ListGroup.Item>
               <ListGroup.Item>
                 <Row>
-                  <Col>Tax</Col>
-                  <Col>R{order.taxPrice}</Col>
+                  <Col>Vat</Col>
+                  <Col>R{order.vatPrice}</Col>
                 </Row>
               </ListGroup.Item>
               <ListGroup.Item>
