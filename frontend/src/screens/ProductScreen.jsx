@@ -10,19 +10,20 @@ import {
   Card,
   Button,
 } from "react-bootstrap";
+import { FaTrash } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import Rating from "../components/Rating";
 import { toast } from "react-toastify";
 import {
   useGetProductDetailsQuery,
   useCreateReviewMutation,
+  useDeleteReviewMutation, // Add this import
 } from "../slices/productsApiSlice";
 import Loader from "../components/Loader";
 import Message from "../components/Message";
 import { addToCart } from "../slices/cartSlice";
 import Meta from "../components/Meta";
 
-/*** CODE STARTS HERE ***/
 const ProductScreen = () => {
   const { id: productId } = useParams();
   const dispatch = useDispatch();
@@ -42,6 +43,8 @@ const ProductScreen = () => {
 
   const [createReview, { isLoading: loadingProductReview }] =
     useCreateReviewMutation();
+  
+  const [deleteReview] = useDeleteReviewMutation(); // Add this hook
 
   const { userInfo } = useSelector((state) => state.auth);
 
@@ -65,6 +68,21 @@ const ProductScreen = () => {
       toast.error(err?.data?.message || err.error);
     }
   };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (userInfo && userInfo.isAdmin) {
+      try {
+        await deleteReview({ productId, reviewId }).unwrap();
+        refetch();
+        toast.success("Review Deleted");
+      } catch (err) {
+        toast.error(err?.data?.message || err.error);
+      }
+    } else {
+      toast.error("You are not authorized to delete this review.");
+    }
+  };
+  
 
   return (
     <>
@@ -190,6 +208,15 @@ const ProductScreen = () => {
                     <Rating value={review.rating} />
                     <p>{review.createdAt.substring(0, 10)}</p>
                     <p>{review.comment}</p>
+                    {userInfo && userInfo.isAdmin && (
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDeleteReview(review._id)}
+                        
+                      >
+                        <FaTrash />
+                      </Button>
+                    )}
                   </ListGroup.Item>
                 ))}
 
