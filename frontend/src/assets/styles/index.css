@@ -114,7 +114,7 @@ footer ul li a:hover {
 
  /*** Password strength ***/
 
-.password-strength {
+ .password-strength {
   margin-top: 10px;
   position: relative;
 }
@@ -166,6 +166,7 @@ footer ul li a:hover {
   font-size: 0.9rem;
   color: #6c757d;
 } */
+
 
 
 .review-item {
