@@ -113,7 +113,6 @@ footer ul li a:hover {
 }
 
  /*** Password strength ***/
-
  .password-strength {
   margin-top: 10px;
   position: relative;
@@ -126,24 +125,24 @@ footer ul li a:hover {
   transition: width 0.5s ease-in-out;
 }
 
-.strength-bar.weak {
+.strength-bar.Weak {
   background-color: #ff4d4d;
   width: 33%;
 }
 
-.strength-bar.medium {
+.strength-bar.Medium {
   background-color: #ffcc00;
   width: 66%;
 }
 
-.strength-bar.strong {
+.strength-bar.Strong {
   background-color: #4caf50;
   width: 100%;
 }
 
-.strength-bar.weak::before,
-.strength-bar.medium::before,
-.strength-bar.strong::before {
+.strength-bar.Weak::before,
+.strength-bar.Medium::before,
+.strength-bar.Strong::before {
   content: "";
   display: block;
   height: 100%;
@@ -161,11 +160,6 @@ footer ul li a:hover {
   }
 }
 
-/* p {
-  margin-top: 5px;
-  font-size: 0.9rem;
-  color: #6c757d;
-} */
 
 
 
