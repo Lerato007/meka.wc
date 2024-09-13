@@ -166,3 +166,19 @@ footer ul li a:hover {
   font-size: 0.9rem;
   color: #6c757d;
 } */
+
+
+.review-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.review-comment {
+  flex: 1;
+}
+
+.review-actions {
+  margin-left: 1rem;
+}

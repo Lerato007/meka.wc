@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +16,7 @@ const ShippingScreen = () => {
   const [postalCode, setPostalCode] = useState(
     shippingAddress?.postalCode || ""
   );
-  const [country, setCountry] = useState(shippingAddress?.country || "");
+  const [country] = useState("South Africa"); // Set country to South Africa and disable editing
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -27,6 +26,7 @@ const ShippingScreen = () => {
     dispatch(saveShippingAddress({ address, city, postalCode, country }));
     navigate("/payment");
   };
+
   return (
     <FormContainer>
       <CheckoutSteps step1 step2 />
@@ -60,7 +60,11 @@ const ShippingScreen = () => {
             type="text"
             placeholder="Enter postal code"
             value={postalCode}
-            onChange={(e) => setPostalCode(e.target.value)}
+            onChange={(e) => {
+              const { value } = e.target;
+              // Allow only digits and limit to 4 characters
+              if (/^\d{0,4}$/.test(value)) setPostalCode(value);
+            }}
           ></Form.Control>
         </Form.Group>
 
@@ -68,9 +72,9 @@ const ShippingScreen = () => {
           <Form.Label>Country</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter country"
+            placeholder="Country"
             value={country}
-            onChange={(e) => setCountry(e.target.value)}
+            readOnly // Make field read-only
           ></Form.Control>
         </Form.Group>
 

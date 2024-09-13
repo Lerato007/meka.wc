@@ -17,13 +17,14 @@ import { toast } from "react-toastify";
 import {
   useGetProductDetailsQuery,
   useCreateReviewMutation,
-  useDeleteReviewMutation, // Add this import
+  useDeleteReviewMutation,
 } from "../slices/productsApiSlice";
 import Loader from "../components/Loader";
 import Message from "../components/Message";
 import { addToCart } from "../slices/cartSlice";
 import Meta from "../components/Meta";
 
+/*** CODE STARTS HERE ***/
 const ProductScreen = () => {
   const { id: productId } = useParams();
   const dispatch = useDispatch();
@@ -41,10 +42,8 @@ const ProductScreen = () => {
     error,
   } = useGetProductDetailsQuery(productId);
 
-  const [createReview, { isLoading: loadingProductReview }] =
-    useCreateReviewMutation();
-  
-  const [deleteReview] = useDeleteReviewMutation(); // Add this hook
+  const [createReview, { isLoading: loadingProductReview }] = useCreateReviewMutation();
+  const [deleteReview] = useDeleteReviewMutation(); // Add this line
 
   const { userInfo } = useSelector((state) => state.auth);
 
@@ -82,7 +81,6 @@ const ProductScreen = () => {
       toast.error("You are not authorized to delete this review.");
     }
   };
-  
 
   return (
     <>
@@ -203,19 +201,22 @@ const ProductScreen = () => {
               {product.reviews.length === 0 && <Message>No Reviews</Message>}
               <ListGroup variant="flush">
                 {product.reviews.map((review) => (
-                  <ListGroup.Item key={review._id}>
-                    <strong>{review.name}</strong>
-                    <Rating value={review.rating} />
-                    <p>{review.createdAt.substring(0, 10)}</p>
-                    <p>{review.comment}</p>
+                  <ListGroup.Item key={review._id} className="review-item">
+                    <div className="review-comment">
+                      <strong>{review.name}</strong>
+                      <Rating value={review.rating} />
+                      <p>{review.createdAt.substring(0, 10)}</p>
+                      <p>{review.comment}</p>
+                    </div>
                     {userInfo && userInfo.isAdmin && (
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDeleteReview(review._id)}
-                        
-                      >
-                        <FaTrash />
-                      </Button>
+                      <div className="review-actions">
+                        <Button
+                          variant="danger"
+                          onClick={() => handleDeleteReview(review._id)}
+                        >
+                          <FaTrash />
+                        </Button>
+                      </div>
                     )}
                   </ListGroup.Item>
                 ))}
