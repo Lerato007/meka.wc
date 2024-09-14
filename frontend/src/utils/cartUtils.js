@@ -21,11 +21,11 @@ export const updateCart = (state) => {
   state.shippingPrice = addDecimals(shippingPrice);
 
   // Calculate the vat price
-  const vatPrice = 0.14 * itemsPrice;
+  const vatPrice = 0.15 * itemsPrice;
   state.vatPrice = addDecimals(vatPrice);
 
-  const totalPrice = itemsPrice + shippingPrice + vatPrice;
-  // Calculate the total price
+  // Calculate the total price (excluding VAT)
+  const totalPrice = itemsPrice + shippingPrice;
   state.totalPrice = addDecimals(totalPrice);
 
   // Save the cart to localStorage
