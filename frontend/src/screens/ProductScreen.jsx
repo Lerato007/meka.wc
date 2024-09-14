@@ -46,6 +46,7 @@ const ProductScreen = () => {
 
   const { userInfo } = useSelector((state) => state.auth);
 
+  // Size validation added
   const addToCartHandler = () => {
     if (!size) {
       toast.error("Please select a size before adding to cart.");
