@@ -24,7 +24,6 @@ import Message from "../components/Message";
 import { addToCart } from "../slices/cartSlice";
 import Meta from "../components/Meta";
 
-/*** CODE STARTS HERE ***/
 const ProductScreen = () => {
   const { id: productId } = useParams();
   const dispatch = useDispatch();
@@ -43,12 +42,16 @@ const ProductScreen = () => {
   } = useGetProductDetailsQuery(productId);
 
   const [createReview, { isLoading: loadingProductReview }] = useCreateReviewMutation();
-  const [deleteReview] = useDeleteReviewMutation(); // Add this line
+  const [deleteReview] = useDeleteReviewMutation();
 
   const { userInfo } = useSelector((state) => state.auth);
 
   const addToCartHandler = () => {
-    dispatch(addToCart({ ...product, qty, size })); // Include selected size when adding to cart
+    if (!size) {
+      toast.error("Please select a size before adding to cart.");
+      return;
+    }
+    dispatch(addToCart({ ...product, qty, size }));
     navigate("/cart");
   };
 
