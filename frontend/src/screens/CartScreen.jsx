@@ -58,7 +58,7 @@ const CartScreen = () => {
                       as="select"
                       value={item.qty}
                       onChange={(e) =>
-                        addToCartHandler(item, Number(e.targer.value))
+                        addToCartHandler(item, Number(e.target.value))
                       }
                     >
                       {[...Array(item.countInStock).keys()].map((x) => (
