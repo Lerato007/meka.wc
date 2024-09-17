@@ -16,17 +16,25 @@ export const updateCart = (state) => {
   );
   state.itemsPrice = addDecimals(itemsPrice);
 
-  // Calculate the vat price
+  // Calculate the VAT price
   const vatPrice = 0.15 * itemsPrice;
   state.vatPrice = addDecimals(vatPrice);
 
   // Determine shipping based on city
   let shippingPrice = 0;
 
-  if (state.shippingAddress.city.toLowerCase() === 'paarl') {
-    shippingPrice = 0; // Free for Paarl customers
+  // Check if shippingAddress exists and has a valid city
+  if (state.shippingAddress && state.shippingAddress.city) {
+    const city = state.shippingAddress.city.toLowerCase(); // Check city in lowercase
+
+    if (city === 'paarl') {
+      shippingPrice = 0; // Free for Paarl customers
+    } else {
+      shippingPrice = itemsPrice > 500 ? 0 : 100; // Outside Paarl
+    }
   } else {
-    shippingPrice = itemsPrice > 500 ? 0 : 100; // Outside Paarl
+    // Default shipping price if city is undefined
+    shippingPrice = itemsPrice > 500 ? 0 : 100;
   }
 
   state.shippingPrice = addDecimals(shippingPrice);

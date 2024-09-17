@@ -15,17 +15,23 @@ export function calcPrices(orderItems, shippingAddress) {
     0
   );
 
-  // Calculate the vat price
+  // Calculate the VAT price
   const vatPrice = 0.15 * itemsPrice;
 
   // Determine shipping cost based on city and order amount
   let shippingPrice = 0;
 
-  if (shippingAddress && shippingAddress.city.toLowerCase() === 'paarl') {
-    // Free shipping for Paarl customers
-    shippingPrice = 0;
+  // Check if shippingAddress exists and has a valid city
+  if (shippingAddress && shippingAddress.city) {
+    const city = shippingAddress.city.toLowerCase(); // Check city in lowercase
+
+    if (city === 'paarl') {
+      shippingPrice = 0; // Free shipping for Paarl customers
+    } else {
+      shippingPrice = itemsPrice > 500 ? 0 : 100; // R100 shipping for orders below R500 outside Paarl
+    }
   } else {
-    // Outside Paarl: R100 shipping if below R500, free if above R500
+    // If no shippingAddress or city provided, assume default outside Paarl behavior
     shippingPrice = itemsPrice > 500 ? 0 : 100;
   }
 
@@ -33,7 +39,7 @@ export function calcPrices(orderItems, shippingAddress) {
   const totalPriceWithoutShipping = itemsPrice;
   const totalPrice = totalPriceWithoutShipping + shippingPrice;
 
-  // return prices as strings fixed to 2 decimal places
+  // Return prices as strings fixed to 2 decimal places
   return {
     itemsPrice: addDecimals(itemsPrice),
     shippingPrice: addDecimals(shippingPrice),
