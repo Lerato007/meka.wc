@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Row, Col, ListGroup, Image, Button, Card } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
-import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
+import { PayPalButtons, FUNDING,usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
 import {
@@ -46,6 +46,7 @@ const OrderScreen = () => {
           value: {
             "client-id": paypal.clientId,
             currency: "USD",
+            locale: "en_ZA"
           },
         });
         paypalDispatch({ type: "setLoadingStatus", value: "pending" });
@@ -235,6 +236,7 @@ const OrderScreen = () => {
 
                       <div>
                         <PayPalButtons
+                          fundingSource={FUNDING.CARD} // Only show card option
                           createOrder={ createOrder }
                           onApprove= {onApprove }
                           onError={ onError }

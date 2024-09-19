@@ -39,7 +39,7 @@ const PaymentScreen = () => {
             <Form.Check
               type="radio"
               className="my-2"
-              label="PayPal or Credit Card"
+              label="Credit Card"
               id="PayPal"
               name="paymentMethod"
               value="PayPal"
