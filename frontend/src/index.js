@@ -34,6 +34,9 @@ import ProductEditScreen from "./screens/admin/ProductEditScreen";
 import UserListScreen from "./screens/admin/UserListScreen";
 import UserEditScreen from "./screens/admin/UserEditScreen";
 import EmailContactForm from "./routes/Contact";
+import ReturnScreen from "./screens/ReturnScreen";
+import CancelScreen from "./screens/CancelScreen";
+import NotifyScreen from "./screens/NotifyScreen";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -70,6 +73,11 @@ const router = createBrowserRouter(
         <Route path="/admin/userlist" element={<UserListScreen />} />
         <Route path="/admin/user/:id/edit" element={<UserEditScreen />} />
       </Route>
+
+      {/* PayFast Return, Cancel, and Notify Pages */}
+      <Route path="/success" element={<ReturnScreen />} />
+      <Route path="/cancel" element={<CancelScreen />} />
+      <Route path="/ipn" element={<NotifyScreen />} />
     </Route>
   )
 );
