@@ -41,7 +41,7 @@ const OrderScreen = () => {
   const generatePayFastForm = () => {
     const merchantId = "10000100";
     const merchantKey = "46f0cd694581a";
-    const returnUrl = "https://meka-wc.onrender.com/";
+    const returnUrl = "https://meka-wc.onrender.com/success";
     const cancelUrl = "https://meka-wc.onrender.com/";
     const notifyUrl = "https://meka-wc.onrender.com/";
 
