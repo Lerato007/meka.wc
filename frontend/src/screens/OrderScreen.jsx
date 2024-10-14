@@ -11,6 +11,7 @@ import {
   useDeliverOrderMutation,
 } from "../slices/ordersApiSlice";
 
+/* Code starts here*/
 const OrderScreen = () => {
   const { id: orderId } = useParams();
   const [signature, setSignature] = useState("");

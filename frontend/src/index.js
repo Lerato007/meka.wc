@@ -53,7 +53,8 @@ const router = createBrowserRouter(
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/register" element={<RegisterScreen />} />
       <Route path="/contact" element={<EmailContactForm />} />
-
+      
+      {/* Private Routes */}
       <Route path="" element={<PrivateRoute />}>
         <Route path="/shipping" element={<ShippingScreen />} />
         <Route path="/payment" element={<PaymentScreen />} />
@@ -62,6 +63,7 @@ const router = createBrowserRouter(
         <Route path="/profile" element={<ProfileScreen />} />
       </Route>
 
+      {/* Admin Routes */}
       <Route path="" element={<AdminRoute />}>
         <Route path="/admin/orderlist" element={<OrderListScreen />} />
         <Route path="/admin/productlist" element={<ProductListScreen />} />
@@ -79,6 +81,8 @@ const router = createBrowserRouter(
       <Route path="/cancel" element={<CancelScreen />} />
       <Route path="/ipn" element={<NotifyScreen />} />
     </Route>
+
+
   )
 );
 
