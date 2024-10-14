@@ -1,20 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Row, Col, ListGroup, Image, Button, Card } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
-import { PayPalButtons, FUNDING,usePayPalScriptReducer } from "@paypal/react-paypal-js";
+import axios from "axios";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
 import {
   useGetOrderDetailsQuery,
-  usePayOrderMutation,
-  useGetPayPalClientIdQuery,
   useDeliverOrderMutation,
 } from "../slices/ordersApiSlice";
 
 const OrderScreen = () => {
   const { id: orderId } = useParams();
+  const [signature, setSignature] = useState("");
+  const [loadingSignature, setLoadingSignature] = useState(false);
+  const [payfastData, setPayfastData] = useState(null);
+  const formRef = useRef(null); // Form reference for submitting
 
   const {
     data: order,
@@ -23,79 +25,10 @@ const OrderScreen = () => {
     error,
   } = useGetOrderDetailsQuery(orderId);
 
-  const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
-
   const [deliverOrder, { isLoading: loadingDeliver }] =
     useDeliverOrderMutation();
 
   const { userInfo } = useSelector((state) => state.auth);
-
-  const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
-
-  const {
-    data: paypal,
-    isLoading: loadingPayPal,
-    error: errorPayPal,
-  } = useGetPayPalClientIdQuery();
-
-  useEffect(() => {
-    if (!errorPayPal && !loadingPayPal && paypal.clientId) {
-      const loadingPayPalScript = async () => {
-        paypalDispatch({
-          type: "resetOptions",
-          value: {
-            "client-id": paypal.clientId,
-            currency: "USD",
-            locale: "en_ZA"
-          },
-        });
-        paypalDispatch({ type: "setLoadingStatus", value: "pending" });
-      };
-      if (order && !order.isPaid) {
-        if (!window.paypal) {
-          loadingPayPalScript();
-        }
-      }
-    }
-  }, [order, paypal, paypalDispatch, loadingPayPal, errorPayPal]);
-
-  function onApprove(data, actions) {
-    return actions.order.capture().then(async function (details) {
-      try {
-        await payOrder({ orderId, details }).unwrap();
-        refetch();
-        toast.success("Payment Successful");
-      } catch (err) {
-        toast.error(err?.data?.message || err.message);
-      }
-    });
-  }
-
-  // async function onApproveTest() {
-  //   await payOrder({ orderId, details: { payer: {} } });
-  //   refetch();
-  //   toast.success("Payment successful");
-  // }
-
-  function onError(err) {
-    toast.error(err.message);
-  }
-
-  function createOrder(data, actions) {
-    return actions.order
-      .create({
-        purchase_units: [
-          {
-            amount: {
-              value: order.totalPrice,
-            },
-          },
-        ],
-      })
-      .then((orderID) => {
-        return orderID;
-      });
-  }
 
   const deliverOrderHandler = async () => {
     try {
@@ -104,6 +37,63 @@ const OrderScreen = () => {
       toast.success("Order delivered");
     } catch (err) {
       toast.error(err?.data?.message || err.message);
+    }
+  };
+
+  // Fetch the PayFast signature and generate the payment form when the component mounts
+  useEffect(() => {
+    const fetchSignature = async () => {
+      setLoadingSignature(true);
+
+      const merchantId = "25297857"; // Your merchant ID
+      const merchantKey = "1yttopb7zgk7y"; // Your merchant key
+      const returnUrl = "https://meka-wc.onrender.com/success";
+    const cancelUrl = "https://meka-wc.onrender.com/cancel";
+    const notifyUrl = "https://meka-wc.onrender.com/";
+      const myPassphrase = "Graphics_7598"; // Your passphrase
+
+      const data = {
+        merchant_id: merchantId,
+        merchant_key: merchantKey,
+        return_url: returnUrl,
+        cancel_url: cancelUrl,
+        notify_url: notifyUrl,
+        name_first: order?.user?.name,
+        email_address: order?.user?.email,
+        m_payment_id: order?._id,
+        amount: order?.totalPrice.toFixed(2),
+        item_name: `Order ${order?._id}`,
+        currency: "ZAR",
+      };
+
+      try {
+        // Make an API call to generate the signature
+        const { data: response } = await axios.post(
+          "/api/payfast/generate-signature",
+          { data, passphrase: myPassphrase }
+        );
+        setSignature(response.signature);
+
+        // Save the PayFast data for rendering
+        setPayfastData({
+          ...data,
+          signature: response.signature,
+        });
+      } catch (error) {
+        console.error("Error generating signature", error);
+      } finally {
+        setLoadingSignature(false);
+      }
+    };
+
+    if (order) {
+      fetchSignature();
+    }
+  }, [order]);
+
+  const handlePayNow = () => {
+    if (formRef.current) {
+      formRef.current.submit();
     }
   };
 
@@ -218,31 +208,33 @@ const OrderScreen = () => {
                 </Row>
               </ListGroup.Item>
 
-              {/* PAY ORDER PLACEHOLDER */}
               {!order.isPaid && (
                 <ListGroup.Item>
-                  {loadingPay && <Loader />}
-
-                  {isPending ? (
-                    <Loader />
-                  ) : (
-                    <div>
-                      {/* <Button
-                        style={{ marginBottom: "10px" }}
-                        onClick={onApproveTest}
+                  {/* Render PayFast Form */}
+                  {payfastData && (
+                    <form
+                      action="https://www.payfast.co.za/eng/process"
+                      method="post"
+                      ref={formRef}
+                      id="payfast-payment-form"
+                    >
+                      {Object.entries(payfastData).map(([key, value]) => (
+                        <input
+                          key={key}
+                          name={key}
+                          type="hidden"
+                          value={value}
+                        />
+                      ))}
+                      <Button
+                        type="button"
+                        className="btn btn-primary btn-block"
+                        onClick={handlePayNow}
+                        disabled={loadingSignature}
                       >
-                        Test Pay Order
-                      </Button> */}
-
-                      <div>
-                        <PayPalButtons
-                          fundingSource={FUNDING.CARD} // Only show card option
-                          createOrder={ createOrder }
-                          onApprove= {onApprove }
-                          onError={ onError }
-                        ></PayPalButtons>
-                      </div>
-                    </div>
+                        {loadingSignature ? <Loader /> : "Pay Now with PayFast"}
+                      </Button>
+                    </form>
                   )}
                 </ListGroup.Item>
               )}
