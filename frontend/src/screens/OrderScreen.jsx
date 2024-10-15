@@ -67,6 +67,11 @@ const OrderScreen = () => {
         currency: "ZAR",
       };
 
+      // Log the parameter string
+    const paramString = `merchant_id=${merchantId}&merchant_key=${merchantKey}&return_url=${encodeURIComponent(returnUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}&notify_url=${encodeURIComponent(notifyUrl)}&name_first=${encodeURIComponent(data.name_first)}&email_address=${encodeURIComponent(data.email_address)}&m_payment_id=${encodeURIComponent(data.m_payment_id)}&amount=${encodeURIComponent(data.amount)}&item_name=${encodeURIComponent(data.item_name)}&currency=${data.currency}`;
+    
+    console.log("Generated Parameter String:", paramString);
+
       try {
         // Make an API call to generate the signature
         const { data: response } = await axios.post(
@@ -74,6 +79,9 @@ const OrderScreen = () => {
           { data, passphrase: myPassphrase }
         );
         setSignature(response.signature);
+
+        // Log the generated signature
+      console.log("Generated PayFast Signature:", response.signature);
 
         // Save the PayFast data for rendering
         setPayfastData({
