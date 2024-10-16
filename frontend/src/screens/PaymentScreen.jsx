@@ -8,7 +8,7 @@ import { savePaymentMethod } from "../slices/cartSlice";
 
 /*** CODE STARTS HERE ***/
 const PaymentScreen = () => {
-  const [paymentMethod, setPaymentMethod] = useState("PayPal");
+  const [paymentMethod, setPaymentMethod] = useState("PayFast");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -39,10 +39,10 @@ const PaymentScreen = () => {
             <Form.Check
               type="radio"
               className="my-2"
-              label="Credit Card"
-              id="PayPal"
+              label="PayFast"
+              id="PayFast"
               name="paymentMethod"
-              value="PayPal"
+              value="PayFast"
               checked
               onChange={(e) => setPaymentMethod(e.target.value)}
             ></Form.Check>

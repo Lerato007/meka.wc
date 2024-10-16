@@ -11,7 +11,6 @@ import {
   useDeliverOrderMutation,
 } from "../slices/ordersApiSlice";
 
-/* Code starts here*/
 const OrderScreen = () => {
   const { id: orderId } = useParams();
   const [signature, setSignature] = useState("");
@@ -49,8 +48,8 @@ const OrderScreen = () => {
       const merchantId = "25297857"; // Your merchant ID
       const merchantKey = "1yttopb7zgk7y"; // Your merchant key
       const returnUrl = "https://meka-wc.onrender.com/success";
-    const cancelUrl = "https://meka-wc.onrender.com/cancel";
-    const notifyUrl = "https://meka-wc.onrender.com/";
+      const cancelUrl = "https://meka-wc.onrender.com/cancel";
+      const notifyUrl = "https://meka-wc.onrender.com/";
       const myPassphrase = "Graphics_7598"; // Your passphrase
 
       const data = {
@@ -67,11 +66,6 @@ const OrderScreen = () => {
         currency: "ZAR",
       };
 
-      // Log the parameter string
-    const paramString = `merchant_id=${merchantId}&merchant_key=${merchantKey}&return_url=${encodeURIComponent(returnUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}&notify_url=${encodeURIComponent(notifyUrl)}&name_first=${encodeURIComponent(data.name_first)}&email_address=${encodeURIComponent(data.email_address)}&m_payment_id=${encodeURIComponent(data.m_payment_id)}&amount=${encodeURIComponent(data.amount)}&item_name=${encodeURIComponent(data.item_name)}&currency=${data.currency}`;
-    
-    console.log("Generated Parameter String:", paramString);
-
       try {
         // Make an API call to generate the signature
         const { data: response } = await axios.post(
@@ -81,7 +75,7 @@ const OrderScreen = () => {
         setSignature(response.signature);
 
         // Log the generated signature
-      console.log("Generated PayFast Signature:", response.signature);
+        console.log("Generated PayFast Signature:", response.signature);
 
         // Save the PayFast data for rendering
         setPayfastData({
@@ -237,11 +231,11 @@ const OrderScreen = () => {
                       ))}
                       <Button
                         type="button"
-                        className="btn btn-primary btn-block"
+                        className="pay-now-btn"
                         onClick={handlePayNow}
                         disabled={loadingSignature}
                       >
-                        {loadingSignature ? <Loader /> : "Pay Now with PayFast"}
+                        {loadingSignature ? <Loader /> : "Pay Now"}
                       </Button>
                     </form>
                   )}

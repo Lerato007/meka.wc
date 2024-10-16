@@ -177,3 +177,16 @@ footer ul li a:hover {
 .review-actions {
   margin-left: 1rem;
 }
+
+.pay-now-btn{
+  background-color: #003366; /* Bootstrap blue */
+  color: white;
+  float: left; /* Align the button to the right */
+  border: none; /* Remove borders if desired */
+  padding: 10px 20px; /* Adjust padding as needed */
+  border-radius: 5px; /* Rounded corners for a nicer look */
+}
+
+.pay-now-btn:hover {
+  background-color: #0056b3; /* Darken on hover */
+}
