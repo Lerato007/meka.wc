@@ -1,22 +1,19 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Row, Col, ListGroup, Image, Button, Card } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
-import axios from "axios";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
 import {
   useGetOrderDetailsQuery,
+  usePayOrderMutation,
   useDeliverOrderMutation,
 } from "../slices/ordersApiSlice";
+import axios from 'axios'; // For making the signature request
 
 const OrderScreen = () => {
   const { id: orderId } = useParams();
-  const [signature, setSignature] = useState("");
-  const [loadingSignature, setLoadingSignature] = useState(false);
-  const [payfastData, setPayfastData] = useState(null);
-  const formRef = useRef(null); // Form reference for submitting
 
   const {
     data: order,
@@ -25,10 +22,42 @@ const OrderScreen = () => {
     error,
   } = useGetOrderDetailsQuery(orderId);
 
+  const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+
   const [deliverOrder, { isLoading: loadingDeliver }] =
     useDeliverOrderMutation();
 
   const { userInfo } = useSelector((state) => state.auth);
+
+  // State to hold the signature for PayFast form
+  const [signature, setSignature] = useState('');
+
+  useEffect(() => {
+    const getPayfastSignature = async () => {
+      try {
+        const { data } = await axios.post('/api/payfast-signature', {
+          merchant_id: '25297857',
+          merchant_key: '1yttopb7zgk7y',
+          return_url: 'https://meka-wc.onrender.com/success',
+          cancel_url: 'https://meka-wc.onrender.com/return',
+          notify_url: 'https://meka-wc.onrender.com/',
+          name_first: order.user.name,
+          email_address: order.user.email,
+          m_payment_id: order._id,
+          amount: order.totalPrice,
+          item_name: 'Order Items',
+          signature: '5042567927542841e81fb9bc3a20270e',
+        });
+        setSignature(data.signature);
+      } catch (error) {
+        toast.error('Error generating PayFast signature');
+      }
+    };
+
+    if (order && !order.isPaid) {
+      getPayfastSignature();
+    }
+  }, [order]);
 
   const deliverOrderHandler = async () => {
     try {
@@ -37,66 +66,6 @@ const OrderScreen = () => {
       toast.success("Order delivered");
     } catch (err) {
       toast.error(err?.data?.message || err.message);
-    }
-  };
-
-  // Fetch the PayFast signature and generate the payment form when the component mounts
-  useEffect(() => {
-    const fetchSignature = async () => {
-      setLoadingSignature(true);
-
-      const merchantId = "25297857"; // Your merchant ID
-      const merchantKey = "1yttopb7zgk7y"; // Your merchant key
-      const returnUrl = "https://meka-wc.onrender.com/success";
-      const cancelUrl = "https://meka-wc.onrender.com/cancel";
-      const notifyUrl = "https://meka-wc.onrender.com/";
-      const myPassphrase = "Graphics_7598"; // Your passphrase
-
-      const data = {
-        merchant_id: merchantId,
-        merchant_key: merchantKey,
-        return_url: returnUrl,
-        cancel_url: cancelUrl,
-        notify_url: notifyUrl,
-        name_first: order?.user?.name,
-        email_address: order?.user?.email,
-        m_payment_id: order?._id,
-        amount: order?.totalPrice.toFixed(2),
-        item_name: `Order ${order?._id}`,
-        currency: "ZAR",
-      };
-
-      try {
-        // Make an API call to generate the signature
-        const { data: response } = await axios.post(
-          "/api/payfast/generate-signature",
-          { data, passphrase: myPassphrase }
-        );
-        setSignature(response.signature);
-
-        // Log the generated signature
-        console.log("Generated PayFast Signature:", response.signature);
-
-        // Save the PayFast data for rendering
-        setPayfastData({
-          ...data,
-          signature: response.signature,
-        });
-      } catch (error) {
-        console.error("Error generating signature", error);
-      } finally {
-        setLoadingSignature(false);
-      }
-    };
-
-    if (order) {
-      fetchSignature();
-    }
-  }, [order]);
-
-  const handlePayNow = () => {
-    if (formRef.current) {
-      formRef.current.submit();
     }
   };
 
@@ -211,34 +180,25 @@ const OrderScreen = () => {
                 </Row>
               </ListGroup.Item>
 
+              {/* PAY ORDER PLACEHOLDER */}
               {!order.isPaid && (
                 <ListGroup.Item>
-                  {/* Render PayFast Form */}
-                  {payfastData && (
-                    <form
-                      action="https://www.payfast.co.za/eng/process"
-                      method="post"
-                      ref={formRef}
-                      id="payfast-payment-form"
-                    >
-                      {Object.entries(payfastData).map(([key, value]) => (
-                        <input
-                          key={key}
-                          name={key}
-                          type="hidden"
-                          value={value}
-                        />
-                      ))}
-                      <Button
-                        type="button"
-                        className="pay-now-btn"
-                        onClick={handlePayNow}
-                        disabled={loadingSignature}
-                      >
-                        {loadingSignature ? <Loader /> : "Pay Now"}
-                      </Button>
-                    </form>
-                  )}
+                  {loadingPay && <Loader />}
+
+                  <form action="https://www.payfast.co.za/eng/process" method="post">
+                    <input type="hidden" name="merchant_id" value="25297857" />
+                    <input type="hidden" name="merchant_key" value="1yttopb7zgk7y" />
+                    <input type="hidden" name="return_url" value="https://meka-wc.onrender.com/success" />
+                    <input type="hidden" name="cancel_url" value="https://meka-wc.onrender.com/return" />
+                    <input type="hidden" name="notify_url" value="https://meka-wc.onrender.com/" />
+                    <input type="hidden" name="name_first" value={order.user.name} />
+                    <input type="hidden" name="email_address" value={order.user.email} />
+                    <input type="hidden" name="m_payment_id" value={order._id} />
+                    <input type="hidden" name="amount" value={order.totalPrice} />
+                    <input type="hidden" name="item_name" value="Order Items" />
+                    <input type="hidden" name="signature" value={signature} />
+                    <input type="submit" value="Pay with PayFast" className="btn btn-primary btn-block" />
+                  </form>
                 </ListGroup.Item>
               )}
 
