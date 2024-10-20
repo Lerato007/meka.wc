@@ -86,6 +86,10 @@ const getOrderById = asyncHandler(async (req, res) => {
 // @desc    Update order to paid
 // @route   PUT /api/orders/:id/pay
 // @access  Private
+
+// Exchange rate: 1 ZAR = 0.0547861 USD (replace this with dynamic fetching if available)
+const zarToUsdRate = 0.0547861;
+
 const updateOrderToPaid = asyncHandler(async (req, res) => {
   // NOTE: here we need to verify the payment was made to PayPal before marking
   // the order as paid
@@ -100,8 +104,14 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 
   if (order) {
     // check the correct amount was paid
-    const paidCorrectAmount = order.totalPrice.toString() === value;
+    // const paidCorrectAmount = order.totalPrice.toString() === value;
+    // if (!paidCorrectAmount) throw new Error('Incorrect amount paid');
+    const expectedUsdAmount = (order.totalPrice * zarToUsdRate).toFixed(2); // Convert ZAR to USD
+
+    // Step 5: Check if the correct amount was paid in USD
+    const paidCorrectAmount = expectedUsdAmount === value;
     if (!paidCorrectAmount) throw new Error('Incorrect amount paid');
+    
 
     order.isPaid = true;
     order.paidAt = Date.now();
