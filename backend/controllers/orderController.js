@@ -87,7 +87,7 @@ const getOrderById = asyncHandler(async (req, res) => {
 // @route   PUT /api/orders/:id/pay
 // @access  Private
 
-// Exchange rate: 1 ZAR = 0.0547861 USD (replace this with dynamic fetching if available)
+// Exchange rate: 1 ZAR = 0.0547861 USD (replace this with dynamic fetching if available.)
 const zarToUsdRate = 0.0547861;
 
 const updateOrderToPaid = asyncHandler(async (req, res) => {

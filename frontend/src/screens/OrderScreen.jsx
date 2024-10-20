@@ -239,6 +239,7 @@ const OrderScreen = () => {
                       </Button> */}
 
                       <div>
+                      <p>Note: You will be charged in USD, approximately $18.18 for R320.</p>
                         <PayPalButtons
                           fundingSource={FUNDING.CARD} // Only show card option
                           createOrder={ createOrder }
