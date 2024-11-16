@@ -16,7 +16,7 @@ const ProductCarousel = () => {
       {products.map((product) => (
         <Carousel.Item key={product._id}>
           <Link to="#">
-            <Image src={"images/newfolder/back_hoodie.jpg"} alt={"product.name"} fluid style={{ maxWidth: "550px", maxHeight: "350px" }}/>
+          <Image src={"images/newfolder/back_hoodie.jpg"} alt={"product.name"} fluid style={{ maxWidth: "550px", maxHeight: "350px" }}/>
             <Carousel.Caption className="carousel-caption">
               <h1 className="text-white text-right">
                 COMING SOON!!!

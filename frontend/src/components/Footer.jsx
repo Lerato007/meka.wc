@@ -22,14 +22,15 @@ const Footer = () => {
           <Col md={4} className="mb-4 mb-md-0">
             <h5>Contact Us</h5>
             <p>Email: meka4lwd@gmail.com</p>
-            <p>Phone: +27 81-766-6452</p>
+            <p>Phone: +27 (21) 442-8446</p>
             <p>Address: 22 Mrabaraba St, Paarl, S.A</p>
           </Col>
           <Col md={4} className="mb-4 mb-md-0">
             <h5>Quick Links</h5>
             <ul className="list-unstyled">
               <li>
-                <a href="/about">
+                {/* <a href="/about"> */}
+                <a href="#">
                   <FaInfoCircle /> About Us
                 </a>
               </li>
@@ -39,6 +40,7 @@ const Footer = () => {
                 </a>
               </li> */}
               <li>
+                {/* <a href="/contact"> */}
                 <a href="/contact">
                   <FaEnvelope /> Contact Us
                 </a>
@@ -60,7 +62,7 @@ const Footer = () => {
             <ul className="list-unstyled">
               <li>
                 <a
-                  href="https://www.facebook.com/example"
+                  href="#"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -69,7 +71,7 @@ const Footer = () => {
               </li>
               <li>
                 <a
-                  href="https://twitter.com/example"
+                  href="#"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
