@@ -34,9 +34,6 @@ import ProductEditScreen from "./screens/admin/ProductEditScreen";
 import UserListScreen from "./screens/admin/UserListScreen";
 import UserEditScreen from "./screens/admin/UserEditScreen";
 import EmailContactForm from "./routes/Contact";
-import ReturnScreen from "./screens/ReturnScreen";
-import CancelScreen from "./screens/CancelScreen";
-import NotifyScreen from "./screens/NotifyScreen";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
