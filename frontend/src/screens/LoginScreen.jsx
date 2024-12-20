@@ -97,7 +97,7 @@ const LoginScreen = () => {
         </Form.Group>
 
         <ReCAPTCHA
-          sitekey="6Le_Sn8pAAAAALTafNKsPbgL-Plw6iRYTb9vvKP6"
+          sitekey="6LdaWqEqAAAAALmpZdB2rE3-TUqCOAG_HzchIVIs"
           onChange={onChange}
         />
 
