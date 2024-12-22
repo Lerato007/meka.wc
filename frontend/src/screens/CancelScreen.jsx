@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Row, Col, Card, Button } from "react-bootstrap";
 import Message from "../components/Message";
 
-const CancelScreen = () => {
+const CancelScreen = () => { // Code starts here
   return (
     <Row className="justify-content-md-center">
       <Col xs={12} md={8}>
