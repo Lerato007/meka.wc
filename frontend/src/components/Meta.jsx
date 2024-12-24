@@ -13,7 +13,7 @@ const Meta = ({ title, description, keywords }) => {
 Meta.defaultProps = {
   title: "MEKA.WC",
   description: "Meka.WC online store. Where simplicity meets quality. Shop the latest fashion trends.",
-  keywords: "clothes, fashion, T-Shirts, Tees",
+  keywords: "clothes, fashion, T-Shirts, Tees, meka, MEKA, mekawc, MEKAWC, Meka",
 };
 
 export default Meta;
