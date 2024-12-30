@@ -1,8 +1,8 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import User from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
+import bcrypt from "bcryptjs";
 
-/*** CODE STARTS HERE ***/
 // @desc    Auth user & get token
 // @route   POST /api/users/login
 // @access  Public
@@ -56,7 +56,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   } else {
     res.status(400);
-    throw new Error("Invalid user");
+    throw new Error("Invalid user data");
   }
 });
 
@@ -69,8 +69,64 @@ const logoutUser = asyncHandler(async (req, res) => {
     expires: new Date(0),
   });
 
-  res.status(200).json({ message: "Logged put successfully" });
+  res.status(200).json({ message: "Logged out successfully" });
 });
+
+// @desc    Forgot password
+// @route   POST /api/users/forgot-password
+// @access  Public
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res.status(404);
+    throw new Error("Email not found");
+  }
+
+  // Optional: You can integrate an email service here to send a reset link.
+  res.status(200).json({
+    message: "Email verified. Proceed to reset your password.",
+  });
+});
+
+// @desc    Reset password
+// @route   POST /api/users/reset-password
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Find user by email
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res.status(404);
+    throw new Error("Email not found");
+  }
+
+  // Check if the new password is the same as the old password
+  console.log("Password provided:", password);
+console.log("User's current hashed password:", user.password);
+
+
+  const isSamePassword = await bcrypt.compare(password, user.password);
+  console.log("Password comparison result:", isSamePassword);
+  if (isSamePassword) {
+    res.status(400); // Bad request
+    throw new Error("New password cannot be the same as the old password");
+  }
+
+  // Hash the new password
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(password, salt);
+
+  // Save the updated password
+  await user.save();
+
+  res.status(200).json({ message: "Password reset successfully" });
+});
+
 
 // @desc    Get user profile
 // @route   GET /api/users/profile
@@ -109,9 +165,9 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
     res.status(200).json({
       _id: user._id,
-      name: user.name,
-      email: user.email,
-      isAdmin: user.isAdmin,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
     });
   } else {
     res.status(404);
@@ -189,6 +245,8 @@ export {
   authUser,
   registerUser,
   logoutUser,
+  forgotPassword,
+  resetPassword,
   getUserProfile,
   updateUserProfile,
   getUsers,

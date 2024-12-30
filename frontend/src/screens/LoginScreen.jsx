@@ -8,12 +8,14 @@ import { useLoginMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
 import { toast } from "react-toastify";
 import ReCAPTCHA from "react-google-recaptcha";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordStrength, setPasswordStrength] = useState("");
-  const [recaptchaValue, setRecaptchaValue] = useState(""); 
+  const [recaptchaValue, setRecaptchaValue] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -34,7 +36,6 @@ const LoginScreen = () => {
     }
   }, [userInfo, redirect, navigate]);
 
-  // Password strength checker
   const evaluatePasswordStrength = (password) => {
     if (password.length < 6) {
       setPasswordStrength("Weak");
@@ -47,13 +48,15 @@ const LoginScreen = () => {
     }
   };
 
+  const toggleShowPassword = () => setShowPassword((prev) => !prev);
+
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    if (!recaptchaValue) {
-      toast.error("Please complete the ReCAPTCHA");
-      return;
-    }
+    // if (!recaptchaValue) {
+    //   toast.error("Please complete the ReCAPTCHA");
+    //   return;
+    // }
 
     try {
       const res = await login({ email, password }).unwrap();
@@ -67,7 +70,6 @@ const LoginScreen = () => {
   return (
     <FormContainer>
       <h1>Sign In</h1>
-
       <Form onSubmit={submitHandler}>
         <Form.Group controlId="email" className="my-3">
           <Form.Label>Email Address</Form.Label>
@@ -81,34 +83,48 @@ const LoginScreen = () => {
 
         <Form.Group controlId="password" className="my-3">
           <Form.Label>Password</Form.Label>
-          <Form.Control
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              evaluatePasswordStrength(e.target.value);
-            }}
-          ></Form.Control>
+          <div className="d-flex align-items-center">
+            <Form.Control
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                evaluatePasswordStrength(e.target.value);
+              }}
+            ></Form.Control>
+            <Button
+              variant="link"
+              className="text-decoration-none p-0 mx-2"
+              onClick={toggleShowPassword}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </Button>
+          </div>
           <div className="password-strength">
             <div className={`strength-bar ${passwordStrength}`}></div>
             <p>{passwordStrength && `${passwordStrength}`}</p>
           </div>
         </Form.Group>
 
-        <ReCAPTCHA
+        {/* <ReCAPTCHA
           sitekey="6LdaWqEqAAAAALmpZdB2rE3-TUqCOAG_HzchIVIs"
           onChange={onChange}
-        />
+        /> */}
 
-        <Button
-          type="submit"
-          variant="primary"
-          className="mt-2"
-          disabled={isLoading || !recaptchaValue}
-        >
-          Sign In
-        </Button>
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <Button
+            type="submit"
+            variant="primary"
+            className="me-2"
+            // disabled={isLoading || !recaptchaValue}
+          >
+            Sign In
+          </Button>
+          <Link to="/forgot-password" className="text-decoration-none">
+            Forgot Password?
+          </Link>
+        </div>
 
         {isLoading && <Loader />}
       </Form>
