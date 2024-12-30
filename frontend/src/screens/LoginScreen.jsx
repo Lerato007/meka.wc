@@ -53,10 +53,10 @@ const LoginScreen = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    // if (!recaptchaValue) {
-    //   toast.error("Please complete the ReCAPTCHA");
-    //   return;
-    // }
+    if (!recaptchaValue) {
+      toast.error("Please complete the ReCAPTCHA");
+      return;
+    }
 
     try {
       const res = await login({ email, password }).unwrap();
@@ -107,17 +107,17 @@ const LoginScreen = () => {
           </div>
         </Form.Group>
 
-        {/* <ReCAPTCHA
+        { <ReCAPTCHA
           sitekey="6LdaWqEqAAAAALmpZdB2rE3-TUqCOAG_HzchIVIs"
           onChange={onChange}
-        /> */}
+        /> }
 
         <div className="d-flex justify-content-between align-items-center mt-3">
           <Button
             type="submit"
             variant="primary"
             className="me-2"
-            // disabled={isLoading || !recaptchaValue}
+            disabled={isLoading || !recaptchaValue}
           >
             Sign In
           </Button>
