@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";  // Import useNavigate
 import FormContainer from "../components/formContainer";
 import { useForgotPasswordMutation, useResetPasswordMutation } from "../slices/usersApiSlice";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -15,6 +16,8 @@ const ForgotPasswordScreen = () => {
 
   const [forgotPassword, { isLoading: isForgotLoading }] = useForgotPasswordMutation();
   const [resetPassword, { isLoading: isResetLoading }] = useResetPasswordMutation();
+
+  const navigate = useNavigate();  // Declare navigate
 
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
 
@@ -89,6 +92,9 @@ const ForgotPasswordScreen = () => {
       setPassword("");
       setConfirmPassword("");
       setShowPasswordReset(false);
+
+      // Redirect to login page after successful password reset
+      navigate("/login");  // Replace '/login' with your actual login route if different
     } catch (err) {
       toast.error(err?.data?.message || "Error resetting password.");
     }
