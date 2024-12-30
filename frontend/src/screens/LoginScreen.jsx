@@ -83,7 +83,7 @@ const LoginScreen = () => {
 
         <Form.Group controlId="password" className="my-3">
           <Form.Label>Password</Form.Label>
-          <div className="d-flex align-items-center">
+          <div className="position-relative">
             <Form.Control
               type={showPassword ? "text" : "password"}
               placeholder="Enter password"
@@ -92,14 +92,15 @@ const LoginScreen = () => {
                 setPassword(e.target.value);
                 evaluatePasswordStrength(e.target.value);
               }}
-            ></Form.Control>
-            <Button
-              variant="link"
-              className="text-decoration-none p-0 mx-2"
+              style={{ paddingRight: "40px" }}
+            />
+            <span
+              className="position-absolute end-0 top-50 translate-middle-y me-3"
+              style={{ cursor: "pointer" }}
               onClick={toggleShowPassword}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </Button>
+            </span>
           </div>
           <div className="password-strength">
             <div className={`strength-bar ${passwordStrength}`}></div>
@@ -107,10 +108,10 @@ const LoginScreen = () => {
           </div>
         </Form.Group>
 
-        { <ReCAPTCHA
+        <ReCAPTCHA
           sitekey="6LdaWqEqAAAAALmpZdB2rE3-TUqCOAG_HzchIVIs"
           onChange={onChange}
-        /> }
+        />
 
         <div className="d-flex justify-content-between align-items-center mt-3">
           <Button

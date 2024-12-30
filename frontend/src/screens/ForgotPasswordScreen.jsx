@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";  // Import useNavigate
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import FormContainer from "../components/formContainer";
 import { useForgotPasswordMutation, useResetPasswordMutation } from "../slices/usersApiSlice";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -17,7 +17,7 @@ const ForgotPasswordScreen = () => {
   const [forgotPassword, { isLoading: isForgotLoading }] = useForgotPasswordMutation();
   const [resetPassword, { isLoading: isResetLoading }] = useResetPasswordMutation();
 
-  const navigate = useNavigate();  // Declare navigate
+  const navigate = useNavigate();
 
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
 
@@ -92,9 +92,7 @@ const ForgotPasswordScreen = () => {
       setPassword("");
       setConfirmPassword("");
       setShowPasswordReset(false);
-
-      // Redirect to login page after successful password reset
-      navigate("/login");  // Replace '/login' with your actual login route if different
+      navigate("/login");
     } catch (err) {
       toast.error(err?.data?.message || "Error resetting password.");
     }
@@ -112,7 +110,7 @@ const ForgotPasswordScreen = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-            ></Form.Control>
+            />
           </Form.Group>
         )}
 
@@ -120,7 +118,7 @@ const ForgotPasswordScreen = () => {
           <>
             <Form.Group controlId="password" className="my-3">
               <Form.Label>New Password</Form.Label>
-              <div className="d-flex align-items-center">
+              <div className="position-relative">
                 <Form.Control
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter new password"
@@ -129,20 +127,22 @@ const ForgotPasswordScreen = () => {
                     setPassword(e.target.value);
                     evaluatePasswordStrength(e.target.value);
                   }}
-                ></Form.Control>
-                <Button
-                  variant="link"
-                  className="text-decoration-none p-0 mx-2"
+                  style={{ paddingRight: "40px" }}
+                />
+                <span
+                  className="position-absolute end-0 top-50 translate-middle-y me-3"
+                  style={{ cursor: "pointer" }}
                   onClick={toggleShowPassword}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
-                </Button>
+                </span>
               </div>
               <div className="password-strength">
                 <div className={`strength-bar ${passwordStrength}`}></div>
                 <p>{passwordStrength && `${passwordStrength}`}</p>
               </div>
             </Form.Group>
+
             <Form.Group controlId="confirmPassword" className="my-3">
               <Form.Label>Confirm New Password</Form.Label>
               <Form.Control
@@ -150,7 +150,7 @@ const ForgotPasswordScreen = () => {
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
           </>
         )}
