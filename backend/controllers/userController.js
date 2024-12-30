@@ -105,13 +105,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new Error("Email not found");
   }
 
-  // Check if the new password is the same as the old password
-  console.log("Password provided:", password);
-console.log("User's current hashed password:", user.password);
-
-
   const isSamePassword = await bcrypt.compare(password, user.password);
-  console.log("Password comparison result:", isSamePassword);
   if (isSamePassword) {
     res.status(400); // Bad request
     throw new Error("New password cannot be the same as the old password");
