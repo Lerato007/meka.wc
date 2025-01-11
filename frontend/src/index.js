@@ -36,7 +36,7 @@ import UserListScreen from "./screens/admin/UserListScreen";
 import UserEditScreen from "./screens/admin/UserEditScreen";
 import ForgotPasswordScreen from "./screens/ForgotPasswordScreen";
 import ReturnRefundScreen from "./screens/ReturnRefundScreen";
-import ShippingInformationPage from "./screens/ShippingInformationScreen";
+import ShippingInformationScreen from "./screens/ShippingInformationScreen";
 import AboutUs from "./screens/AboutUsScreen";
 import LandingPageScreen from "./screens/LandingPageScreen";
 
@@ -57,7 +57,7 @@ const router = createBrowserRouter(
       <Route path="/register" element={<RegisterScreen />} />
       <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
       <Route path="/returns" element={<ReturnRefundScreen />} />
-      <Route path="/shippingInfo" element={<ShippingInformationPage />} />
+      <Route path="/shippingInfo" element={<ShippingInformationScreen />} />
       <Route path="/about-us" element={<AboutUs />} />
       
       {/* Private Routes */}

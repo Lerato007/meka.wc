@@ -167,7 +167,7 @@ const deleteProductReview = asyncHandler(async (req, res) => {
 // @route   GET /api/products/top
 // @access  Public
 const getTopProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({}).sort({ rating: -1 }).limit(2);
+  const products = await Product.find({}).sort({ rating: -1 }).limit(9);
   res.status(200).json(products);
 });
 
