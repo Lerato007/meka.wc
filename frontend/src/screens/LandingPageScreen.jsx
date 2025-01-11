@@ -186,10 +186,9 @@ const LandingPageScreen = () => {
         <Container>
           <Row>
             <Col md={4} className="text-center">
-                <img
-                  src="/images/img5.jpg"
-                  alt="Quality Materials"
-                  className="feature-image"
+               <img src="/images/img5.JPG"
+                 alt="Quality Materials"
+                 className="feature-image"
                 />
               <h3 className="feature-title mt-3">Quality Materials</h3>
               <p className="feature-text">
