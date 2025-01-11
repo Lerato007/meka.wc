@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, Form, Button, Row, Col } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -8,47 +7,102 @@ import Message from "../components/Message";
 import Loader from "../components/Loader";
 import { useProfileMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaEye, FaEyeSlash } from "react-icons/fa"; // Importing eye icons
 import { useGetMyOrdersQuery } from "../slices/ordersApiSlice";
 
-/*** CODE STARTS HERE ***/
 const ProfileScreen = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [address, setAddress] = useState({
+    street: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    phone: "",
+    country: "",
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const { data: orders, isLoading, error } = useGetMyOrdersQuery();
-  const [updateProfile, { isLoading: loadingUpdateProfile }] =
-    useProfileMutation();
+  const [updateProfile, { isLoading: loadingUpdateProfile }] = useProfileMutation();
 
   const dispatch = useDispatch();
-
   const { userInfo } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (userInfo) {
       setName(userInfo.name);
       setEmail(userInfo.email);
+      setAddress(userInfo.address || {
+        street: "",
+        city: "",
+        state: "",
+        postalCode: "",
+        country: "",
+      });
     }
-  }, [userInfo, userInfo.name, userInfo.email]);
+  }, [userInfo]);
+
+  // 🔐 Password Strength Validation
+  const validatePassword = (pwd) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+    if (!passwordRegex.test(pwd)) {
+      return "Password must be at least 8 characters, include uppercase, lowercase, number, and special character.";
+    }
+    return "";
+  };
+
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+  };
+
+  const handleAddressChange = (e) => {
+    setAddress({
+      ...address,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
+  const toggleConfirmPasswordVisibility = () => setShowConfirmPassword((prev) => !prev);
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
+
+    // Validate password strength
+    const passwordError = validatePassword(password);
+    if (password && passwordError) {
+      toast.error(passwordError); // Show toast error for weak password
+      return;
+    }
+
+    // Check if passwords match
+    if (password && password !== confirmPassword) {
       toast.error("Passwords do not match");
-    } else {
-      try {
-        const res = await updateProfile({
-          _id: userInfo._id,
-          name,
-          email,
-          password,
-        }).unwrap();
-        dispatch(setCredentials({ ...res }));
-        toast.success("Profile updated successfully");
-      } catch (err) {
-        toast.error(err?.data?.message || err.error);
+      return;
+    }
+
+    try {
+      const updateData = {
+        _id: userInfo._id,
+        name,
+        password,
+        address,
+      };
+
+      if (userInfo.isAdmin) {
+        updateData.email = email;
       }
+
+      const res = await updateProfile(updateData).unwrap();
+      dispatch(setCredentials({ ...res }));
+      toast.success("Profile updated successfully");
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
     }
   };
 
@@ -61,41 +115,62 @@ const ProfileScreen = () => {
           <Form.Group controlId="name" className="my-2">
             <Form.Label>Name</Form.Label>
             <Form.Control
-              type="name"
+              type="text"
               placeholder="Enter name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-            ></Form.Control>
+            />
           </Form.Group>
 
-          <Form.Group className="my-2" controlId="email">
+          <Form.Group controlId="email" className="my-2">
             <Form.Label>Email Address</Form.Label>
             <Form.Control
               type="email"
               placeholder="Enter email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-            ></Form.Control>
+              readOnly={!userInfo.isAdmin}
+            />
           </Form.Group>
 
-          <Form.Group className="my-2" controlId="password">
+          <Form.Group controlId="password" className="my-2">
             <Form.Label>Password</Form.Label>
-            <Form.Control
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            ></Form.Control>
+            <div className="position-relative">
+              <Form.Control
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter password"
+                value={password}
+                onChange={handlePasswordChange}
+                style={{ paddingRight: "40px" }}
+              />
+              <span
+                className="position-absolute end-0 top-50 translate-middle-y me-3"
+                style={{ cursor: "pointer" }}
+                onClick={togglePasswordVisibility}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
           </Form.Group>
 
-          <Form.Group className="my-2" controlId="confirmPassword">
+          <Form.Group controlId="confirmPassword" className="my-2">
             <Form.Label>Confirm Password</Form.Label>
-            <Form.Control
-              type="password"
-              placeholder="Confirm password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            ></Form.Control>
+            <div className="position-relative">
+              <Form.Control
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                style={{ paddingRight: "40px" }}
+              />
+              <span
+                className="position-absolute end-0 top-50 translate-middle-y me-3"
+                style={{ cursor: "pointer" }}
+                onClick={toggleConfirmPasswordVisibility}
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
           </Form.Group>
 
           <Button type="submit" variant="primary">
@@ -103,6 +178,7 @@ const ProfileScreen = () => {
           </Button>
         </Form>
       </Col>
+
       <Col md={9}>
         <h2>My Orders</h2>
         {isLoading ? (
@@ -112,7 +188,7 @@ const ProfileScreen = () => {
             {error?.data?.message || error.error}
           </Message>
         ) : (
-          <Table striped table hover responsive className="table-sm">
+          <Table striped hover responsive className="table-sm">
             <thead>
               <tr>
                 <th>ID</th>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import FormContainer from "../components/formContainer";
 import { useForgotPasswordMutation, useResetPasswordMutation } from "../slices/usersApiSlice";
 import { FaEye, FaEyeSlash } from "react-icons/fa";

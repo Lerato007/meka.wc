@@ -59,7 +59,9 @@ const LoginScreen = () => {
     }
 
     try {
-      const res = await login({ email, password }).unwrap();
+      // Convert email to lowercase before sending it
+      const emailLower = email.toLowerCase();
+      const res = await login({ email: emailLower, password }).unwrap();
       dispatch(setCredentials({ ...res }));
       navigate(redirect);
     } catch (err) {

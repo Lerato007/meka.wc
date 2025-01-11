@@ -70,6 +70,7 @@ const OrderScreen = () => {
       }
     });
   }
+  
 
   // async function onApproveTest() {
   //   await payOrder({ orderId, details: { payer: {} } });
@@ -82,7 +83,7 @@ const OrderScreen = () => {
   }
 
   function createOrder(data, actions) {
-    const zarToUsdRate = 0.0547861; // Current ZAR to USD rate from PayPal
+    const zarToUsdRate = 0.04984375; // Current ZAR to USD rate from PayPal
     const usdAmount = (order.totalPrice * zarToUsdRate).toFixed(2); // Convert ZAR to USD
 
     return actions.order
@@ -131,6 +132,9 @@ const OrderScreen = () => {
                 <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
               </p>
               <p>
+              <p>
+                <strong>Phone: </strong> {order.shippingAddress.phone}
+              </p>
                 <strong>Address: </strong>
                 {order.shippingAddress.address}, {order.shippingAddress.city}{" "}
                 {order.shippingAddress.postalCode},{" "}

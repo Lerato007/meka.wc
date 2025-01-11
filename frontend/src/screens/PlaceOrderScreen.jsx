@@ -9,7 +9,6 @@ import Loader from "../components/Loader";
 import { useCreateOrderMutation } from "../slices/ordersApiSlice";
 import { clearCartItems } from "../slices/cartSlice";
 
-/*** CODE STARTS HERE ***/
 const PlaceOrderScreen = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -57,6 +56,10 @@ const PlaceOrderScreen = () => {
                 {cart.shippingAddress.address}, {cart.shippingAddress.city}{" "}
                 {cart.shippingAddress.postalCode},{" "}
                 {cart.shippingAddress.country}
+              </p>
+              <p>
+                <strong>Phone No: </strong>
+                {cart.shippingAddress.phone}
               </p>
             </ListGroup.Item>
 

@@ -186,6 +186,7 @@ const LandingPageScreen = () => {
         <Container>
           <Row>
             <Col md={4} className="text-center">
+            <source srcSet="/images/img5.webp" type="image/webp" />
                <img src="/images/img5.JPG"
                  alt="Quality Materials"
                  className="feature-image"
@@ -196,6 +197,7 @@ const LandingPageScreen = () => {
               </p>
             </Col>
             <Col md={4} className="text-center">
+            <source srcSet="/images/img2.webp" type="image/webp" />
                 <img
                   src="/images/img2.jpg"
                   alt="Unique Designs"
@@ -207,6 +209,7 @@ const LandingPageScreen = () => {
               </p>
             </Col>
             <Col md={4} className="text-center">
+            <source srcSet="/images/img4.webp" type="image/webp" />
                 <img
                   src="/images/img4.jpg"
                   alt="Sustainable Fashion"

@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Form, Button, Row, Col } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,7 +8,6 @@ import { useRegisterMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
 import { toast } from "react-toastify";
 
-/*** CODE STARTS HERE ***/
 const RegisterScreen = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,9 +34,22 @@ const RegisterScreen = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
-
-    if (password !== confirmPassword) {
-      toast.error("Password do not match");
+  
+    // Email validation pattern
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+    // Strong password validation pattern
+    const passwordPattern =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  
+    if (emailPattern.test(name)) {
+      toast.error("Name cannot be an email address");
+    } else if (!passwordPattern.test(password)) {
+      toast.error(
+        "Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character"
+      );
+    } else if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
     } else {
       try {
         const res = await register({ name, email, password }).unwrap();
@@ -49,6 +60,8 @@ const RegisterScreen = () => {
       }
     }
   };
+  
+
   return (
     <FormContainer>
       <h1>Sign Up</h1>
@@ -84,7 +97,7 @@ const RegisterScreen = () => {
           ></Form.Control>
         </Form.Group>
 
-        <Form.Group controlId="confirmPassowrd" className="my-3">
+        <Form.Group controlId="confirmPassword" className="my-3">
           <Form.Label>Confirm Password</Form.Label>
           <Form.Control
             type="password"
