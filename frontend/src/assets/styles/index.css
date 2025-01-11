@@ -65,52 +65,61 @@ table th {
 
 /*** FOOTER STYLING ***/
 /* Footer Styles */
-footer {
+/* Footer Styles */
+.footer {
   background-color: #409118;
   color: #fff;
-  padding: 40px 0;
+  padding: 2rem 0;
 }
 
-footer h5 {
+.footer h5 {
   color: #fff;
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 20px;
 }
 
-footer p {
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-
-footer ul {
-  padding: 0;
-}
-
-footer ul li {
-  list-style: none;
-  margin-bottom: 10px;
-}
-
-footer ul li a {
+.footer p,
+.footer a {
   color: #fff;
   text-decoration: none;
 }
 
-footer ul li a:hover {
+.footer a:hover {
   text-decoration: underline;
 }
 
-/* Responsive Styles */
-@media (max-width: 768px) {
-  footer h5 {
-    font-size: 16px;
-  }
-
-  footer p {
-    font-size: 12px;
-  }
+.footer-links,
+.footer-social {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
+
+.footer-links li,
+.footer-social li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+}
+
+.footer-social a:hover {
+  color: #d4e157;
+}
+
+.footer-social li:not(:last-child) {
+  margin-bottom: 0.5rem;
+}
+
+.text-center a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.text-center a:hover {
+  text-decoration: underline;
+}
+
 
  /*** Password strength ***/
  .password-strength {

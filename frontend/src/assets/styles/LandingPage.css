@@ -1,0 +1,244 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scrollbars */
+}
+
+/* General Styles */
+.landing-page {
+  font-family: "Arial", sans-serif;
+  color: #333;
+}
+
+/* Hero Section */
+.hero-section {
+  width: 100vw;
+  height: 89.5vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-image {
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center; /* Center the text */
+  flex-direction: column; /* Stack the title and buttons vertically */
+  position: relative;
+}
+
+
+.hero-title {
+  font-size: 3rem;
+  color: #fff;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+
+.hero-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Button Styling */
+.hero-btn {
+  padding: 10px 20px;
+  font-size: 1.1rem;
+  border: 2px solid white;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.hero-btn.explore-btn {
+  background-color: white;
+  color: black;
+}
+
+.hero-btn.explore-btn:hover {
+  background-color: black;
+  color: white;
+}
+
+/* Shop Now Button */
+.shop-now-btn {
+  display: inline-block;
+  width: 300px;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  background-color: #000;
+  color: #fff;
+  border: 1px solid #000; /* Added black border */
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.shop-now-btn:hover {
+  background-color: #fff; /* White background on hover */
+  color: #000; /* Black text on hover */
+}
+
+
+
+
+
+/* Features Section */
+.features-section {
+  background-color: #f9f9f9;
+  padding: 50px 0;
+}
+
+.feature-image {
+  max-width: 80%;
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+
+.feature-image:hover {
+  transform: scale(1.1);
+}
+
+.feature-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+.feature-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #555;
+}
+
+.feature-icon {
+  font-size: 1.1rem;
+  color: #409118;
+  margin-bottom: 10px;
+}
+
+/* Video Banner */
+.video-banner {
+  position: relative;
+  width: 100%;
+  height: 60vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: black;
+}
+
+.video-banner-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+}
+
+/* Product Display */
+.product-details {
+  display: flex; /* Use Flexbox for alignment */
+  flex-direction: column; /* Stack children vertically */
+  align-items: center; /* Horizontally center-align */
+  justify-content: center; /* Vertically center-align */
+  gap: 20px; /* Add spacing between elements, like the title, description, and button */
+}
+
+.product-price {
+  font-size: 2rem;   /* Makes the price bigger */
+  /*font-weight: bold;*/ /* Emphasizes the price */
+  /*color: #000;*/       /* Optional: Ensures the price stands out */
+  margin-top: 10px;  /* Optional: Adds spacing */
+}
+
+
+.product-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 20px;
+}
+
+.product-display img {
+  width: 200px;
+  height: auto;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+}
+
+.product-info {
+  font-family: Arial, sans-serif;
+  text-align: left;
+}
+
+.product-info h3 {
+  font-size: 18px;
+  margin: 5px 0;
+}
+
+.product-info p {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+.product-image {
+  max-width: 70%; /* Ensure the image doesn't overflow its container */
+  height: auto; /* Maintain aspect ratio */
+  border-radius: 10px; /* Optional: Rounded corners */
+}
+
+@media (max-width: 768px) {
+  .product-section .row {
+    flex-direction: column; /* Stack columns vertically on smaller screens */
+  }
+
+  .product-image {
+    width: 100%; /* Allow the image to take full width on smaller screens */
+    margin-bottom: 20px; /* Add spacing between the image and product details */
+  }
+
+  .product-details {
+    text-align: center; /* Center align product details on smaller devices */
+  }
+}
+
