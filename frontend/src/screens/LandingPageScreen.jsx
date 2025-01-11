@@ -51,13 +51,13 @@ const LandingPageScreen = () => {
                       </Button>
                     </>
                   ) : (
-                    // If user IS logged in → Show Shop Now
+                    // If user IS logged in → Show Shop Merch
                     <Button
                       variant="dark"
                       className="hero-btn shop-btn"
                       onClick={handleShopNowClick}
                     >
-                      Shop Now
+                      Shop Merch
                     </Button>
                   )}
                 </div>
@@ -93,7 +93,7 @@ const LandingPageScreen = () => {
                       className="hero-btn shop-btn"
                       onClick={handleShopNowClick}
                     >
-                      Shop Now
+                      Shop Merch
                     </Button>
                   )}
                 </div>
@@ -102,7 +102,7 @@ const LandingPageScreen = () => {
           </Carousel.Item>
 
           <Carousel.Item>
-            <div className="hero-image" style={{ backgroundImage: "url('/images/img3.jpg')" }}>
+            <div className="hero-image" style={{ backgroundImage: "url('/images/img3.jpg')"}}>
               <Container fluid className="p-0">
                 <h1 className="hero-title">Streetwear Redefined</h1>
                 <div className="hero-buttons">
@@ -129,7 +129,7 @@ const LandingPageScreen = () => {
                       className="hero-btn shop-btn"
                       onClick={handleShopNowClick}
                     >
-                      Shop Now
+                      Shop Merch
                     </Button>
                   )}
                 </div>
@@ -152,7 +152,6 @@ const LandingPageScreen = () => {
                 <Col md={6} className="text-center">
                   <img
                     src={product.image}
-                    loading="lazy"
                     alt={product.name}
                     className="product-image"
                   />
@@ -174,7 +173,7 @@ const LandingPageScreen = () => {
                     className="shop-now-btn"
                     onClick={handleShopNowClick}
                   >
-                    Shop Now
+                    Shop Merch
                   </Button>
                 </Col>
               </Row>
@@ -189,7 +188,6 @@ const LandingPageScreen = () => {
             <Col md={4} className="text-center">
             <source srcSet="/images/img5.webp" type="image/webp" />
                <img src="/images/img5.JPG"
-                 loading="lazy"
                  alt="Quality Materials"
                  className="feature-image"
                 />
@@ -202,7 +200,6 @@ const LandingPageScreen = () => {
             <source srcSet="/images/img2.webp" type="image/webp" />
                 <img
                   src="/images/img2.jpg"
-                  loading="lazy"
                   alt="Unique Designs"
                   className="feature-image"
                 />
@@ -215,7 +212,6 @@ const LandingPageScreen = () => {
             <source srcSet="/images/img4.webp" type="image/webp" />
                 <img
                   src="/images/img4.jpg"
-                  loading="lazy"
                   alt="Sustainable Fashion"
                   className="feature-image"
                 />
@@ -279,7 +275,6 @@ const LandingPageScreen = () => {
         <video
           className="video-banner-content"
           src="/images/final_product.mp4"
-          loading="lazy"
           autoPlay
           loop
           muted
