@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&display=swap');
 /* General Reset */
 * {
   margin: 0;
@@ -24,6 +25,7 @@ body {
 .hero-section {
   width: 100vw;
   height: 89.5vh;
+  font-family: "Bruno Ace SC", sans-serif;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -47,7 +49,9 @@ body {
 
 
 .hero-title {
-  font-size: 3rem;
+  font-size: 2rem;
+  text-transform: uppercase;
+  font-weight: bold;
   color: #fff;
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
 }
@@ -120,7 +124,7 @@ body {
 }
 
 .feature-title {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
   margin-top: 15px;
 }
@@ -136,6 +140,10 @@ body {
   color: #409118;
   margin-bottom: 10px;
 }
+
+/* .product-title{
+  font-family: "Bruno Ace SC", sans-serif;
+} */
 
 /* Video Banner */
 .video-banner {
@@ -176,6 +184,7 @@ body {
 
 /* Product Display */
 .product-details {
+  text-transform: bold;
   display: flex; /* Use Flexbox for alignment */
   flex-direction: column; /* Stack children vertically */
   align-items: center; /* Horizontally center-align */
