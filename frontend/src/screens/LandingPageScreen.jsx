@@ -278,6 +278,7 @@ const LandingPageScreen = () => {
           autoPlay
           loop
           muted
+          playsInline
         />
         <div className="video-banner-overlay">
           <Container></Container>
