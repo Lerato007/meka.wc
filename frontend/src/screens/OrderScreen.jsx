@@ -83,7 +83,7 @@ const OrderScreen = () => {
   }
 
   function createOrder(data, actions) {
-    const zarToUsdRate = 0.04984375; // Current ZAR to USD rate from PayPal
+    const zarToUsdRate = 0.05405405; // Current ZAR to USD rate from PayPal
     const usdAmount = (order.totalPrice * zarToUsdRate).toFixed(2); // Convert ZAR to USD
 
     return actions.order
