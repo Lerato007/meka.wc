@@ -24,7 +24,12 @@ const PaymentScreen = () => {
   const submitHandler = (e) => {
     e.preventDefault();
     dispatch(savePaymentMethod(paymentMethod));
-    navigate("/placeorder");
+
+    if (paymentMethod === "PayFast") {
+      navigate("/payfast"); // Redirects to PayFast form
+    } else {
+      navigate("/placeorder"); // Redirects to Place Order screen
+    }
   };
 
   return (
@@ -35,18 +40,31 @@ const PaymentScreen = () => {
         <Form.Group>
           <Form.Label as="legend">Select Method</Form.Label>
           <Col>
+            {/* Credit Card Option */}
             <Form.Check
               type="radio"
               className="my-2"
               label="Credit Card"
-              id="Credit Card"
+              id="CreditCard"
               name="paymentMethod"
               value="Credit Card"
-              checked
+              checked={paymentMethod === "Credit Card"}
               onChange={(e) => setPaymentMethod(e.target.value)}
-            ></Form.Check>
+            />
 
-            <Button type="sybmit" variant="primary">
+            {/* PayFast Option */}
+            {/* <Form.Check
+              type="radio"
+              className="my-2"
+              label="PayFast"
+              id="PayFast"
+              name="paymentMethod"
+              value="PayFast"
+              checked={paymentMethod === "PayFast"}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            /> */}
+
+            <Button type="submit" variant="primary" className="mt-3">
               Continue
             </Button>
           </Col>
