@@ -3,6 +3,23 @@ import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import { calcPrices } from "../utils/calcPrices.js";
 import { verifyPayPalPayment, checkIfNewTransaction } from "../utils/paypal.js";
+import axios from "axios";
+import { Resend } from "resend";
+
+const resend = new Resend("re_drMZndTE_7vWk3E1oNXzoxMVpjrUhRjKp");
+
+// Function to fetch the exchange rate from the API
+const fetchExchangeRate = async () => {
+  try {
+    const response = await axios.get(
+      `https://v6.exchangerate-api.com/v6/dcb8b5d35cce0be56b199997/latest/ZAR`
+    );
+    return response.data.conversion_rates.USD;
+  } catch (error) {
+    console.error("Error fetching exchange rate:", error);
+    throw new Error("Failed to fetch exchange rate");
+  }
+};
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -12,19 +29,14 @@ const addOrderItems = asyncHandler(async (req, res) => {
 
   if (orderItems && orderItems.length === 0) {
     res.status(400);
-    throw new Error('No order items');
+    throw new Error("No order items");
   } else {
-    // NOTE: here we must assume that the prices from our client are incorrect.
-    // We must only trust the price of the item as it exists in
-    // our DB. This prevents a user paying whatever they want by hacking our client
-    // side code - https://gist.github.com/bushblade/725780e6043eaf59415fbaf6ca7376ff
-
-    // get the ordered items from our database
+    // Get the ordered items from our database
     const itemsFromDB = await Product.find({
       _id: { $in: orderItems.map((x) => x._id) },
     });
 
-    // map over the order items and use the price from our items from database
+    // Map over the order items and use the price from our items from database
     const dbOrderItems = orderItems.map((itemFromClient) => {
       const matchingItemFromDB = itemsFromDB.find(
         (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id
@@ -37,9 +49,11 @@ const addOrderItems = asyncHandler(async (req, res) => {
       };
     });
 
-    // calculate prices
-    const { itemsPrice, vatPrice, shippingPrice, totalPrice } =
-      calcPrices(dbOrderItems, shippingAddress);
+    // Calculate prices
+    const { itemsPrice, vatPrice, shippingPrice, totalPrice } = calcPrices(
+      dbOrderItems,
+      shippingAddress
+    );
 
     const order = new Order({
       orderItems: dbOrderItems,
@@ -86,32 +100,21 @@ const getOrderById = asyncHandler(async (req, res) => {
 // @desc    Update order to paid
 // @route   PUT /api/orders/:id/pay
 // @access  Private
-
-// Exchange rate: 1 ZAR = 0.0547861 USD (replace this with dynamic fetching if available.)
-const zarToUsdRate = 0.0547861;
-
 const updateOrderToPaid = asyncHandler(async (req, res) => {
-  // NOTE: here we need to verify the payment was made to PayPal before marking
-  // the order as paid
   const { verified, value } = await verifyPayPalPayment(req.body.id);
-  if (!verified) throw new Error('Payment not verified');
+  if (!verified) throw new Error("Payment not verified");
 
-  // check if this transaction has been used before
   const isNewTransaction = await checkIfNewTransaction(Order, req.body.id);
-  if (!isNewTransaction) throw new Error('Transaction has been used before');
+  if (!isNewTransaction) throw new Error("Transaction has been used before");
 
   const order = await Order.findById(req.params.id);
 
   if (order) {
-    // check the correct amount was paid
-    // const paidCorrectAmount = order.totalPrice.toString() === value;
-    // if (!paidCorrectAmount) throw new Error('Incorrect amount paid');
-    const expectedUsdAmount = (order.totalPrice * zarToUsdRate).toFixed(2); // Convert ZAR to USD
+    const zarToUsdRate = await fetchExchangeRate();
+    const expectedUsdAmount = (order.totalPrice * zarToUsdRate).toFixed(2);
 
-    // Step 5: Check if the correct amount was paid in USD
     const paidCorrectAmount = expectedUsdAmount === value;
-    if (!paidCorrectAmount) throw new Error('Incorrect amount paid');
-    
+    if (!paidCorrectAmount) throw new Error("Incorrect amount paid");
 
     order.isPaid = true;
     order.paidAt = Date.now();
@@ -124,10 +127,29 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 
     const updatedOrder = await order.save();
 
+    // Send confirmation email
+    try {
+      await resend.emails.send({
+        from: "mekawc4lwd@gmail.com",
+        to: order.user.email,
+        subject: "Order Confirmation - Meka.WC",
+        html: `<h2>Order Confirmation</h2>
+               <p>Hi ${order.user.name},</p>
+               <p>Thank you for your order! Your payment has been successfully processed.</p>
+               <p><strong>Order ID:</strong> ${order._id}</p>
+               <p><strong>Total Paid:</strong> $${value}</p>
+               <p>We will notify you when your order is shipped.</p>
+               <p>Best Regards,</p>
+               <p><strong>Meka.WC Team</strong></p>`,
+      });
+    } catch (emailError) {
+      console.error("Error sending email:", emailError);
+    }
+
     res.json(updatedOrder);
   } else {
     res.status(404);
-    throw new Error('Order not found');
+    throw new Error("Order not found");
   }
 });
 
@@ -146,7 +168,7 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
     res.json(updatedOrder);
   } else {
     res.status(404);
-    throw new Error('Order not found');
+    throw new Error("Order not found");
   }
 });
 
@@ -157,12 +179,9 @@ const getOrders = asyncHandler(async (req, res) => {
   const pageSize = Number(req.query.pageSize) || 10;
   const page = Number(req.query.page) || 1;
 
-  // Get the total count of orders
   const count = await Order.countDocuments({});
-
-  // Fetch orders with pagination
   const orders = await Order.find({})
-    .populate('user', 'id name')
+    .populate("user", "id name")
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 

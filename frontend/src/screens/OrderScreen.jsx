@@ -3,7 +3,12 @@ import { Link, useParams } from "react-router-dom";
 import { Row, Col, ListGroup, Image, Button, Card } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
-import { PayPalButtons, FUNDING,usePayPalScriptReducer } from "@paypal/react-paypal-js";
+import {
+  PayPalButtons,
+  FUNDING,
+  usePayPalScriptReducer,
+} from "@paypal/react-paypal-js";
+import axios from "axios";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
 import {
@@ -38,6 +43,19 @@ const OrderScreen = () => {
     error: errorPayPal,
   } = useGetPayPalClientIdQuery();
 
+  // Function to fetch the exchange rate from the API
+  const fetchExchangeRate = async () => {
+    try {
+      const response = await axios.get(
+        `https://v6.exchangerate-api.com/v6/dcb8b5d35cce0be56b199997/latest/ZAR`
+      );
+      return response.data.conversion_rates.USD;
+    } catch (error) {
+      console.error("Error fetching exchange rate:", error);
+      throw new Error("Failed to fetch exchange rate");
+    }
+  };
+
   useEffect(() => {
     if (!errorPayPal && !loadingPayPal && paypal.clientId) {
       const loadingPayPalScript = async () => {
@@ -46,7 +64,7 @@ const OrderScreen = () => {
           value: {
             "client-id": paypal.clientId,
             currency: "USD",
-            locale: "en_ZA"
+            locale: "en_ZA",
           },
         });
         paypalDispatch({ type: "setLoadingStatus", value: "pending" });
@@ -71,21 +89,13 @@ const OrderScreen = () => {
     });
   }
 
-
-  // async function onApproveTest() {
-  //   await payOrder({ orderId, details: { payer: {} } });
-  //   refetch();
-  //   toast.success("Payment successful");
-  // }
-
   function onError(err) {
     toast.error(err.message);
   }
 
-  function createOrder(data, actions) {
-    const zarToUsdRate = 0.05405405; // Current ZAR to USD rate from PayPal
-    // const zarToUsdRate = 0.0544625; // Current ZAR to USD rate from PayPal
-    const usdAmount = (order.totalPrice * zarToUsdRate).toFixed(2); // Convert ZAR to USD
+  const createOrder = async (data, actions) => {
+    const zarToUsdRate = await fetchExchangeRate();
+    const usdAmount = (order.totalPrice * zarToUsdRate).toFixed(2);
 
     return actions.order
       .create({
@@ -101,7 +111,7 @@ const OrderScreen = () => {
       .then((orderID) => {
         return orderID;
       });
-  }
+  };
 
   const deliverOrderHandler = async () => {
     try {
@@ -133,9 +143,9 @@ const OrderScreen = () => {
                 <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
               </p>
               <p>
-              <p>
                 <strong>Phone: </strong> {order.shippingAddress.phone}
               </p>
+              <p>
                 <strong>Address: </strong>
                 {order.shippingAddress.address}, {order.shippingAddress.city}{" "}
                 {order.shippingAddress.postalCode},{" "}
@@ -227,7 +237,6 @@ const OrderScreen = () => {
                 </Row>
               </ListGroup.Item>
 
-              {/* PAY ORDER PLACEHOLDER */}
               {!order.isPaid && (
                 <ListGroup.Item>
                   {loadingPay && <Loader />}
@@ -236,22 +245,15 @@ const OrderScreen = () => {
                     <Loader />
                   ) : (
                     <div>
-                      {/* <Button
-                        style={{ marginBottom: "10px" }}
-                        onClick={onApproveTest}
-                      >
-                        Test Pay Order
-                      </Button> */}
-
-                      <div>
-                      <p>Note: <strong>You will be charged in USD</strong></p>
-                        <PayPalButtons
-                          fundingSource={FUNDING.CARD} // Only show card option
-                          createOrder={ createOrder }
-                          onApprove= {onApprove }
-                          onError={ onError }
-                        ></PayPalButtons>
-                      </div>
+                      <p>
+                        Note: <strong>You will be charged in USD</strong>
+                      </p>
+                      <PayPalButtons
+                        fundingSource={FUNDING.CARD}
+                        createOrder={createOrder}
+                        onApprove={onApprove}
+                        onError={onError}
+                      ></PayPalButtons>
                     </div>
                   )}
                 </ListGroup.Item>
@@ -280,4 +282,5 @@ const OrderScreen = () => {
     </>
   );
 };
+
 export default OrderScreen;
