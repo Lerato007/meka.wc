@@ -38,7 +38,7 @@ const ShippingScreen = () => {
     e.preventDefault();
     if (isFormValid) {
       dispatch(saveShippingAddress({ address, city, postalCode, country, phone })); // Include phone in saveShippingAddress
-      navigate("/placeorder");
+      navigate("/payment");
     }
   };
 

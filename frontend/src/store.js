@@ -3,7 +3,6 @@ import { apiSlice } from "./slices/apiSlice";
 import cartSliceReducer from "./slices/cartSlice";
 import authSliceReducer from "./slices/authSlice";
 
-/*** CODE STARTS HERE ***/
 const store = configureStore({
   reducer: {
     [apiSlice.reducerPath]: apiSlice.reducer,

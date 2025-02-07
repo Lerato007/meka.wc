@@ -8,7 +8,6 @@ import Product from "./models/productModel.js";
 import Order from "./models/orderModel.js";
 import connectDB from "./config/db.js";
 
-/*** CODE STARTS HERE ***/
 dotenv.config();
 
 connectDB();

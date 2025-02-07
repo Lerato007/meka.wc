@@ -1,6 +1,5 @@
 import { Container, Row, Col } from "react-bootstrap";
 
-/*** CODE STARTS HERE ***/
 const FormContainer = ({ children }) => {
   return (
     <Container>

@@ -1,7 +1,6 @@
 import { USERS_URL } from "../constants";
 import { apiSlice } from "./apiSlice";
 
-/*** CODE STARTS HERE ***/
 export const usersApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation({
@@ -32,12 +31,14 @@ export const usersApiSlice = apiSlice.injectEndpoints({
       }),
     }),
     getUsers: builder.query({
-      query: () => ({
+      query: ({ pageNumber = 1 }) => ({
         url: USERS_URL,
+        params: { pageNumber }, // Ensure pageNumber is sent as a query param
       }),
       providesTags: ["Users"],
       keepUnusedDataFor: 5,
     }),
+    
     deleteUser: builder.mutation({
       query: (userId) => ({
         url: `${USERS_URL}/${userId}`,

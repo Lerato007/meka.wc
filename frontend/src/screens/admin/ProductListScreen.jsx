@@ -12,7 +12,6 @@ import {
 import { toast } from "react-toastify";
 import Paginate from "../../components/Paginate";
 
-/*** CODE STARTS HERE ***/
 const ProductListScreen = () => {
   const { pageNumber } = useParams();
 
