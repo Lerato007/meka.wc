@@ -1,33 +1,54 @@
 import React, { useState } from "react";
 import { LinkContainer } from "react-router-bootstrap";
 import { Table, Button, Pagination } from "react-bootstrap";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaTrash } from "react-icons/fa";
 import Message from "../../components/Message";
 import Loader from "../../components/Loader";
-import { useGetOrdersQuery } from "../../slices/ordersApiSlice";
+import { toast } from "react-toastify";
+import {
+  useGetOrdersQuery,
+  useDeleteOrderMutation,
+} from "../../slices/ordersApiSlice";
 
 const OrderListScreen = () => {
   const [page, setPage] = useState(1);
   const pageSize = 10; // Number of orders per page
 
   // Fetch orders with pagination
-  const { data, isLoading, error } = useGetOrdersQuery({ page, pageSize });
+  const { data, isLoading, error, refetch } = useGetOrdersQuery({ page, pageSize });
+
+  // Mutation for deleting orders
+  const [deleteOrder, { isLoading: loadingDelete }] = useDeleteOrderMutation();
 
   // Destructure orders and pages from the data
   const orders = data?.orders || [];
   const pages = data?.pages || 1;
 
+  // Function to handle order deletion
+  const deleteHandler = async (orderId) => {
+    if (window.confirm("Are you sure you want to delete this order?")) {
+      try {
+        await deleteOrder(orderId).unwrap();
+        toast.success("Order deleted successfully");
+        refetch(); // Refresh orders list
+      } catch (error) {
+        toast.error(error?.data?.message || "Failed to delete order");
+      }
+    }
+  };
+
   return (
     <>
       <h1>Orders</h1>
+      {loadingDelete && <Loader />}
       {isLoading ? (
         <Loader />
       ) : error ? (
-        <Message variant="danger">{error.message || 'An error occurred'}</Message>
+        <Message variant="danger">{error.message || "An error occurred"}</Message>
       ) : (
         <>
-        {/* Pagination Controls */}
-        <Pagination>
+          {/* Pagination Controls */}
+          <Pagination>
             <Pagination.Prev
               onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
@@ -46,6 +67,7 @@ const OrderListScreen = () => {
               disabled={page === pages}
             />
           </Pagination>
+
           <Table striped hover responsive className="table-sm">
             <thead>
               <tr>
@@ -55,7 +77,7 @@ const OrderListScreen = () => {
                 <th>TOTAL</th>
                 <th>PAID</th>
                 <th>DELIVERED</th>
-                <th></th>
+                <th>ACTIONS</th>
               </tr>
             </thead>
             <tbody>
@@ -86,6 +108,13 @@ const OrderListScreen = () => {
                           Details
                         </Button>
                       </LinkContainer>
+                      <Button
+                        variant="danger"
+                        className="btn-sm"
+                        onClick={() => deleteHandler(order._id)}
+                      >
+                        <FaTrash style={{ color: "white" }} />
+                      </Button>
                     </td>
                   </tr>
                 ))
