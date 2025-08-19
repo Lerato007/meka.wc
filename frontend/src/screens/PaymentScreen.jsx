@@ -25,11 +25,7 @@ const PaymentScreen = () => {
     e.preventDefault();
     dispatch(savePaymentMethod(paymentMethod));
 
-    if (paymentMethod === "PayFast") {
-      navigate("/payfast"); // Redirects to PayFast form
-    } else {
-      navigate("/placeorder"); // Redirects to Place Order screen
-    }
+    navigate("/placeorder"); // Normal order flow
   };
 
   return (
@@ -40,7 +36,6 @@ const PaymentScreen = () => {
         <Form.Group>
           <Form.Label as="legend">Select Method</Form.Label>
           <Col>
-            {/* Credit Card Option */}
             <Form.Check
               type="radio"
               className="my-2"
@@ -52,8 +47,7 @@ const PaymentScreen = () => {
               onChange={(e) => setPaymentMethod(e.target.value)}
             />
 
-            {/* PayFast Option */}
-            {/* <Form.Check
+            <Form.Check
               type="radio"
               className="my-2"
               label="PayFast"
@@ -62,7 +56,7 @@ const PaymentScreen = () => {
               value="PayFast"
               checked={paymentMethod === "PayFast"}
               onChange={(e) => setPaymentMethod(e.target.value)}
-            /> */}
+            />
 
             <Button type="submit" variant="primary" className="mt-3">
               Continue

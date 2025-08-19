@@ -36,10 +36,16 @@ const PlaceOrderScreen = () => {
         vatPrice: cart.vatPrice,
         totalPrice: cart.totalPrice,
       }).unwrap();
+
       dispatch(clearCartItems());
-      navigate(`/order/${res._id}`);
+
+      if (res.paymentMethod === "PayFast") {
+        navigate(`/payfast/${res._id}`); // Redirect to PayFast checkout
+      } else {
+        navigate(`/order/${res._id}`); // Redirect to normal order summary
+      }
     } catch (err) {
-      toast.error(err);
+      toast.error(err?.data?.message || err.message);
     }
   };
 

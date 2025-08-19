@@ -9,7 +9,7 @@ import {
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { HelmetProvider } from "react-helmet-async";
 import { Provider } from "react-redux";
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import store from "./store";
 // import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -43,7 +43,7 @@ import LandingPageScreen from "./screens/LandingPageScreen";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-  <Route path="/" element={<App />}>
+    <Route path="/" element={<App />}>
       <Route index={true} path="/" element={<LandingPageScreen />} />
       <Route path="/home" element={<HomeScreen />} />
       <Route path="/search/:keyword" element={<HomeScreen />} />
@@ -60,13 +60,13 @@ const router = createBrowserRouter(
       <Route path="/returns" element={<ReturnRefundScreen />} />
       <Route path="/shippingInfo" element={<ShippingInformationScreen />} />
       <Route path="/about-us" element={<AboutUs />} />
-      
+
       {/* Private Routes */}
       <Route path="" element={<PrivateRoute />}>
         <Route path="/shipping" element={<ShippingScreen />} />
         <Route path="/payment" element={<PaymentScreen />} />
         <Route path="/placeorder" element={<PlaceOrderScreen />} />
-        <Route path="/payfast" element={<PayFastScreen />} />
+        <Route path="/payfast/:id" element={<PayFastScreen />} />
         <Route path="/order/:id" element={<OrderScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
       </Route>
@@ -92,10 +92,10 @@ root.render(
   <React.StrictMode>
     <HelmetProvider>
       <Provider store={store}>
-      <GoogleOAuthProvider clientId="589927020191-5veddi0u0un0lhvohvf1p05aji0ejshs.apps.googleusercontent.com">
-        <PayPalScriptProvider deferLoading={true}>
-          <RouterProvider router={router} />
-        </PayPalScriptProvider>
+        <GoogleOAuthProvider clientId="589927020191-5veddi0u0un0lhvohvf1p05aji0ejshs.apps.googleusercontent.com">
+          <PayPalScriptProvider deferLoading={true}>
+            <RouterProvider router={router} />
+          </PayPalScriptProvider>
         </GoogleOAuthProvider>
       </Provider>
     </HelmetProvider>
