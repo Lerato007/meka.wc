@@ -47,7 +47,7 @@ const PaymentScreen = () => {
               onChange={(e) => setPaymentMethod(e.target.value)}
             />
 
-            <Form.Check
+            {/* <Form.Check
               type="radio"
               className="my-2"
               label="PayFast"
@@ -56,7 +56,7 @@ const PaymentScreen = () => {
               value="PayFast"
               checked={paymentMethod === "PayFast"}
               onChange={(e) => setPaymentMethod(e.target.value)}
-            />
+            /> */}
 
             <Button type="submit" variant="primary" className="mt-3">
               Continue

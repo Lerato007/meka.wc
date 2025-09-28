@@ -10,7 +10,7 @@ import productRoutes from "./routes/productRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
-import payfastRoutes from "./routes/payfastRoutes.js";
+// import payfastRoutes from "./routes/payfastRoutes.js";
 
 const port = process.env.PORT || 5000;
 
@@ -35,7 +35,7 @@ app.get("/api/config/paypal", (req, res) =>
 );
 
 // app.use("/api/payfast", require("./routes/payfastRoutes"));
-app.use("/api/payfast", payfastRoutes);
+// app.use("/api/payfast", payfastRoutes);
 
 const __dirname = path.resolve(); // Set __dirname to current directory
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
