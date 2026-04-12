@@ -3,10 +3,8 @@ import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import { calcPrices } from "../utils/calcPrices.js";
 import { verifyPayPalPayment, checkIfNewTransaction } from "../utils/paypal.js";
+import { sendOrderConfirmationEmail, sendOrderShippedEmail } from "../utils/emailService.js";
 import axios from "axios";
-import { Resend } from "resend";
-
-const resend = new Resend("re_drMZndTE_7vWk3E1oNXzoxMVpjrUhRjKp");
 
 // Function to fetch the exchange rate from the API
 const fetchExchangeRate = async () => {
@@ -107,7 +105,8 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
   const isNewTransaction = await checkIfNewTransaction(Order, req.body.id);
   if (!isNewTransaction) throw new Error("Transaction has been used before");
 
-  const order = await Order.findById(req.params.id);
+  // Populate user data before accessing it
+  const order = await Order.findById(req.params.id).populate("user", "name email");
 
   if (order) {
     const zarToUsdRate = await fetchExchangeRate();
@@ -127,24 +126,16 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // Send confirmation email
-    try {
-      await resend.emails.send({
-        from: "mekawc4lwd@gmail.com",
-        to: order.user.email,
-        subject: "Order Confirmation - Meka.WC",
-        html: `<h2>Order Confirmation</h2>
-               <p>Hi ${order.user.name},</p>
-               <p>Thank you for your order! Your payment has been successfully processed.</p>
-               <p><strong>Order ID:</strong> ${order._id}</p>
-               <p><strong>Total Paid:</strong> $${value}</p>
-               <p>We will notify you when your order is shipped.</p>
-               <p>Best Regards,</p>
-               <p><strong>Meka.WC Team</strong></p>`,
+    // Send confirmation email (don't block response if email fails)
+    sendOrderConfirmationEmail(updatedOrder, value, 'USD')
+      .then(result => {
+        if (result.success) {
+          console.log('✅ Confirmation email sent to:', order.user.email);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Email failed but order is still valid:', error);
       });
-    } catch (emailError) {
-      console.error("Error sending email:", emailError);
-    }
 
     res.json(updatedOrder);
   } else {
@@ -154,16 +145,28 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
 });
 
 // @desc    Update order to delivered
-// @route   GET /api/orders/:id/deliver
+// @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
 const updateOrderToDelivered = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id).populate("user", "name email");
 
   if (order) {
     order.isDelivered = true;
     order.deliveredAt = Date.now();
 
     const updatedOrder = await order.save();
+
+    // Send shipped email with tracking number (optional)
+    const trackingNumber = req.body.trackingNumber || "Will be provided shortly";
+    sendOrderShippedEmail(updatedOrder, trackingNumber)
+      .then(result => {
+        if (result.success) {
+          console.log('✅ Shipping notification sent to:', order.user.email);
+        }
+      })
+      .catch(error => {
+        console.error('❌ Shipping email failed:', error);
+      });
 
     res.json(updatedOrder);
   } else {

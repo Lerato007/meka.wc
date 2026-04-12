@@ -57,7 +57,7 @@
 //   return (
 //     <div>
 //       <h2>PayFast Payment</h2>
-//       <form action="https://sandbox.payfast.co.za/eng/process" method="POST">
+//       <form action="https://www.payfast.co.za/eng/process" method="POST">
 //         {fieldOrder.map((key) => (
 //           <input
 //             key={key}
