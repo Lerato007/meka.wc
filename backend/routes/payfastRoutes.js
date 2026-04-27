@@ -6,9 +6,9 @@ import { sendOrderConfirmationEmail } from "../utils/emailService.js";
 const router = express.Router();
 
 // Live PayFast credentials
-const PAYFAST_MERCHANT_ID = "10000100";
-const PAYFAST_MERCHANT_KEY = "46f0cd694581a";
-const PAYFAST_PASSPHRASE = "Graphics_7598";
+const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID;
+const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY;
+const PAYFAST_PASSPHRASE = process.env.PAYFAST_PASSPHRASE;
 
 // Generate PayFast signature
 const generateSignature = (data, passPhrase) => {
@@ -85,9 +85,9 @@ router.post("/session", (req, res) => {
   const formData = {
     merchant_id: PAYFAST_MERCHANT_ID,
     merchant_key: PAYFAST_MERCHANT_KEY,
-    return_url: `https://mekawc.com/order/${order._id}?payment=success`,
-    cancel_url: `https://mekawc.com/order/${order._id}`,
-    notify_url: `https://mekawc.com/api/payfast/notify`,
+    return_url: `${process.env.PAYFAST_BASE_URL}/order/${order._id}?payment=success`,
+    cancel_url: `${process.env.PAYFAST_BASE_URL}/order/${order._id}`,
+    notify_url: `${process.env.PAYFAST_BASE_URL}/api/payfast/notify`,
     name_first: order.user?.name || "Customer",
     email_address: order.user?.email || "customer@example.com",
     m_payment_id: order._id,

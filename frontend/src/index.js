@@ -12,6 +12,10 @@ import { Provider } from "react-redux";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import store from "./store";
 // import "bootstrap/dist/css/bootstrap.min.css";
+// Make sure this exact order is in your index.js
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './assets/styles/bootstrap.custom.css';
+import './assets/styles/index.css';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./assets/styles/bootstrap.custom.css";
 import "./assets/styles/index.css";
@@ -26,7 +30,6 @@ import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import ShippingScreen from "./screens/ShippingScreen";
 import PaymentScreen from "./screens/PaymentScreen";
-import PayFastScreen from "./screens/PayFastScreen";
 import PlaceOrderScreen from "./screens/PlaceOrderScreen";
 import OrderScreen from "./screens/OrderScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -36,7 +39,6 @@ import ProductEditScreen from "./screens/admin/ProductEditScreen";
 import UserListScreen from "./screens/admin/UserListScreen";
 import UserEditScreen from "./screens/admin/UserEditScreen";
 import ForgotPasswordScreen from "./screens/ForgotPasswordScreen";
-import ReturnRefundScreen from "./screens/ReturnRefundScreen";
 import ShippingInformationScreen from "./screens/ShippingInformationScreen";
 import AboutUs from "./screens/AboutUsScreen";
 import LandingPageScreen from "./screens/LandingPageScreen";
@@ -57,7 +59,6 @@ const router = createBrowserRouter(
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/register" element={<RegisterScreen />} />
       <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
-      <Route path="/returns" element={<ReturnRefundScreen />} />
       <Route path="/shippingInfo" element={<ShippingInformationScreen />} />
       <Route path="/about-us" element={<AboutUs />} />
 
@@ -66,7 +67,6 @@ const router = createBrowserRouter(
         <Route path="/shipping" element={<ShippingScreen />} />
         <Route path="/payment" element={<PaymentScreen />} />
         <Route path="/placeorder" element={<PlaceOrderScreen />} />
-        <Route path="/payfast/:id" element={<PayFastScreen />} />
         <Route path="/order/:id" element={<OrderScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
       </Route>

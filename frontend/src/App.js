@@ -9,24 +9,34 @@ import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
   const location = useLocation();
+  const isLanding = location.pathname === "/";
 
   return (
     <>
       <Header />
-      {location.pathname === "/" ? (
-        // Render LandingPageScreen directly without a container
+      {isLanding ? (
         <LandingPageScreen />
       ) : (
-        // Render other pages within a Container
         <Container>
-          <main className="py-3">
+          <main className="py-4">
             <Outlet />
           </main>
         </Container>
       )}
       <Footer />
-      {/* Include ToastContainer */}
-      <ToastContainer position="top-right" autoClose={5000} />
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        toastStyle={{
+          fontFamily: "var(--font-body)",
+          fontSize: "0.9rem",
+          borderRadius: "var(--radius-md)",
+        }}
+      />
     </>
   );
 };

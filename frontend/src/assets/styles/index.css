@@ -1,51 +1,650 @@
+/* ============================================
+   MEKA.WC — Global Design System
+   Fonts: Rajdhani (headings) + Space Grotesk (body)
+   Brand: Off-white bg · #409118 accent
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+/* ============================================
+   CSS CUSTOM PROPERTIES — DESIGN TOKENS
+   ============================================ */
+:root {
+  /* Brand Colors */
+  --meka-green:        #409118;
+  --meka-green-dark:   #2e6810;
+  --meka-green-light:  #5ab527;
+  --meka-green-muted:  rgba(64, 145, 24, 0.12);
+  --meka-green-border: rgba(64, 145, 24, 0.25);
+
+  /* Backgrounds */
+  --bg-base:     #f5f3ef;   /* off-white */
+  --bg-surface:  #eeece8;   /* slightly darker off-white */
+  --bg-card:     #faf9f6;   /* brightest card surface */
+  --bg-dark:     #1a1a18;   /* near-black for footer/accents */
+  --bg-dark-2:   #242420;
+
+  /* Text */
+  --text-primary:   #1a1a18;
+  --text-secondary: #4a4a45;
+  --text-muted:     #7a7a72;
+  --text-inverse:   #f5f3ef;
+  --text-accent:    #409118;
+
+  /* Borders */
+  --border-subtle:  rgba(26, 26, 24, 0.08);
+  --border-default: rgba(26, 26, 24, 0.15);
+  --border-strong:  rgba(26, 26, 24, 0.28);
+
+  /* Typography */
+  --font-display: 'Rajdhani', sans-serif;
+  --font-body:    'Space Grotesk', sans-serif;
+
+  /* Spacing */
+  --space-xs:  0.25rem;
+  --space-sm:  0.5rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+
+  /* Radius */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  20px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:  0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
+  --shadow-green: 0 4px 20px rgba(64, 145, 24, 0.20);
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-base:   250ms ease;
+  --transition-slow:   400ms ease;
+}
+
+/* ============================================
+   BASE RESET & GLOBAL
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+h1, .h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
+h2, .h2 { font-size: clamp(1.6rem, 3.5vw, 2.5rem); }
+h3, .h3 { font-size: clamp(1.3rem, 2.5vw, 1.9rem); }
+h4, .h4 { font-size: clamp(1.1rem, 2vw, 1.5rem); }
+h5, .h5 { font-size: 1.15rem; }
+h6, .h6 { font-size: 1rem; }
+
+p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+a {
+  color: var(--meka-green);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--meka-green-dark);
+}
+
+strong, b {
+  font-weight: 600;
+}
+
+/* ============================================
+   LAYOUT
+   ============================================ */
 main {
   min-height: 80vh;
 }
 
+/* ============================================
+   BUTTONS — Override Bootstrap
+   ============================================ */
+.btn {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1.5rem;
+  transition: all var(--transition-base);
+  border-width: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background-color: var(--meka-green);
+  border-color: var(--meka-green);
+  color: #fff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--meka-green-dark);
+  border-color: var(--meka-green-dark);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-green);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-outline-primary {
+  color: var(--meka-green);
+  border-color: var(--meka-green);
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--meka-green);
+  border-color: var(--meka-green);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn-dark {
+  background-color: var(--bg-dark);
+  border-color: var(--bg-dark);
+  color: var(--text-inverse);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.btn-dark:hover {
+  background-color: var(--bg-dark-2);
+  border-color: var(--bg-dark-2);
+  color: var(--text-inverse);
+  transform: translateY(-1px);
+}
+
+.btn-light {
+  background-color: var(--bg-card);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.btn-light:hover {
+  background-color: var(--bg-surface);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.btn-sm {
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+}
+
+.btn-lg {
+  padding: 0.85rem 2rem;
+  font-size: 1.05rem;
+}
+
+/* ============================================
+   CARDS
+   ============================================ */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 1rem 1.25rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.card-footer {
+  background-color: transparent;
+  border-top: 1px solid var(--border-subtle);
+  padding: 1rem 1.25rem;
+}
+
+/* ============================================
+   PRODUCT CARDS
+   ============================================ */
+.product-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-default);
+}
+
+.product-card .card-img-top {
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  width: 100%;
+  transition: transform var(--transition-slow);
+}
+
+.product-card:hover .card-img-top {
+  transform: scale(1.04);
+}
+
+.product-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 0.25rem;
+}
+
+.product-price {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--meka-green);
+  letter-spacing: 0.02em;
+}
+
+/* ============================================
+   NAVBAR — Override Bootstrap
+   ============================================ */
+.navbar {
+  background-color: var(--bg-dark) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 0.75rem 0;
+}
+
+.navbar-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff !important;
+}
+
+.navbar-brand:hover {
+  color: var(--meka-green-light) !important;
+}
+
+.navbar-nav .nav-link {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.8) !important;
+  padding: 0.5rem 0.75rem;
+  transition: color var(--transition-fast);
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: var(--meka-green-light) !important;
+}
+
+.navbar-toggler {
+  border-color: rgba(255,255,255,0.2);
+}
+
+.navbar-toggler-icon {
+  filter: invert(1);
+}
+
+/* Cart badge */
+.navbar .badge {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  background-color: var(--meka-green) !important;
+  border-radius: var(--radius-pill);
+  padding: 2px 6px;
+}
+
+/* Dropdown */
+.dropdown-menu {
+  background-color: var(--bg-dark);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 0.5rem 0;
+}
+
+.dropdown-item {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.75);
+  padding: 0.5rem 1.25rem;
+  transition: all var(--transition-fast);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: rgba(255,255,255,0.07);
+  color: #fff;
+}
+
+.dropdown-divider {
+  border-color: rgba(255,255,255,0.08);
+}
+
+/* ============================================
+   SEARCH BOX
+   ============================================ */
+.search-box .form-control {
+  background-color: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.search-box .form-control::placeholder {
+  color: rgba(255,255,255,0.4);
+}
+
+.search-box .form-control:focus {
+  background-color: rgba(255,255,255,0.12);
+  border-color: var(--meka-green);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--meka-green-border);
+}
+
+.search-box .btn {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* ============================================
+   FORM CONTROLS
+   ============================================ */
+.form-control,
+.form-select {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  background-color: var(--bg-card);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 0.65rem 0.85rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--meka-green);
+  box-shadow: 0 0 0 3px var(--meka-green-border);
+  outline: none;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+.form-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.form-check-input:checked {
+  background-color: var(--meka-green);
+  border-color: var(--meka-green);
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 3px var(--meka-green-border);
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+.table {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+
+.table thead th {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border-default);
+  padding: 0.85rem 0.75rem;
+  text-align: center;
+}
+
+.table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.85rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.table tbody tr:hover {
+  background-color: rgba(64, 145, 24, 0.04);
+}
+
+/* ============================================
+   BADGES
+   ============================================ */
+.badge {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  padding: 0.3em 0.65em;
+}
+
+.bg-success { background-color: var(--meka-green) !important; }
+.bg-primary { background-color: var(--bg-dark) !important; }
+
+/* ============================================
+   ALERTS
+   ============================================ */
+.alert {
+  font-family: var(--font-body);
+  border-radius: var(--radius-md);
+  border-width: 1.5px;
+  font-size: 0.92rem;
+}
+
+.alert-success {
+  background-color: rgba(64, 145, 24, 0.08);
+  border-color: var(--meka-green-border);
+  color: var(--meka-green-dark);
+}
+
+.alert-danger {
+  background-color: rgba(231, 76, 60, 0.07);
+  border-color: rgba(231, 76, 60, 0.25);
+  color: #922b21;
+}
+
+.alert-info {
+  background-color: rgba(52, 152, 219, 0.07);
+  border-color: rgba(52, 152, 219, 0.25);
+  color: #1a5276;
+}
+
+.alert-warning {
+  background-color: rgba(243, 156, 18, 0.08);
+  border-color: rgba(243, 156, 18, 0.3);
+  color: #784212;
+}
+
+/* ============================================
+   PAGINATION
+   ============================================ */
+.pagination {
+  gap: 4px;
+}
+
+.page-link {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  background-color: var(--bg-card);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-sm) !important;
+  padding: 0.45rem 0.85rem;
+  transition: all var(--transition-fast);
+}
+
+.page-link:hover {
+  background-color: var(--meka-green-muted);
+  border-color: var(--meka-green);
+  color: var(--meka-green);
+}
+
+.page-item.active .page-link {
+  background-color: var(--meka-green);
+  border-color: var(--meka-green);
+  color: #fff;
+}
+
+.page-item.disabled .page-link {
+  opacity: 0.4;
+}
+
+/* ============================================
+   RATING STARS
+   ============================================ */
 .rating span {
   margin: 0.1rem;
 }
 
 .rating svg {
-  color: #f8e825;
+  color: #e8a020;
 }
 
 .rating-text {
-  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding-left: 0.4rem;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   CHECKOUT STEPS
+   ============================================ */
+.checkout-steps > div {
+  font-family: var(--font-display);
   font-weight: 600;
-  padding-left: 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.product-title {
-  height: 2.5em; /* Set a fixed height */
-  overflow: hidden; /* Hide overflow content */
-  text-overflow: ellipsis; /* Add ellipsis for long text */
-  white-space: nowrap; /* Prevent wrapping */
+.checkout-steps > div.active {
+  color: var(--meka-green);
+  border-bottom: 3px solid var(--meka-green);
+  padding-bottom: 0.5rem;
 }
 
-table td,
-table th {
-  text-align: center;
-}
-
-.review {
-  margin-top: 30px;
-}
-
-.review h2 {
-  font-size: 24px;
-  background: #f4f4f4;
-  padding: 10px;
-  border: 1px solid #ddd;
-}
-
-.review button {
-  margin-top: 10px;
-}
-
+/* ============================================
+   HERO / CAROUSEL
+   ============================================ */
 .carousel {
-  width: 100%; /* Adjust the width as needed */
-  margin: 0 auto; /* Center the carousel horizontally */
+  width: 100%;
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .carousel-caption {
@@ -54,36 +653,80 @@ table th {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: linear-gradient(0deg, rgba(0,0,0,0.72) 0%, transparent 100%);
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: left;
 }
 
-.Hero img {
-  max-width: 100%;
-  margin-bottom: 20px;
-  height: auto;
-}
-
-/*** FOOTER STYLING ***/
-/* Footer Styles */
-/* Footer Styles */
-.footer {
-  background-color: #409118;
+.carousel-caption h1,
+.carousel-caption h2,
+.carousel-caption h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: #fff;
-  padding: 2rem 0;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 10%;
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+  opacity: 1;
+}
+
+.carousel-indicators [data-bs-target] {
+  width: 24px;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background-color: rgba(255,255,255,0.5);
+  border: none;
+  margin: 0 3px;
+  transition: all var(--transition-base);
+}
+
+.carousel-indicators .active {
+  background-color: var(--meka-green-light);
+  width: 40px;
+  opacity: 1;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.footer {
+  background-color: var(--bg-dark);
+  color: rgba(255,255,255,0.75);
+  padding: 3.5rem 0 2rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 .footer h5 {
-  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 1.25rem;
 }
 
 .footer p,
 .footer a {
-  color: #fff;
+  color: rgba(255,255,255,0.7);
   text-decoration: none;
+  font-size: 0.92rem;
+  transition: color var(--transition-fast);
 }
 
 .footer a:hover {
-  text-decoration: underline;
+  color: var(--meka-green-light);
+  text-decoration: none;
 }
 
 .footer-links,
@@ -95,107 +738,267 @@ table th {
 
 .footer-links li,
 .footer-social li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
 }
 
 .footer-social a {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
-.footer-social a:hover {
-  color: #d4e157;
+.footer-divider {
+  border-color: rgba(255,255,255,0.07);
+  margin: 2rem 0 1.5rem;
 }
 
-.footer-social li:not(:last-child) {
-  margin-bottom: 0.5rem;
+.footer-bottom {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.04em;
 }
 
 .text-center a {
-  color: #fff;
+  color: rgba(255,255,255,0.7);
   text-decoration: none;
 }
 
 .text-center a:hover {
-  text-decoration: underline;
+  color: var(--meka-green-light);
 }
 
-
- /*** Password strength ***/
- .password-strength {
-  margin-top: 10px;
-  position: relative;
+/* ============================================
+   ORDER / PAYMENT
+   ============================================ */
+.pay-now-btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background-color: var(--meka-green);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-green);
 }
 
-.strength-bar {
-  height: 5px;
-  width: 100%;
-  border-radius: 5px;
-  transition: width 0.5s ease-in-out;
+.pay-now-btn:hover {
+  background-color: var(--meka-green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(64, 145, 24, 0.28);
 }
 
-.strength-bar.Weak {
-  background-color: #ff4d4d;
-  width: 33%;
+.pay-now-btn:active {
+  transform: translateY(0);
 }
 
-.strength-bar.Medium {
-  background-color: #ffcc00;
-  width: 66%;
+/* Order status badges */
+.order-status-paid {
+  background-color: rgba(64, 145, 24, 0.12);
+  color: var(--meka-green-dark);
+  border: 1.5px solid var(--meka-green-border);
+  padding: 0.3em 0.8em;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.strength-bar.Strong {
-  background-color: #4caf50;
-  width: 100%;
+.order-status-unpaid {
+  background-color: rgba(231, 76, 60, 0.08);
+  color: #922b21;
+  border: 1.5px solid rgba(231, 76, 60, 0.22);
+  padding: 0.3em 0.8em;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.strength-bar.Weak::before,
-.strength-bar.Medium::before,
-.strength-bar.Strong::before {
-  content: "";
-  display: block;
-  height: 100%;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.2);
-  animation: pulse 1s infinite alternate;
+/* ============================================
+   REVIEWS
+   ============================================ */
+.review {
+  margin-top: 2rem;
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.5;
-  }
+.review h2 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--bg-surface);
+  padding: 0.85rem 1.1rem;
+  border-left: 3px solid var(--meka-green);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-primary);
+  margin-bottom: 1.25rem;
 }
 
-
-
+.review button {
+  margin-top: 0.75rem;
+}
 
 .review-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 
 .review-comment {
   flex: 1;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
 }
 
 .review-actions {
   margin-left: 1rem;
 }
 
-.pay-now-btn{
-  background-color: #003366; /* Bootstrap blue */
-  color: white;
-  float: left; /* Align the button to the right */
-  border: none; /* Remove borders if desired */
-  padding: 10px 20px; /* Adjust padding as needed */
-  border-radius: 5px; /* Rounded corners for a nicer look */
+/* ============================================
+   PASSWORD STRENGTH
+   ============================================ */
+.password-strength {
+  margin-top: 0.6rem;
 }
 
-.pay-now-btn:hover {
-  background-color: #0056b3; /* Darken on hover */
+.strength-bar {
+  height: 4px;
+  width: 100%;
+  border-radius: var(--radius-pill);
+  transition: width 0.4s ease;
+  background-color: var(--border-subtle);
+}
+
+.strength-bar.Weak {
+  background-color: #e74c3c;
+  width: 33%;
+}
+
+.strength-bar.Medium {
+  background-color: #f39c12;
+  width: 66%;
+}
+
+.strength-bar.Strong {
+  background-color: var(--meka-green);
+  width: 100%;
+}
+
+/* ============================================
+   LOADER / SPINNER
+   ============================================ */
+.spinner-border {
+  color: var(--meka-green);
+}
+
+/* ============================================
+   SECTION UTILITIES
+   ============================================ */
+.section-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--meka-green);
+  margin-bottom: 0.5rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+.divider-green {
+  width: 40px;
+  height: 3px;
+  background-color: var(--meka-green);
+  border-radius: var(--radius-pill);
+  margin: 0.75rem 0 1.5rem;
+}
+
+/* ============================================
+   PRICE DISPLAY
+   ============================================ */
+.price-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--meka-green);
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================
+   ADMIN PANEL
+   ============================================ */
+.admin-header {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ============================================
+   SCROLLBAR (WebKit)
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(64, 145, 24, 0.35);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--meka-green);
+}
+
+/* ============================================
+   SELECTION
+   ============================================ */
+::selection {
+  background-color: var(--meka-green-muted);
+  color: var(--meka-green-dark);
+}
+
+/* ============================================
+   RESPONSIVE TWEAKS
+   ============================================ */
+@media (max-width: 768px) {
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.6rem 1.2rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .footer {
+    padding: 2.5rem 0 1.5rem;
+  }
 }
