@@ -1,67 +1,44 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Form, Button, Row, Col } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import FormContainer from "../components/formContainer";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Loader from "../components/Loader";
 import { useLoginMutation } from "../slices/usersApiSlice";
 import { setCredentials } from "../slices/authSlice";
 import { toast } from "react-toastify";
-import ReCAPTCHA from "react-google-recaptcha";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+
+const evaluateStrength = (pw) => {
+  if (!pw) return "";
+  if (pw.length < 6) return "Weak";
+  if (pw.length < 10) return "Medium";
+  if (pw.length >= 10 && /[A-Z]/.test(pw) && /[0-9]/.test(pw)) return "Strong";
+  return "Weak";
+};
 
 const LoginScreen = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordStrength, setPasswordStrength] = useState("");
-  const [recaptchaValue, setRecaptchaValue] = useState("");
+  const [email, setEmail]               = useState("");
+  const [password, setPassword]         = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [strength, setStrength]         = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
   const [login, { isLoading }] = useLoginMutation();
-
-  const onChange = (value) => {
-    setRecaptchaValue(value);
-  };
-
   const { userInfo } = useSelector((state) => state.auth);
+
   const { search } = useLocation();
-  const sp = new URLSearchParams(search);
-  const redirect = sp.get("redirect") || "/";
+  const redirect = new URLSearchParams(search).get("redirect") || "/";
 
   useEffect(() => {
-    if (userInfo) {
-      navigate(redirect);
-    }
+    if (userInfo) navigate(redirect);
   }, [userInfo, redirect, navigate]);
-
-  const evaluatePasswordStrength = (password) => {
-    if (password.length < 6) {
-      setPasswordStrength("Weak");
-    } else if (password.length < 10) {
-      setPasswordStrength("Medium");
-    } else if (password.length >= 10 && /[A-Z]/.test(password) && /[0-9]/.test(password)) {
-      setPasswordStrength("Strong");
-    } else {
-      setPasswordStrength("Weak");
-    }
-  };
-
-  const toggleShowPassword = () => setShowPassword((prev) => !prev);
 
   const submitHandler = async (e) => {
     e.preventDefault();
-
-    // if (!recaptchaValue) {
-    //   toast.error("Please complete the ReCAPTCHA");
-    //   return;
-    // }
-
     try {
-      // Convert email to lowercase before sending it
-      const emailLower = email.toLowerCase();
-      const res = await login({ email: emailLower, password }).unwrap();
+      const res = await login({ email: email.toLowerCase(), password }).unwrap();
       dispatch(setCredentials({ ...res }));
       navigate(redirect);
     } catch (err) {
@@ -70,77 +47,78 @@ const LoginScreen = () => {
   };
 
   return (
-    <FormContainer>
-      <h1>Sign In</h1>
-      <Form onSubmit={submitHandler}>
-        <Form.Group controlId="email" className="my-3">
-          <Form.Label>Email Address</Form.Label>
-          <Form.Control
-            type="email"
-            placeholder="Enter email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          ></Form.Control>
-        </Form.Group>
+    <div className="auth-wrapper">
+      <div className="auth-card">
+        <p className="auth-card__eyebrow">Welcome back</p>
+        <h1 className="auth-card__title">Sign In</h1>
+        <div className="auth-card__accent" />
 
-        <Form.Group controlId="password" className="my-3">
-          <Form.Label>Password</Form.Label>
-          <div className="position-relative">
+        <Form onSubmit={submitHandler}>
+          <Form.Group controlId="email" className="mb-3">
+            <Form.Label>Email Address</Form.Label>
             <Form.Control
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                evaluatePasswordStrength(e.target.value);
-              }}
-              style={{ paddingRight: "40px" }}
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
             />
-            <span
-              className="position-absolute end-0 top-50 translate-middle-y me-3"
-              style={{ cursor: "pointer" }}
-              onClick={toggleShowPassword}
-            >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </span>
+          </Form.Group>
+
+          <Form.Group controlId="password" className="mb-2">
+            <Form.Label>Password</Form.Label>
+            <div className="password-field-wrap">
+              <Form.Control
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setStrength(evaluateStrength(e.target.value));
+                }}
+                style={{ paddingRight: "2.5rem" }}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((p) => !p)}
+                tabIndex={-1}
+              >
+                {showPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+              </button>
+            </div>
+            {password && (
+              <div className="password-strength">
+                <div className={`strength-bar ${strength}`} />
+                <span className={`strength-label ${strength}`}>{strength}</span>
+              </div>
+            )}
+          </Form.Group>
+
+          <div style={{ textAlign: "right", marginBottom: "1.25rem" }}>
+            <Link to="/forgot-password" className="auth-forgot-link">
+              Forgot password?
+            </Link>
           </div>
-          <div className="password-strength">
-            <div className={`strength-bar ${passwordStrength}`}></div>
-            <p>{passwordStrength && `${passwordStrength}`}</p>
-          </div>
-        </Form.Group>
 
-        {/* <ReCAPTCHA
-          sitekey="6LdaWqEqAAAAALmpZdB2rE3-TUqCOAG_HzchIVIs"
-          onChange={onChange}
-        /> */}
+          <button type="submit" className="auth-submit-btn" disabled={isLoading}>
+            {isLoading ? "Signing in..." : "Sign In"}
+          </button>
 
-        <div className="d-flex justify-content-between align-items-center mt-3">
-          <Button
-            type="submit"
-            variant="primary"
-            className="me-2"
-            disabled={isLoading}  //!recaptchaValue
-          >
-            Sign In
-          </Button>
-          <Link to="/forgot-password" className="text-decoration-none">
-            Forgot Password?
-          </Link>
-        </div>
+          {isLoading && <Loader />}
+        </Form>
 
-        {isLoading && <Loader />}
-      </Form>
+        <hr className="auth-card__divider" />
 
-      <Row className="py-3">
-        <Col>
-          New Customer?{" "}
+        <p className="auth-card__footer">
+          New to MEKA.WC?{" "}
           <Link to={redirect ? `/register?redirect=${redirect}` : "/register"}>
-            Register
+            Create an account
           </Link>
-        </Col>
-      </Row>
-    </FormContainer>
+        </p>
+      </div>
+    </div>
   );
 };
 

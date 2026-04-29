@@ -1,26 +1,28 @@
-import { Pagination } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
 const Paginate = ({ pages, page, isAdmin = false, keyword = "" }) => {
+  if (pages <= 1) return null;
+
+  const getTo = (pageNum) => {
+    if (isAdmin) return `/admin/productlist/${pageNum}`;
+    if (keyword) return `/search/${keyword}/page/${pageNum}`;
+    return `/page/${pageNum}`;
+  };
+
   return (
-    pages > 1 && (
-      <Pagination>
-        {[...Array(pages).keys()].map((x) => (
-          <LinkContainer
-            key={x + 1}
-            to={
-              !isAdmin
-                ? keyword
-                  ? `/search/${keyword}/page/${x + 1}`
-                  : `/page/${x + 1}`
-                : `/admin/productlist/${x + 1}`
-            }
-          >
-            <Pagination.Item active={x + 1 === page}>{x + 1}</Pagination.Item>
+    <div className="paginate-wrap">
+      {[...Array(pages).keys()].map((x) => {
+        const pageNum = x + 1;
+        const isActive = pageNum === page;
+        return (
+          <LinkContainer key={pageNum} to={getTo(pageNum)}>
+            <button className={`page-btn${isActive ? " active" : ""}`}>
+              {pageNum}
+            </button>
           </LinkContainer>
-        ))}
-      </Pagination>
-    )
+        );
+      })}
+    </div>
   );
 };
 

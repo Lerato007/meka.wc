@@ -1,16 +1,8 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Row,
-  Col,
-  ListGroup,
-  Image,
-  Form,
-  Button,
-  Card,
-} from "react-bootstrap";
+import { Row, Col, Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaArrowRight } from "react-icons/fa";
 import Message from "../components/Message";
 import { addToCart, removeFromCart } from "../slices/cartSlice";
 
@@ -18,7 +10,14 @@ const CartScreen = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const addToCartHandler = async (product, qty) => {
+  const { cartItems } = useSelector((state) => state.cart);
+
+  const totalItems = cartItems.reduce((acc, item) => acc + item.qty, 0);
+  const subtotal = cartItems
+    .reduce((acc, item) => acc + item.qty * item.price, 0)
+    .toFixed(2);
+
+  const addToCartHandler = (product, qty) => {
     dispatch(addToCart({ ...product, qty }));
   };
 
@@ -30,85 +29,110 @@ const CartScreen = () => {
     navigate("/login?redirect=/shipping");
   };
 
-  const cart = useSelector((state) => state.cart);
-  const { cartItems } = cart;
-
   return (
-    <Row>
+    <Row className="g-4">
+      {/* ── Cart items ── */}
       <Col md={8}>
-        <h1 style={{ color: '#409118', marginBottom: "20px" }}>Shopping Cart</h1>
+        <h1 className="cart-page__title">Shopping Cart</h1>
+        <div className="cart-page__accent" />
+
         {cartItems.length === 0 ? (
           <Message>
-            Your cart is empty <Link to="/">Go Back</Link>
+            Your cart is empty.{" "}
+            <Link to="/home" style={{ color: "var(--meka-green)", fontWeight: 600 }}>
+              Continue Shopping
+            </Link>
           </Message>
         ) : (
-          <ListGroup variant="flush">
+          <div>
             {cartItems.map((item) => (
-              <ListGroup.Item key={item._id}>
-                <Row>
-                  <Col md={2}>
-                    <Image src={item.image} alt={item.name} fluid rounded />
-                  </Col>
-                  <Col md={3}>
-                    <Link to={`/product/${item._id}`}>{item.name}</Link>
-                  </Col>
-                  <Col md={2}>R{item.price}</Col>
-                  <Col md={2}>
-                    <Form.Control
-                      as="select"
-                      value={item.qty}
-                      onChange={(e) =>
-                        addToCartHandler(item, Number(e.target.value))
-                      }
-                    >
-                      {[...Array(item.countInStock).keys()].map((x) => (
-                        <option key={x + 1} value={x + 1}>
-                          {x + 1}
-                        </option>
-                      ))}
-                    </Form.Control>
-                  </Col>
-                  <Col md={2}>
-                    <Button
-                      type="button"
-                      variant="light"
-                      onClick={() => removeFromCartHandler(item._id)}
-                    >
-                      <FaTrash />
-                    </Button>
-                  </Col>
-                </Row>
-              </ListGroup.Item>
+              <div key={item._id} className="cart-item">
+
+                {/* Thumbnail */}
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="cart-item__image"
+                />
+
+                {/* Name + meta */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Link
+                    to={`/product/${item._id}`}
+                    className="cart-item__name"
+                  >
+                    {item.name}
+                  </Link>
+                  {item.size && (
+                    <p className="cart-item__meta">Size: {item.size}</p>
+                  )}
+                </div>
+
+                {/* Price */}
+                <span className="cart-item__price">R{item.price}</span>
+
+                {/* Qty */}
+                <Form.Select
+                  value={item.qty}
+                  onChange={(e) => addToCartHandler(item, Number(e.target.value))}
+                  className="cart-item__qty"
+                  size="sm"
+                >
+                  {[...Array(item.countInStock).keys()].map((x) => (
+                    <option key={x + 1} value={x + 1}>{x + 1}</option>
+                  ))}
+                </Form.Select>
+
+                {/* Remove */}
+                <button
+                  className="cart-item__remove"
+                  onClick={() => removeFromCartHandler(item._id)}
+                  title="Remove item"
+                >
+                  <FaTrash size={13} />
+                </button>
+              </div>
             ))}
-          </ListGroup>
+          </div>
         )}
       </Col>
 
+      {/* ── Order summary ── */}
       <Col md={4}>
-        <Card>
-          <ListGroup variant="flush">
-            <ListGroup.Item>
-              <h2>
-                Subtotal ({cartItems.reduce((acc, item) => acc + item.qty, 0)})
-                items
-              </h2>
-              R
-              {cartItems
-                .reduce((acc, item) => acc + item.qty * item.price, 0)
-                .toFixed(2)}
-            </ListGroup.Item>
-            <ListGroup.Item>
-              <Button
-                type="button"
-                className="btn-block"
-                disabled={cartItems.length === 0}
-                onClick={checkoutHandler}
-              >
-                Proceed To Checkout
-              </Button>
-            </ListGroup.Item>
-          </ListGroup>
-        </Card>
+        <div className="order-summary">
+          <div className="order-summary__header">
+            <p className="order-summary__title">Order Summary</p>
+          </div>
+
+          <div className="order-summary__body">
+            <div className="order-summary__row">
+              <span className="order-summary__label">
+                Items ({totalItems})
+              </span>
+              <span className="order-summary__value">R{subtotal}</span>
+            </div>
+            <div className="order-summary__row">
+              <span className="order-summary__label">Shipping</span>
+              <span className="order-summary__value"
+                style={{ color: "var(--meka-green)", fontSize: "0.85rem" }}>
+                Calculated at checkout
+              </span>
+            </div>
+          </div>
+
+          <div className="order-summary__total">
+            <span className="order-summary__total-label">Subtotal</span>
+            <span className="order-summary__total-value">R{subtotal}</span>
+          </div>
+
+          <button
+            className="checkout-btn"
+            disabled={cartItems.length === 0}
+            onClick={checkoutHandler}
+          >
+            Proceed to Checkout <FaArrowRight size={12} style={{ marginLeft: "0.4rem" }} />
+          </button>
+        </div>
       </Col>
     </Row>
   );
