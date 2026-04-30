@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Row, Col } from "react-bootstrap";
+import React, { useEffect, useState, useRef } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { Row, Col, ListGroup, Image, Button, Card } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
-import { FaCheckCircle, FaTimesCircle, FaTruck, FaClock } from "react-icons/fa";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
 import {
@@ -11,84 +10,127 @@ import {
   useDeliverOrderMutation,
 } from "../slices/ordersApiSlice";
 
+// PayFast field order — MUST match exactly what the backend signs
+// Source: https://developers.payfast.co.za/docs#step_2_signature
 const PAYFAST_FIELD_ORDER = [
-  "merchant_id", "merchant_key", "return_url", "cancel_url",
-  "notify_url", "name_first", "email_address",
-  "m_payment_id", "amount", "item_name",
+  "merchant_id",
+  "merchant_key",
+  "return_url",
+  "cancel_url",
+  "notify_url",
+  "name_first",
+  "name_last",
+  "email_address",
+  "m_payment_id",
+  "amount",
+  "item_name",
 ];
 
 const OrderScreen = () => {
   const { id: orderId } = useParams();
+  const navigate = useNavigate();
 
-  const { data: order, refetch, isLoading, error } = useGetOrderDetailsQuery(orderId);
+  const {
+    data: order,
+    refetch,
+    isLoading,
+    error,
+  } = useGetOrderDetailsQuery(orderId);
+
   const [deliverOrder, { isLoading: loadingDeliver }] = useDeliverOrderMutation();
   const { userInfo } = useSelector((state) => state.auth);
 
-  const [payfastData,    setPayfastData]    = useState(null);
+  // PayFast session state
+  const [payfastData, setPayfastData]       = useState(null);
   const [loadingPayFast, setLoadingPayFast] = useState(false);
+  const [payfastError, setPayfastError]     = useState(null);
 
-  // ── Fetch PayFast session ──
+  // Polling ref — stored in ref so interval can be cleared from inside itself
+  const pollIntervalRef = useRef(null);
+  const pollAttemptsRef = useRef(0);
+  const MAX_POLL_ATTEMPTS = 8; // 8 × 2.5s = 20 seconds max
+
+  // ── Fetch signed PayFast form data from backend ──────────────────────────
   useEffect(() => {
-    if (!order?._id || order.isPaid) return;
+    if (!order || order.isPaid) return;
 
-    const fetchPayFastData = async () => {
+    const fetchPayFastSession = async () => {
       setLoadingPayFast(true);
+      setPayfastError(null);
       try {
         const res = await fetch("/api/payfast/session", {
-          method: "POST",
+          method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(order),
+          body:    JSON.stringify(order),
         });
         const data = await res.json();
         if (res.ok) {
           setPayfastData(data);
         } else {
-          toast.error("Failed to load payment option");
+          setPayfastError(data.message || "Failed to load payment option");
+          toast.error("Failed to load PayFast payment option");
         }
       } catch (err) {
-        toast.error("Failed to load payment option");
+        setPayfastError("Network error — please refresh");
+        toast.error("Failed to connect to payment service");
       } finally {
         setLoadingPayFast(false);
       }
     };
 
-    fetchPayFastData();
-  }, [order]);
+    fetchPayFastSession();
+  }, [order?._id]); // Only re-run if the order ID changes
 
-  // ── Verify PayFast payment on return ──
+  // ── Poll for payment confirmation after returning from PayFast ───────────
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("payment") !== "success" || !order || order.isPaid) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentReturn = urlParams.get("payment");
 
-    let attempts = 0;
-    const maxAttempts = 24; // poll for up to 60s
+    if (paymentReturn !== "success" || !order || order.isPaid) return;
 
-    const poll = setInterval(async () => {
-      attempts++;
+    // Clean the URL query param so it doesn't re-trigger on refresh
+    navigate(`/order/${orderId}`, { replace: true });
+
+    toast.info("Confirming your payment...");
+
+    pollIntervalRef.current = setInterval(async () => {
+      pollAttemptsRef.current += 1;
       try {
-        const res = await fetch(`/api/payfast/verify/${order._id}`);
+        const res  = await fetch(`/api/payfast/verify/${orderId}`);
         const data = await res.json();
-        if (data?.order?.isPaid) {
-          clearInterval(poll);
+        if (data.isPaid) {
+          clearInterval(pollIntervalRef.current);
           refetch();
-          toast.success("Payment confirmed!");
-        } else if (attempts >= maxAttempts) {
-          clearInterval(poll);
-          toast.info("Payment is being processed — check back shortly.");
+          toast.success("🎉 Payment confirmed! Thank you for your order.");
         }
-      } catch {
-        clearInterval(poll);
-        toast.error("Could not verify payment.");
+      } catch (_) {
+        // Silently retry
+      }
+      if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+        clearInterval(pollIntervalRef.current);
+        toast.info(
+          "Payment is being processed. Check your email for confirmation or refresh in a moment."
+        );
       }
     }, 2500);
 
-    return () => clearInterval(poll);
-  }, [order, refetch]);
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, [order?._id, order?.isPaid, orderId, navigate, refetch]);
 
-  // ── Deliver handler ──
+  // Handle ?payment=cancelled
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("payment") === "cancelled") {
+      navigate(`/order/${orderId}`, { replace: true });
+      toast.warning("Payment was cancelled. You can try again below.");
+    }
+  }, [orderId, navigate]);
+
   const deliverOrderHandler = async () => {
     try {
-      await deliverOrder(orderId);
+      await deliverOrder(orderId).unwrap();
       refetch();
       toast.success("Order marked as delivered");
     } catch (err) {
@@ -96,241 +138,210 @@ const OrderScreen = () => {
     }
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   if (isLoading) return <Loader />;
-  if (error) return <Message variant="danger">{error?.data?.message || error.error}</Message>;
+  if (error) return (
+    <Message variant="danger">
+      {error?.data?.message || error?.error || "Failed to load order"}
+    </Message>
+  );
 
   return (
     <>
-      {/* Page header */}
-      <p className="order-screen__id">Order Confirmation</p>
-      <h1 className="order-screen__title">#{order._id}</h1>
-      <div className="order-screen__accent" />
-
-      <Row className="g-4">
-
-        {/* ── Left: order details ── */}
+      <h1>Order {order._id}</h1>
+      <Row>
         <Col md={8}>
+          <ListGroup variant="flush">
 
-          {/* Shipping */}
-          <div className="placeorder-section">
-            <div className="placeorder-section__header">
-              <p className="placeorder-section__title">Shipping Details</p>
-            </div>
-            <div className="placeorder-section__body">
+            {/* ── Shipping ── */}
+            <ListGroup.Item>
+              <h2>Shipping</h2>
+              <p><strong>Name: </strong>{order.user.name}</p>
               <p>
-                <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Name:
-                </span>{" "}
-                {order.user.name}
+                <strong>Email: </strong>
+                <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
               </p>
+              <p><strong>Phone: </strong>{order.shippingAddress.phone}</p>
               <p>
-                <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Email:
-                </span>{" "}
-                <a href={`mailto:${order.user.email}`} style={{ color: "var(--meka-green)" }}>
-                  {order.user.email}
-                </a>
+                <strong>Address: </strong>
+                {order.shippingAddress.address},{" "}
+                {order.shippingAddress.city}{" "}
+                {order.shippingAddress.postalCode},{" "}
+                {order.shippingAddress.country}
               </p>
-              <p>
-                <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Phone:
-                </span>{" "}
-                {order.shippingAddress.phone}
-              </p>
-              <p>
-                <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Address:
-                </span>{" "}
-                {order.shippingAddress.address}, {order.shippingAddress.city}{" "}
-                {order.shippingAddress.postalCode}, {order.shippingAddress.country}
-              </p>
-
               {order.isDelivered ? (
-                <span className="status-pill delivered">
-                  <FaTruck size={11} /> Delivered {order.deliveredAt?.substring(0, 10)}
-                </span>
+                <Message variant="success">
+                  Delivered on {new Date(order.deliveredAt).toLocaleDateString("en-ZA")}
+                </Message>
               ) : (
-                <span className="status-pill not-delivered">
-                  <FaClock size={11} /> Not yet delivered
-                </span>
+                <Message variant="danger">Not Delivered</Message>
               )}
-            </div>
-          </div>
+            </ListGroup.Item>
 
-          {/* Payment */}
-          <div className="placeorder-section">
-            <div className="placeorder-section__header">
-              <p className="placeorder-section__title">Payment</p>
-            </div>
-            <div className="placeorder-section__body">
-              <p>
-                <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  Method:
-                </span>{" "}
-                {order.paymentMethod}
-              </p>
-
+            {/* ── Payment ── */}
+            <ListGroup.Item>
+              <h2>Payment Method</h2>
+              <p><strong>Method: </strong>{order.paymentMethod}</p>
               {order.isPaid ? (
-                <span className="status-pill paid">
-                  <FaCheckCircle size={11} /> Paid {order.paidAt?.substring(0, 10)}
-                </span>
+                <Message variant="success">
+                  Paid on {new Date(order.paidAt).toLocaleDateString("en-ZA")}
+                </Message>
               ) : (
-                <span className="status-pill unpaid">
-                  <FaTimesCircle size={11} /> Awaiting payment
-                </span>
+                <Message variant="danger">Not Paid</Message>
               )}
-            </div>
-          </div>
+            </ListGroup.Item>
 
-          {/* Order items */}
-          <div className="placeorder-section">
-            <div className="placeorder-section__header">
-              <p className="placeorder-section__title">
-                Order Items ({order.orderItems.reduce((a, i) => a + i.qty, 0)})
-              </p>
-            </div>
-            <div className="placeorder-section__body">
+            {/* ── Order Items ── */}
+            <ListGroup.Item>
+              <h2>Order Items</h2>
               {order.orderItems.length === 0 ? (
                 <Message>Order is empty</Message>
               ) : (
-                order.orderItems.map((item, index) => (
-                  <div key={index} className="placeorder-item">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="placeorder-item__image"
-                    />
-                    <Link
-                      to={`/product/${item.product}`}
-                      className="placeorder-item__name"
-                    >
-                      {item.name}
-                      {item.size && (
-                        <span style={{
-                          display: "block",
-                          fontFamily: "var(--font-body)",
-                          fontSize: "0.75rem",
-                          fontWeight: 400,
-                          color: "var(--text-muted)",
-                          textTransform: "none",
-                          letterSpacing: 0,
-                        }}>
-                          Size: {item.size}
-                        </span>
-                      )}
-                    </Link>
-                    <span className="placeorder-item__calc">
-                      {item.qty} × R{item.price}{" "}
-                      <span style={{ color: "var(--meka-green)", fontWeight: 700 }}>
-                        = R{(item.qty * item.price).toFixed(2)}
-                      </span>
-                    </span>
-                  </div>
-                ))
+                <ListGroup variant="flush">
+                  {order.orderItems.map((item, index) => (
+                    <ListGroup.Item key={index}>
+                      <Row>
+                        <Col md={1}>
+                          <Image src={item.image} alt={item.name} fluid rounded />
+                        </Col>
+                        <Col>
+                          <Link to={`/product/${item.product}`}>{item.name}</Link>
+                          {item.size && (
+                            <span className="text-muted small ms-2">
+                              Size: {item.size}
+                            </span>
+                          )}
+                        </Col>
+                        <Col md={4}>
+                          {item.qty} × R{item.price} = R{(item.qty * item.price).toFixed(2)}
+                        </Col>
+                      </Row>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
               )}
-            </div>
-          </div>
+            </ListGroup.Item>
+
+          </ListGroup>
         </Col>
 
-        {/* ── Right: summary + payment ── */}
+        {/* ── Order Summary + PayFast ── */}
         <Col md={4}>
-          <div className="order-summary" style={{ position: "sticky", top: "1.5rem" }}>
+          <Card>
+            <ListGroup variant="flush">
+              <ListGroup.Item>
+                <h2>Order Summary</h2>
+              </ListGroup.Item>
+              <ListGroup.Item>
+                <Row>
+                  <Col>Items</Col>
+                  <Col>R{order.itemsPrice}</Col>
+                </Row>
+              </ListGroup.Item>
+              <ListGroup.Item>
+                <Row>
+                  <Col>Shipping</Col>
+                  <Col>
+                    {Number(order.shippingPrice) === 0
+                      ? <span className="text-success fw-bold">FREE</span>
+                      : `R${order.shippingPrice}`}
+                  </Col>
+                </Row>
+              </ListGroup.Item>
+              <ListGroup.Item>
+                <Row>
+                  <Col>VAT (15%)</Col>
+                  <Col>R{order.vatPrice}</Col>
+                </Row>
+              </ListGroup.Item>
+              <ListGroup.Item>
+                <Row>
+                  <Col><strong>Total</strong></Col>
+                  <Col><strong>R{order.totalPrice}</strong></Col>
+                </Row>
+              </ListGroup.Item>
 
-            <div className="order-summary__header">
-              <p className="order-summary__title">Order Summary</p>
-            </div>
+              {/* ── PayFast Payment Form ── */}
+              {!order.isPaid && (
+                <ListGroup.Item>
+                  {loadingPayFast ? (
+                    <Loader />
+                  ) : payfastError ? (
+                    <Message variant="danger">{payfastError}</Message>
+                  ) : payfastData ? (
+                    <div>
+                      <p className="mb-1">
+                        <strong>Pay securely with PayFast</strong>
+                      </p>
+                      <p className="text-muted small mb-3">
+                        Accepts credit/debit card, EFT &amp; instant EFT
+                      </p>
 
-            <div className="order-summary__body">
-              <div className="order-summary__row">
-                <span className="order-summary__label">Items</span>
-                <span className="order-summary__value">R{order.itemsPrice}</span>
-              </div>
-              <div className="order-summary__row">
-                <span className="order-summary__label">Shipping</span>
-                <span className="order-summary__value">R{order.shippingPrice}</span>
-              </div>
-              <div className="order-summary__row">
-                <span className="order-summary__label">VAT (15%)</span>
-                <span className="order-summary__value">R{order.vatPrice}</span>
-              </div>
-            </div>
-
-            <div className="order-summary__total">
-              <span className="order-summary__total-label">Total</span>
-              <span className="order-summary__total-value">R{order.totalPrice}</span>
-            </div>
-
-            {/* PayFast payment form */}
-            {!order.isPaid && (
-              <div style={{ padding: "0 1.25rem 1.25rem" }}>
-                <p style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 700,
-                  fontSize: "0.75rem",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--text-muted)",
-                  marginBottom: "0.75rem",
-                }}>
-                  Complete Payment
-                </p>
-
-                {loadingPayFast ? (
-                  <Loader />
-                ) : payfastData ? (
-                  <>
-                    <p style={{
-                      fontFamily: "var(--font-body)",
-                      fontSize: "0.8rem",
-                      color: "var(--text-muted)",
-                      marginBottom: "0.75rem",
-                    }}>
-                      You will be charged R{order.totalPrice} via PayFast
-                    </p>
-                    <form
-                      action="https://sandbox.payfast.co.za/eng/process"
-                      method="POST"
-                    >
-                      {PAYFAST_FIELD_ORDER.map((key) => (
+                      {/*
+                        PayFast requires a standard HTML form POST.
+                        Hidden inputs are rendered in EXACT field order
+                        matching the server-signed signature.
+                        Signature must be the LAST hidden field.
+                      */}
+                      <form
+                        action={payfastData.payfast_url}
+                        method="POST"
+                      >
+                        {PAYFAST_FIELD_ORDER.map((key) => (
+                          <input
+                            key={key}
+                            type="hidden"
+                            name={key}
+                            value={payfastData[key] || ""}
+                          />
+                        ))}
+                        {/* Signature goes last */}
                         <input
-                          key={key}
                           type="hidden"
-                          name={key}
-                          value={payfastData[key] || ""}
+                          name="signature"
+                          value={payfastData.signature || ""}
                         />
-                      ))}
-                      <input
-                        type="hidden"
-                        name="signature"
-                        value={payfastData.signature || ""}
-                      />
-                      <button type="submit" className="payfast-btn">
-                        Pay Now — R{order.totalPrice}
-                      </button>
-                    </form>
-                  </>
-                ) : (
-                  <Message variant="warning">
-                    Payment option unavailable. Please refresh the page.
-                  </Message>
-                )}
-              </div>
-            )}
+                        <Button
+                          type="submit"
+                          className="w-100"
+                          style={{
+                            backgroundColor: "#00a95c",
+                            borderColor:     "#00a95c",
+                            fontWeight:      600,
+                          }}
+                        >
+                          🔒 Pay R{order.totalPrice} with PayFast
+                        </Button>
+                      </form>
+                      <p className="text-muted small mt-2 text-center">
+                        You'll receive an email confirmation after payment
+                      </p>
+                    </div>
+                  ) : (
+                    <Message variant="warning">
+                      Payment option unavailable — please refresh the page
+                    </Message>
+                  )}
+                </ListGroup.Item>
+              )}
 
-            {/* Admin: mark delivered */}
-            {userInfo?.isAdmin && order.isPaid && !order.isDelivered && (
-              <>
-                {loadingDeliver && <div style={{ padding: "0 1.25rem" }}><Loader /></div>}
-                <button
-                  className="deliver-btn"
-                  onClick={deliverOrderHandler}
-                  disabled={loadingDeliver}
-                >
-                  Mark as Delivered
-                </button>
-              </>
-            )}
-          </div>
+              {/* ── Admin: Mark as Delivered ── */}
+              {loadingDeliver && <ListGroup.Item><Loader /></ListGroup.Item>}
+              {userInfo?.isAdmin && order.isPaid && !order.isDelivered && (
+                <ListGroup.Item>
+                  <Button
+                    type="button"
+                    className="btn btn-block w-100"
+                    onClick={deliverOrderHandler}
+                    disabled={loadingDeliver}
+                  >
+                    {loadingDeliver ? "Updating..." : "Mark As Delivered"}
+                  </Button>
+                </ListGroup.Item>
+              )}
+
+            </ListGroup>
+          </Card>
         </Col>
       </Row>
     </>

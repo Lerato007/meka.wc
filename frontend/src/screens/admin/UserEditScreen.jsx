@@ -1,43 +1,23 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Form, Button } from "react-bootstrap";
+import { Form } from "react-bootstrap";
+import { FaArrowLeft } from "react-icons/fa";
 import Message from "../../components/Message";
 import Loader from "../../components/Loader";
-import FormContainer from "../../components/formContainer";
 import { toast } from "react-toastify";
-import {
-  useGetUserDetailsQuery,
-  useUpdateUserMutation,
-} from "../../slices/usersApiSlice";
+import { useGetUserDetailsQuery, useUpdateUserMutation } from "../../slices/usersApiSlice";
 
 const UserEditScreen = () => {
   const { id: userId } = useParams();
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  const {
-    data: user,
-    isLoading,
-    refetch,
-    error,
-  } = useGetUserDetailsQuery(userId);
-  const [updateUser, { isLoading: loadingUpdate }] = useUpdateUserMutation();
-
   const navigate = useNavigate();
 
-  const submitHandler = async (e) => {
-    e.preventDefault();
-    try {
-      await updateUser({ userId, name, email, isAdmin });
-      toast.success("User updated successfully");
-      refetch();
-      navigate("/admin/userlist");
-    } catch (err) {
-      toast.error(err?.data?.message || err.error);
-    }
-  };
+  const [name,    setName]    = useState("");
+  const [email,   setEmail]   = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const { data: user, isLoading, refetch, error } = useGetUserDetailsQuery(userId);
+  const [updateUser, { isLoading: loadingUpdate }] = useUpdateUserMutation();
+
   useEffect(() => {
     if (user) {
       setName(user.name);
@@ -46,59 +26,91 @@ const UserEditScreen = () => {
     }
   }, [user]);
 
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    try {
+      await updateUser({ userId, name, email, isAdmin });
+      toast.success("User updated");
+      refetch();
+      navigate("/admin/userlist");
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
+  };
+
   return (
     <>
-      <Link to="/admin/userlist" className="btn btn-light my-3">
-        Go Back
+      <Link to="/admin/userlist" className="admin-back-link">
+        <FaArrowLeft size={11} /> Back to Users
       </Link>
-      <FormContainer>
-        <h1>Edit User</h1>
-        {loadingUpdate && <Loader />}
-        {isLoading ? (
-          <Loader />
-        ) : error ? (
-          <Message variant="danger">{error}</Message>
-        ) : (
+
+      {isLoading ? <Loader /> : error ? (
+        <Message variant="danger">{error?.data?.message || String(error)}</Message>
+      ) : (
+        <div className="admin-edit-card">
+          <h1 className="admin-edit-card__title">Edit User</h1>
+          <div className="admin-edit-card__accent" />
+
+          {loadingUpdate && <Loader />}
+
           <Form onSubmit={submitHandler}>
-            <Form.Group controlId="name">
-              <Form.Label>Name</Form.Label>
+
+            <Form.Group controlId="name" className="mb-3">
+              <Form.Label>Full Name</Form.Label>
               <Form.Control
-                type="name"
+                type="text"
                 placeholder="Enter name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
-            <Form.Group controlId="email">
-              <Form.Label>Email</Form.Label>
+
+            <Form.Group controlId="email" className="mb-3">
+              <Form.Label>Email Address</Form.Label>
               <Form.Control
                 type="email"
                 placeholder="Enter email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
 
-            <Form.Group controlId="isAdmin" className="my-2">
-              <Form.Check
-                type="checkbox"
-                label="Is Admin"
-                checked={isAdmin}
-                onChange={(e) => setIsAdmin(e.target.checked)}
-              ></Form.Check>
+            <Form.Group controlId="isAdmin" className="mb-4">
+              <div
+                className={`payment-option${isAdmin ? " selected" : ""}`}
+                onClick={() => setIsAdmin((prev) => !prev)}
+                style={{ cursor: "pointer" }}
+              >
+                <input
+                  type="checkbox"
+                  id="isAdmin"
+                  checked={isAdmin}
+                  onChange={(e) => setIsAdmin(e.target.checked)}
+                  className="payment-option__radio"
+                  style={{ borderRadius: "3px" }}
+                />
+                <div>
+                  <p className="payment-option__label">Admin Access</p>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "var(--text-muted)", margin: 0 }}>
+                    Grants full access to admin dashboard
+                  </p>
+                </div>
+                {isAdmin && <span className="payment-option__badge">Active</span>}
+              </div>
             </Form.Group>
 
-            <Button
+            <button
               type="submit"
-              variant="primary"
-              style={{ marginTop: "1rem" }}
+              className="admin-save-btn"
+              disabled={loadingUpdate}
             >
-              Update
-            </Button>
+              {loadingUpdate ? "Saving..." : "Save Changes"}
+            </button>
           </Form>
-        )}
-      </FormContainer>
+        </div>
+      )}
     </>
   );
 };
+
 export default UserEditScreen;

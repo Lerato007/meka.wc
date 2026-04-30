@@ -6,21 +6,18 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
-import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { HelmetProvider } from "react-helmet-async";
 import { Provider } from "react-redux";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import store from "./store";
-// import "bootstrap/dist/css/bootstrap.min.css";
-// Make sure this exact order is in your index.js
+
+// Styles — order matters
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './assets/styles/bootstrap.custom.css';
 import './assets/styles/index.css';
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import "./assets/styles/bootstrap.custom.css";
-import "./assets/styles/index.css";
+
 import App from "./App";
-import reportWebVitals from "./reportWebVitals";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import HomeScreen from "./screens/HomeScreen";
@@ -29,7 +26,6 @@ import CartScreen from "./screens/CartScreen";
 import LoginScreen from "./screens/LoginScreen";
 import RegisterScreen from "./screens/RegisterScreen";
 import ShippingScreen from "./screens/ShippingScreen";
-import PaymentScreen from "./screens/PaymentScreen";
 import PlaceOrderScreen from "./screens/PlaceOrderScreen";
 import OrderScreen from "./screens/OrderScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -50,10 +46,7 @@ const router = createBrowserRouter(
       <Route path="/home" element={<HomeScreen />} />
       <Route path="/search/:keyword" element={<HomeScreen />} />
       <Route path="/page/:pageNumber" element={<HomeScreen />} />
-      <Route
-        path="/search/:keyword/page/:pageNumber"
-        element={<HomeScreen />}
-      />
+      <Route path="/search/:keyword/page/:pageNumber" element={<HomeScreen />} />
       <Route path="/product/:id" element={<ProductScreen />} />
       <Route path="/cart" element={<CartScreen />} />
       <Route path="/login" element={<LoginScreen />} />
@@ -65,7 +58,6 @@ const router = createBrowserRouter(
       {/* Private Routes */}
       <Route path="" element={<PrivateRoute />}>
         <Route path="/shipping" element={<ShippingScreen />} />
-        <Route path="/payment" element={<PaymentScreen />} />
         <Route path="/placeorder" element={<PlaceOrderScreen />} />
         <Route path="/order/:id" element={<OrderScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
@@ -75,10 +67,7 @@ const router = createBrowserRouter(
       <Route path="" element={<AdminRoute />}>
         <Route path="/admin/orderlist" element={<OrderListScreen />} />
         <Route path="/admin/productlist" element={<ProductListScreen />} />
-        <Route
-          path="/admin/productlist/:pageNumber"
-          element={<ProductListScreen />}
-        />
+        <Route path="/admin/productlist/:pageNumber" element={<ProductListScreen />} />
         <Route path="/admin/product/:id/edit" element={<ProductEditScreen />} />
         <Route path="/admin/userlist" element={<UserListScreen />} />
         <Route path="/admin/user/:id/edit" element={<UserEditScreen />} />
@@ -92,14 +81,10 @@ root.render(
   <React.StrictMode>
     <HelmetProvider>
       <Provider store={store}>
-        <GoogleOAuthProvider clientId="589927020191-5veddi0u0un0lhvohvf1p05aji0ejshs.apps.googleusercontent.com">
-          <PayPalScriptProvider deferLoading={true}>
-            <RouterProvider router={router} />
-          </PayPalScriptProvider>
+        <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+          <RouterProvider router={router} />
         </GoogleOAuthProvider>
       </Provider>
     </HelmetProvider>
   </React.StrictMode>
 );
-
-reportWebVitals();

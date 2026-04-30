@@ -1,12 +1,18 @@
 import React from "react";
-import { Alert } from "react-bootstrap";
+import { FaInfoCircle, FaCheckCircle, FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa";
 
-const Message = ({ variant, children }) => {
-  return <Alert variant={variant}>{children}</Alert>;
+const ICONS = {
+  info:    <FaInfoCircle />,
+  success: <FaCheckCircle />,
+  danger:  <FaExclamationCircle />,
+  warning: <FaExclamationTriangle />,
 };
 
-Message.defaultProps = {
-  variant: "info",
-};
+const Message = ({ variant = "info", children }) => (
+  <div className={`meka-message meka-message--${variant}`} role="alert">
+    <span className="meka-message__icon">{ICONS[variant] || ICONS.info}</span>
+    <span>{children}</span>
+  </div>
+);
 
 export default Message;

@@ -1,122 +1,128 @@
 import React, { useState, useEffect } from "react";
-import { Form, Button } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import FormContainer from "../components/formContainer";
-import { saveShippingAddress } from "../slices/cartSlice";
+import { saveShippingAddress, savePaymentMethod } from "../slices/cartSlice";
 import CheckoutSteps from "../components/CheckoutSteps";
 
 const ShippingScreen = () => {
-  const cart = useSelector((state) => state.cart);
-  const { shippingAddress } = cart;
+  const { shippingAddress } = useSelector((state) => state.cart);
 
-  const [address, setAddress] = useState(shippingAddress?.address || "");
-  const [city, setCity] = useState(shippingAddress?.city || "");
-  const [postalCode, setPostalCode] = useState(
-    shippingAddress?.postalCode || ""
-  );
-  const [country] = useState("South Africa"); // Set country to South Africa and disable editing
-  const [phone, setPhone] = useState(shippingAddress?.phone || ""); // Add phone number state
+  const [address,    setAddress]    = useState(shippingAddress?.address    || "");
+  const [city,       setCity]       = useState(shippingAddress?.city       || "");
+  const [postalCode, setPostalCode] = useState(shippingAddress?.postalCode || "");
+  const [phone,      setPhone]      = useState(shippingAddress?.phone      || "");
+  const country = "South Africa";
+
   const [isFormValid, setIsFormValid] = useState(false);
-
-  const navigate = useNavigate();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  // Check if the form is valid
   useEffect(() => {
-    const isValid =
+    setIsFormValid(
       address.trim() &&
       city.trim() &&
       postalCode.trim() &&
       postalCode.length === 4 &&
       phone.trim() &&
-      phone.length === 10; // Ensure phone has 10 digits
-    setIsFormValid(isValid);
+      phone.length === 10
+    );
   }, [address, city, postalCode, phone]);
 
   const submitHandler = (e) => {
     e.preventDefault();
-    if (isFormValid) {
-      dispatch(saveShippingAddress({ address, city, postalCode, country, phone })); // Include phone in saveShippingAddress
-      navigate("/payment");
-    }
+    if (!isFormValid) return;
+    dispatch(saveShippingAddress({ address, city, postalCode, country, phone }));
+    // Payment method is always PayFast — set it and skip the payment screen
+    dispatch(savePaymentMethod("PayFast"));
+    navigate("/placeorder");
   };
 
   return (
-    <FormContainer>
-      <CheckoutSteps step1 step2 />
+    <div className="checkout-wrapper">
+      <CheckoutSteps step1 />
 
-      <h1>Shipping</h1>
+      <div className="checkout-card">
+        <p className="checkout-card__eyebrow">Step 1 of 3</p>
+        <h1 className="checkout-card__title">Shipping</h1>
+        <div className="checkout-card__accent" />
 
-      <Form onSubmit={submitHandler}>
-        <Form.Group controlId="address" className="my-2">
-          <Form.Label>Address</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          ></Form.Control>
-        </Form.Group>
+        <Form onSubmit={submitHandler}>
 
-        <Form.Group controlId="city" className="my-2">
-          <Form.Label>City</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter city"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-          ></Form.Control>
-        </Form.Group>
+          <Form.Group controlId="address" className="mb-3">
+            <Form.Label>Street Address</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="123 Main Street"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              autoComplete="street-address"
+            />
+          </Form.Group>
 
-        <Form.Group controlId="postalCode" className="my-2">
-          <Form.Label>Postal Code</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter postal code"
-            value={postalCode}
-            onChange={(e) => {
-              const { value } = e.target;
-              // Allow only digits and limit to 4 characters
-              if (/^\d{0,4}$/.test(value)) setPostalCode(value);
-            }}
-          ></Form.Control>
-        </Form.Group>
+          <Form.Group controlId="city" className="mb-3">
+            <Form.Label>City</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Cape Town"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              autoComplete="address-level2"
+            />
+          </Form.Group>
 
-        <Form.Group controlId="phone" className="my-2">
-          <Form.Label>Phone Number</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Enter phone number"
-            value={phone}
-            onChange={(e) => {
-              const { value } = e.target;
-              // Allow only digits and limit to 10 characters
-              if (/^\d{0,10}$/.test(value)) setPhone(value);
-            }}
-          ></Form.Control>
-        </Form.Group>
+          <Form.Group controlId="postalCode" className="mb-3">
+            <Form.Label>
+              Postal Code
+              {postalCode && postalCode.length !== 4 && (
+                <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "var(--bs-danger)", fontWeight: 400, marginLeft: "0.5rem" }}>
+                  Must be 4 digits
+                </span>
+              )}
+            </Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="7000"
+              value={postalCode}
+              onChange={(e) => { if (/^\d{0,4}$/.test(e.target.value)) setPostalCode(e.target.value); }}
+              autoComplete="postal-code"
+            />
+          </Form.Group>
 
-        <Form.Group controlId="country" className="my-2">
-          <Form.Label>Country</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Country"
-            value={country}
-            readOnly // Make field read-only
-          ></Form.Control>
-        </Form.Group>
+          <Form.Group controlId="phone" className="mb-3">
+            <Form.Label>
+              Phone Number
+              {phone && phone.length !== 10 && (
+                <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "var(--bs-danger)", fontWeight: 400, marginLeft: "0.5rem" }}>
+                  Must be 10 digits
+                </span>
+              )}
+            </Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="0821234567"
+              value={phone}
+              onChange={(e) => { if (/^\d{0,10}$/.test(e.target.value)) setPhone(e.target.value); }}
+              autoComplete="tel"
+            />
+          </Form.Group>
 
-        <Button
-          type="submit"
-          variant="primary"
-          className="my-2"
-          disabled={!isFormValid} // Disable button if form is invalid
-        >
-          Continue
-        </Button>
-      </Form>
-    </FormContainer>
+          <Form.Group controlId="country" className="mb-4">
+            <Form.Label>Country</Form.Label>
+            <Form.Control
+              type="text"
+              value={country}
+              readOnly
+              style={{ backgroundColor: "var(--bg-surface)", color: "var(--text-muted)" }}
+            />
+          </Form.Group>
+
+          <button type="submit" className="checkout-submit-btn" disabled={!isFormValid}>
+            Review Order
+          </button>
+        </Form>
+      </div>
+    </div>
   );
 };
 

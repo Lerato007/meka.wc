@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Form, Button } from "react-bootstrap";
-import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { FaSearch } from "react-icons/fa";
 
 const SearchBox = () => {
   const navigate = useNavigate();
@@ -11,27 +10,27 @@ const SearchBox = () => {
   const submitHandler = (e) => {
     e.preventDefault();
     if (keyword.trim()) {
+      navigate(`/search/${keyword.trim()}`);
       setKeyword("");
-      navigate(`/search/${keyword}`);
     } else {
-      navigate("/");
+      navigate("/home");
     }
   };
 
   return (
-    <Form onSubmit={submitHandler} className="d-flex">
-      <Form.Control
+    <form onSubmit={submitHandler} className="search-form">
+      <input
         type="text"
-        name="q"
-        onChange={(e) => setKeyword(e.target.value)}
         value={keyword}
-        placeholder="Search Products..."
-        className="mr-sm-2 ml-sm-5"
-      ></Form.Control>
-      <Button type="submit" variant="outline-light" className="p-2 mx-2">
-        Search
-      </Button>
-    </Form>
+        onChange={(e) => setKeyword(e.target.value)}
+        placeholder="Search products..."
+        className="search-form__input"
+        aria-label="Search products"
+      />
+      <button type="submit" className="search-form__btn" aria-label="Search">
+        <FaSearch size={12} />
+      </button>
+    </form>
   );
 };
 

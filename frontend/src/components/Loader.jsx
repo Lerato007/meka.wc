@@ -1,19 +1,9 @@
-import { Spinner } from "react-bootstrap";
 import React from "react";
 
-const Loader = () => {
-  return (
-    <Spinner
-      animation="border"
-      role="status"
-      style={{
-        width: "80px",
-        height: "80px",
-        margin: "auto",
-        display: "block",
-      }}
-    ></Spinner>
-  );
-};
+const Loader = ({ size = "md" }) => (
+  <div className={`meka-loader${size === "sm" ? " meka-loader--sm" : ""}`}>
+    <div className="meka-loader__ring" role="status" aria-label="Loading" />
+  </div>
+);
 
 export default Loader;

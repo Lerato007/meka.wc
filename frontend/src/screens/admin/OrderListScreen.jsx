@@ -1,151 +1,165 @@
 import React, { useState } from "react";
-import { LinkContainer } from "react-router-bootstrap";
-import { Table, Button, Pagination } from "react-bootstrap";
-import { FaTimes, FaTrash } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { FaCheckCircle, FaTimesCircle, FaTrash, FaEye, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import Message from "../../components/Message";
 import Loader from "../../components/Loader";
 import { toast } from "react-toastify";
-import {
-  useGetOrdersQuery,
-  useDeleteOrderMutation,
-} from "../../slices/ordersApiSlice";
+import { useGetOrdersQuery, useDeleteOrderMutation } from "../../slices/ordersApiSlice";
+
+const AdminPaginate = ({ page, pages, onChange }) => {
+  if (pages <= 1) return null;
+  return (
+    <div className="paginate-wrap">
+      <button
+        className="page-btn"
+        onClick={() => onChange(Math.max(page - 1, 1))}
+        disabled={page === 1}
+        style={{ opacity: page === 1 ? 0.4 : 1 }}
+      >
+        <FaChevronLeft size={10} />
+      </button>
+      {[...Array(pages).keys()].map((x) => (
+        <button
+          key={x + 1}
+          className={`page-btn${page === x + 1 ? " active" : ""}`}
+          onClick={() => onChange(x + 1)}
+        >
+          {x + 1}
+        </button>
+      ))}
+      <button
+        className="page-btn"
+        onClick={() => onChange(Math.min(page + 1, pages))}
+        disabled={page === pages}
+        style={{ opacity: page === pages ? 0.4 : 1 }}
+      >
+        <FaChevronRight size={10} />
+      </button>
+    </div>
+  );
+};
 
 const OrderListScreen = () => {
   const [page, setPage] = useState(1);
-  const pageSize = 10; // Number of orders per page
+  const pageSize = 10;
 
-  // Fetch orders with pagination
   const { data, isLoading, error, refetch } = useGetOrdersQuery({ page, pageSize });
-
-  // Mutation for deleting orders
   const [deleteOrder, { isLoading: loadingDelete }] = useDeleteOrderMutation();
 
-  // Destructure orders and pages from the data
   const orders = data?.orders || [];
-  const pages = data?.pages || 1;
+  const pages  = data?.pages  || 1;
 
-  // Function to handle order deletion
   const deleteHandler = async (orderId) => {
-    if (window.confirm("Are you sure you want to delete this order?")) {
+    if (window.confirm("Delete this order? This cannot be undone.")) {
       try {
         await deleteOrder(orderId).unwrap();
-        toast.success("Order deleted successfully");
-        refetch(); // Refresh orders list
-      } catch (error) {
-        toast.error(error?.data?.message || "Failed to delete order");
+        toast.success("Order deleted");
+        refetch();
+      } catch (err) {
+        toast.error(err?.data?.message || "Failed to delete order");
       }
     }
   };
 
   return (
     <>
-      <h1>Orders</h1>
+      <div className="admin-page__header">
+        <div>
+          <h1 className="admin-page__title">Orders</h1>
+          <div className="admin-page__accent" />
+        </div>
+        {data && (
+          <span style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "0.78rem",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            color: "var(--text-muted)",
+          }}>
+            {orders.length} of {data.total || orders.length} orders
+          </span>
+        )}
+      </div>
+
       {loadingDelete && <Loader />}
-      {isLoading ? (
-        <Loader />
-      ) : error ? (
-        <Message variant="danger">{error.message || "An error occurred"}</Message>
+
+      {isLoading ? <Loader /> : error ? (
+        <Message variant="danger">{error?.message || "An error occurred"}</Message>
       ) : (
         <>
-          {/* Pagination Controls */}
-          <Pagination>
-            <Pagination.Prev
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              disabled={page === 1}
-            />
-            {[...Array(pages)].map((_, index) => (
-              <Pagination.Item
-                key={index + 1}
-                active={index + 1 === page}
-                onClick={() => setPage(index + 1)}
-              >
-                {index + 1}
-              </Pagination.Item>
-            ))}
-            <Pagination.Next
-              onClick={() => setPage((prev) => Math.min(prev + 1, pages))}
-              disabled={page === pages}
-            />
-          </Pagination>
+          <AdminPaginate page={page} pages={pages} onChange={setPage} />
 
-          <Table striped hover responsive className="table-sm">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>USER</th>
-                <th>DATE</th>
-                <th>TOTAL</th>
-                <th>PAID</th>
-                <th>DELIVERED</th>
-                <th>ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.length > 0 ? (
-                orders.map((order) => (
+          <div style={{ overflowX: "auto" }}>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Paid</th>
+                  <th>Delivered</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                      No orders found
+                    </td>
+                  </tr>
+                ) : orders.map((order) => (
                   <tr key={order._id}>
-                    <td>{order._id}</td>
-                    <td>{order.user && order.user.name}</td>
-                    <td>{order.createdAt.substring(0, 10)}</td>
-                    <td>R{order.totalPrice}</td>
+                    <td><span className="cell-id">{order._id}</span></td>
+                    <td style={{ fontWeight: 500, color: "var(--text-primary)" }}>
+                      {order.user?.name || "—"}
+                    </td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      {order.createdAt.substring(0, 10)}
+                    </td>
+                    <td className="cell-price">R{order.totalPrice}</td>
                     <td>
                       {order.isPaid ? (
-                        order.paidAt.substring(0, 10)
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", color: "var(--meka-green)", fontSize: "0.82rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+                          <FaCheckCircle size={11} /> {order.paidAt.substring(0, 10)}
+                        </span>
                       ) : (
-                        <FaTimes style={{ color: "red" }} />
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", color: "var(--bs-danger)", fontSize: "0.82rem" }}>
+                          <FaTimesCircle size={11} /> Unpaid
+                        </span>
                       )}
                     </td>
                     <td>
                       {order.isDelivered ? (
-                        order.deliveredAt.substring(0, 10)
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", color: "var(--meka-green)", fontSize: "0.82rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+                          <FaCheckCircle size={11} /> {order.deliveredAt.substring(0, 10)}
+                        </span>
                       ) : (
-                        <FaTimes style={{ color: "red" }} />
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", color: "var(--text-muted)", fontSize: "0.82rem" }}>
+                          <FaTimesCircle size={11} /> Pending
+                        </span>
                       )}
                     </td>
-                    <td>
-                      <LinkContainer to={`/order/${order._id}`}>
-                        <Button variant="light" className="btn-sm">
-                          Details
-                        </Button>
-                      </LinkContainer>
-                      <Button
-                        variant="danger"
-                        className="btn-sm"
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <Link to={`/order/${order._id}`} className="admin-action-btn" title="View order">
+                        <FaEye size={13} />
+                      </Link>
+                      <button
+                        className="admin-action-btn danger"
                         onClick={() => deleteHandler(order._id)}
+                        title="Delete order"
                       >
-                        <FaTrash style={{ color: "white" }} />
-                      </Button>
+                        <FaTrash size={12} />
+                      </button>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7">No orders found</td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          {/* Pagination Controls */}
-          <Pagination>
-            <Pagination.Prev
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              disabled={page === 1}
-            />
-            {[...Array(pages)].map((_, index) => (
-              <Pagination.Item
-                key={index + 1}
-                active={index + 1 === page}
-                onClick={() => setPage(index + 1)}
-              >
-                {index + 1}
-              </Pagination.Item>
-            ))}
-            <Pagination.Next
-              onClick={() => setPage((prev) => Math.min(prev + 1, pages))}
-              disabled={page === pages}
-            />
-          </Pagination>
+          <AdminPaginate page={page} pages={pages} onChange={setPage} />
         </>
       )}
     </>
