@@ -1,136 +1,103 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { Row, Col, ListGroup, Image, Button, Card } from "react-bootstrap";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { Row, Col } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
+import {
+  FaCheckCircle, FaTimesCircle,
+  FaTruck, FaClock, FaCreditCard,
+} from "react-icons/fa";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
 import {
   useGetOrderDetailsQuery,
   useDeliverOrderMutation,
+  useGetPayFastIdentifierMutation,
+  usePayOrderMutation,
 } from "../slices/ordersApiSlice";
-
-// PayFast field order — MUST match exactly what the backend signs
-// Source: https://developers.payfast.co.za/docs#step_2_signature
-const PAYFAST_FIELD_ORDER = [
-  "merchant_id",
-  "merchant_key",
-  "return_url",
-  "cancel_url",
-  "notify_url",
-  "name_first",
-  "name_last",
-  "email_address",
-  "m_payment_id",
-  "amount",
-  "item_name",
-];
 
 const OrderScreen = () => {
   const { id: orderId } = useParams();
-  const navigate = useNavigate();
 
-  const {
-    data: order,
-    refetch,
-    isLoading,
-    error,
-  } = useGetOrderDetailsQuery(orderId);
+  const { data: order, refetch, isLoading, error } = useGetOrderDetailsQuery(orderId);
+  const [deliverOrder,         { isLoading: loadingDeliver }]  = useDeliverOrderMutation();
+  const [getPayFastIdentifier, { isLoading: loadingIdentifier }] = useGetPayFastIdentifierMutation();
+  const [payOrder,             { isLoading: loadingPay }]      = usePayOrderMutation();
 
-  const [deliverOrder, { isLoading: loadingDeliver }] = useDeliverOrderMutation();
   const { userInfo } = useSelector((state) => state.auth);
 
-  // PayFast session state
-  const [payfastData, setPayfastData]       = useState(null);
-  const [loadingPayFast, setLoadingPayFast] = useState(false);
-  const [payfastError, setPayfastError]     = useState(null);
+  // Prevent double-firing the modal if React renders twice (StrictMode)
+  const modalOpenRef = useRef(false);
 
-  // Polling ref — stored in ref so interval can be cleared from inside itself
-  const pollIntervalRef = useRef(null);
-  const pollAttemptsRef = useRef(0);
-  const MAX_POLL_ATTEMPTS = 8; // 8 × 2.5s = 20 seconds max
+  const [paymentError, setPaymentError] = useState(null);
 
-  // ── Fetch signed PayFast form data from backend ──────────────────────────
-  useEffect(() => {
-    if (!order || order.isPaid) return;
+  // ── Trigger PayFast modal ──────────────────────────────────────────────────
+  const handlePayment = async () => {
+    if (modalOpenRef.current) return;
+    setPaymentError(null);
 
-    const fetchPayFastSession = async () => {
-      setLoadingPayFast(true);
-      setPayfastError(null);
-      try {
-        const res = await fetch("/api/payfast/session", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify(order),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setPayfastData(data);
-        } else {
-          setPayfastError(data.message || "Failed to load payment option");
-          toast.error("Failed to load PayFast payment option");
-        }
-      } catch (err) {
-        setPayfastError("Network error — please refresh");
-        toast.error("Failed to connect to payment service");
-      } finally {
-        setLoadingPayFast(false);
-      }
-    };
-
-    fetchPayFastSession();
-  }, [order?._id]); // Only re-run if the order ID changes
-
-  // ── Poll for payment confirmation after returning from PayFast ───────────
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentReturn = urlParams.get("payment");
-
-    if (paymentReturn !== "success" || !order || order.isPaid) return;
-
-    // Clean the URL query param so it doesn't re-trigger on refresh
-    navigate(`/order/${orderId}`, { replace: true });
-
-    toast.info("Confirming your payment...");
-
-    pollIntervalRef.current = setInterval(async () => {
-      pollAttemptsRef.current += 1;
-      try {
-        const res  = await fetch(`/api/payfast/verify/${orderId}`);
-        const data = await res.json();
-        if (data.isPaid) {
-          clearInterval(pollIntervalRef.current);
-          refetch();
-          toast.success("🎉 Payment confirmed! Thank you for your order.");
-        }
-      } catch (_) {
-        // Silently retry
-      }
-      if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
-        clearInterval(pollIntervalRef.current);
-        toast.info(
-          "Payment is being processed. Check your email for confirmation or refresh in a moment."
-        );
-      }
-    }, 2500);
-
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    };
-  }, [order?._id, order?.isPaid, orderId, navigate, refetch]);
-
-  // Handle ?payment=cancelled
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("payment") === "cancelled") {
-      navigate(`/order/${orderId}`, { replace: true });
-      toast.warning("Payment was cancelled. You can try again below.");
-    }
-  }, [orderId, navigate]);
-
-  const deliverOrderHandler = async () => {
     try {
-      await deliverOrder(orderId).unwrap();
+      // Step 1 result: get the UUID from our backend
+      const { uuid } = await getPayFastIdentifier(orderId).unwrap();
+
+      if (!uuid) {
+        setPaymentError("Could not initiate payment. Please try again.");
+        return;
+      }
+
+      // Step 2: trigger the PayFast onsite modal (Method 2 — with callback)
+      if (typeof window.payfast_do_onsite_payment !== "function") {
+        setPaymentError("PayFast payment engine failed to load. Please refresh and try again.");
+        return;
+      }
+
+      modalOpenRef.current = true;
+
+      window.payfast_do_onsite_payment(
+        {
+          uuid,
+          // return_url and cancel_url were NOT set in Step 1,
+          // so we supply them here as the fallback.
+          return_url: `${window.location.origin}/order/${orderId}`,
+          cancel_url: `${window.location.origin}/order/${orderId}`,
+        },
+        async (result) => {
+          modalOpenRef.current = false;
+
+          if (result === true) {
+            // Payment completed — mark order as paid in our DB
+            try {
+              await payOrder({
+                orderId,
+                details: {
+                  id:            uuid,
+                  status:        "COMPLETE",
+                  update_time:   new Date().toISOString(),
+                  email_address: order?.user?.email || "",
+                },
+              }).unwrap();
+
+              refetch();
+              toast.success("Payment successful! Your order is confirmed.");
+            } catch (payErr) {
+              toast.error(payErr?.data?.message || "Payment recorded but order update failed. Please contact support.");
+            }
+          } else {
+            // User closed the modal without paying
+            toast.info("Payment cancelled. You can try again whenever you're ready.");
+          }
+        }
+      );
+    } catch (err) {
+      modalOpenRef.current = false;
+      setPaymentError(err?.data?.message || err.message || "Payment initiation failed.");
+    }
+  };
+
+  // ── Deliver handler ────────────────────────────────────────────────────────
+  const deliverHandler = async () => {
+    try {
+      await deliverOrder(orderId);
       refetch();
       toast.success("Order marked as delivered");
     } catch (err) {
@@ -138,210 +105,195 @@ const OrderScreen = () => {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   if (isLoading) return <Loader />;
   if (error) return (
-    <Message variant="danger">
-      {error?.data?.message || error?.error || "Failed to load order"}
-    </Message>
+    <Message variant="danger">{error?.data?.message || error.error}</Message>
   );
+
+  const isPaymentPending = !order.isPaid;
+  const isBusy = loadingIdentifier || loadingPay;
 
   return (
     <>
-      <h1>Order {order._id}</h1>
-      <Row>
+      <p className="order-screen__id">Order Confirmation</p>
+      <h1 className="order-screen__title">#{order._id}</h1>
+      <div className="order-screen__accent" />
+
+      <Row className="g-4">
+
+        {/* ── Left: order details ── */}
         <Col md={8}>
-          <ListGroup variant="flush">
 
-            {/* ── Shipping ── */}
-            <ListGroup.Item>
-              <h2>Shipping</h2>
-              <p><strong>Name: </strong>{order.user.name}</p>
-              <p>
-                <strong>Email: </strong>
-                <a href={`mailto:${order.user.email}`}>{order.user.email}</a>
-              </p>
-              <p><strong>Phone: </strong>{order.shippingAddress.phone}</p>
-              <p>
-                <strong>Address: </strong>
-                {order.shippingAddress.address},{" "}
-                {order.shippingAddress.city}{" "}
-                {order.shippingAddress.postalCode},{" "}
-                {order.shippingAddress.country}
-              </p>
+          {/* Shipping */}
+          <div className="placeorder-section">
+            <div className="placeorder-section__header">
+              <p className="placeorder-section__title">Shipping Details</p>
+            </div>
+            <div className="placeorder-section__body">
+              {[
+                ["Name",    order.user.name],
+                ["Email",   <a href={`mailto:${order.user.email}`} style={{ color: "var(--meka-green)" }}>{order.user.email}</a>],
+                ["Phone",   order.shippingAddress.phone],
+                ["Address", `${order.shippingAddress.address}, ${order.shippingAddress.city} ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}`],
+              ].map(([label, value]) => (
+                <p key={label}>
+                  <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    {label}:
+                  </span>{" "}{value}
+                </p>
+              ))}
+
               {order.isDelivered ? (
-                <Message variant="success">
-                  Delivered on {new Date(order.deliveredAt).toLocaleDateString("en-ZA")}
-                </Message>
+                <span className="status-pill delivered">
+                  <FaTruck size={11} /> Delivered {order.deliveredAt?.substring(0, 10)}
+                </span>
               ) : (
-                <Message variant="danger">Not Delivered</Message>
+                <span className="status-pill not-delivered">
+                  <FaClock size={11} /> Not yet delivered
+                </span>
               )}
-            </ListGroup.Item>
+            </div>
+          </div>
 
-            {/* ── Payment ── */}
-            <ListGroup.Item>
-              <h2>Payment Method</h2>
-              <p><strong>Method: </strong>{order.paymentMethod}</p>
+          {/* Payment */}
+          <div className="placeorder-section">
+            <div className="placeorder-section__header">
+              <p className="placeorder-section__title">Payment</p>
+            </div>
+            <div className="placeorder-section__body">
+              <p>
+                <span style={{ color: "var(--text-muted)", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Method:
+                </span>{" "}{order.paymentMethod}
+              </p>
               {order.isPaid ? (
-                <Message variant="success">
-                  Paid on {new Date(order.paidAt).toLocaleDateString("en-ZA")}
-                </Message>
+                <span className="status-pill paid">
+                  <FaCheckCircle size={11} /> Paid {order.paidAt?.substring(0, 10)}
+                </span>
               ) : (
-                <Message variant="danger">Not Paid</Message>
+                <span className="status-pill unpaid">
+                  <FaTimesCircle size={11} /> Awaiting payment
+                </span>
               )}
-            </ListGroup.Item>
+            </div>
+          </div>
 
-            {/* ── Order Items ── */}
-            <ListGroup.Item>
-              <h2>Order Items</h2>
+          {/* Order items */}
+          <div className="placeorder-section">
+            <div className="placeorder-section__header">
+              <p className="placeorder-section__title">
+                Order Items ({order.orderItems.reduce((a, i) => a + i.qty, 0)})
+              </p>
+            </div>
+            <div className="placeorder-section__body">
               {order.orderItems.length === 0 ? (
                 <Message>Order is empty</Message>
-              ) : (
-                <ListGroup variant="flush">
-                  {order.orderItems.map((item, index) => (
-                    <ListGroup.Item key={index}>
-                      <Row>
-                        <Col md={1}>
-                          <Image src={item.image} alt={item.name} fluid rounded />
-                        </Col>
-                        <Col>
-                          <Link to={`/product/${item.product}`}>{item.name}</Link>
-                          {item.size && (
-                            <span className="text-muted small ms-2">
-                              Size: {item.size}
-                            </span>
-                          )}
-                        </Col>
-                        <Col md={4}>
-                          {item.qty} × R{item.price} = R{(item.qty * item.price).toFixed(2)}
-                        </Col>
-                      </Row>
-                    </ListGroup.Item>
-                  ))}
-                </ListGroup>
-              )}
-            </ListGroup.Item>
-
-          </ListGroup>
+              ) : order.orderItems.map((item, index) => (
+                <div key={index} className="placeorder-item">
+                  <img src={item.image} alt={item.name} className="placeorder-item__image" />
+                  <Link to={`/product/${item.product}`} className="placeorder-item__name">
+                    {item.name}
+                    {item.size && (
+                      <span style={{ display: "block", fontFamily: "var(--font-body)", fontSize: "0.75rem", fontWeight: 400, color: "var(--text-muted)", textTransform: "none", letterSpacing: 0 }}>
+                        Size: {item.size}
+                      </span>
+                    )}
+                  </Link>
+                  <span className="placeorder-item__calc">
+                    {item.qty} × R{item.price}{" "}
+                    <span style={{ color: "var(--meka-green)", fontWeight: 700 }}>
+                      = R{(item.qty * item.price).toFixed(2)}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </Col>
 
-        {/* ── Order Summary + PayFast ── */}
+        {/* ── Right: summary ── */}
         <Col md={4}>
-          <Card>
-            <ListGroup variant="flush">
-              <ListGroup.Item>
-                <h2>Order Summary</h2>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Items</Col>
-                  <Col>R{order.itemsPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>Shipping</Col>
-                  <Col>
-                    {Number(order.shippingPrice) === 0
-                      ? <span className="text-success fw-bold">FREE</span>
-                      : `R${order.shippingPrice}`}
-                  </Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col>VAT (15%)</Col>
-                  <Col>R{order.vatPrice}</Col>
-                </Row>
-              </ListGroup.Item>
-              <ListGroup.Item>
-                <Row>
-                  <Col><strong>Total</strong></Col>
-                  <Col><strong>R{order.totalPrice}</strong></Col>
-                </Row>
-              </ListGroup.Item>
+          <div className="order-summary" style={{ position: "sticky", top: "1.5rem" }}>
 
-              {/* ── PayFast Payment Form ── */}
-              {!order.isPaid && (
-                <ListGroup.Item>
-                  {loadingPayFast ? (
-                    <Loader />
-                  ) : payfastError ? (
-                    <Message variant="danger">{payfastError}</Message>
-                  ) : payfastData ? (
-                    <div>
-                      <p className="mb-1">
-                        <strong>Pay securely with PayFast</strong>
-                      </p>
-                      <p className="text-muted small mb-3">
-                        Accepts credit/debit card, EFT &amp; instant EFT
-                      </p>
+            <div className="order-summary__header">
+              <p className="order-summary__title">Order Summary</p>
+            </div>
 
-                      {/*
-                        PayFast requires a standard HTML form POST.
-                        Hidden inputs are rendered in EXACT field order
-                        matching the server-signed signature.
-                        Signature must be the LAST hidden field.
-                      */}
-                      <form
-                        action={payfastData.payfast_url}
-                        method="POST"
-                      >
-                        {PAYFAST_FIELD_ORDER.map((key) => (
-                          <input
-                            key={key}
-                            type="hidden"
-                            name={key}
-                            value={payfastData[key] || ""}
-                          />
-                        ))}
-                        {/* Signature goes last */}
-                        <input
-                          type="hidden"
-                          name="signature"
-                          value={payfastData.signature || ""}
-                        />
-                        <Button
-                          type="submit"
-                          className="w-100"
-                          style={{
-                            backgroundColor: "#00a95c",
-                            borderColor:     "#00a95c",
-                            fontWeight:      600,
-                          }}
-                        >
-                          🔒 Pay R{order.totalPrice} with PayFast
-                        </Button>
-                      </form>
-                      <p className="text-muted small mt-2 text-center">
-                        You'll receive an email confirmation after payment
-                      </p>
-                    </div>
-                  ) : (
-                    <Message variant="warning">
-                      Payment option unavailable — please refresh the page
+            <div className="order-summary__body">
+              {[
+                ["Items",     `R${order.itemsPrice}`],
+                ["Shipping",  `R${order.shippingPrice}`],
+                ["VAT (15%)", `R${order.vatPrice}`],
+              ].map(([label, value]) => (
+                <div key={label} className="order-summary__row">
+                  <span className="order-summary__label">{label}</span>
+                  <span className="order-summary__value">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="order-summary__total">
+              <span className="order-summary__total-label">Total</span>
+              <span className="order-summary__total-value">R{order.totalPrice}</span>
+            </div>
+
+            {/* Payment area */}
+            <div style={{ padding: "0 1.25rem 1.25rem" }}>
+              {order.isPaid ? (
+                <div style={{
+                  background: "rgba(64,145,24,0.08)",
+                  border: "1.5px solid var(--meka-green-border)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "0.85rem 1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.6rem",
+                  color: "var(--meka-green-dark)",
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.88rem",
+                }}>
+                  <FaCheckCircle style={{ flexShrink: 0 }} />
+                  Payment received. Thank you!
+                </div>
+              ) : (
+                <>
+                  {paymentError && (
+                    <Message variant="danger" style={{ marginBottom: "0.75rem" }}>
+                      {paymentError}
                     </Message>
                   )}
-                </ListGroup.Item>
-              )}
 
-              {/* ── Admin: Mark as Delivered ── */}
-              {loadingDeliver && <ListGroup.Item><Loader /></ListGroup.Item>}
-              {userInfo?.isAdmin && order.isPaid && !order.isDelivered && (
-                <ListGroup.Item>
-                  <Button
-                    type="button"
-                    className="btn btn-block w-100"
-                    onClick={deliverOrderHandler}
-                    disabled={loadingDeliver}
-                  >
-                    {loadingDeliver ? "Updating..." : "Mark As Delivered"}
-                  </Button>
-                </ListGroup.Item>
+                  {isBusy ? (
+                    <Loader />
+                  ) : (
+                    <button
+                      className="place-order-btn"
+                      onClick={handlePayment}
+                      disabled={isBusy}
+                      style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
+                    >
+                      <FaCreditCard size={14} />
+                      Pay Now — R{order.totalPrice}
+                    </button>
+                  )}
+                </>
               )}
+            </div>
 
-            </ListGroup>
-          </Card>
+            {/* Admin: mark as delivered */}
+            {userInfo?.isAdmin && order.isPaid && !order.isDelivered && (
+              <>
+                {loadingDeliver && <div style={{ padding: "0 1.25rem" }}><Loader size="sm" /></div>}
+                <button
+                  className="deliver-btn"
+                  onClick={deliverHandler}
+                  disabled={loadingDeliver}
+                >
+                  {loadingDeliver ? "Updating…" : "Mark as Delivered"}
+                </button>
+              </>
+            )}
+          </div>
         </Col>
       </Row>
     </>

@@ -1,229 +1,181 @@
 import express from "express";
-import crypto from "crypto";
+import asyncHandler from "../middleware/asyncHandler.js";
 import Order from "../models/orderModel.js";
+import { protect } from "../middleware/authMiddleware.js";
+import {
+  dataToString,
+  generateSignature,
+  pfValidSignature,
+  pfValidIP,
+  pfValidPaymentData,
+  pfValidServerConfirmation,
+} from "../utils/payfastUtils.js";
 import { sendOrderConfirmationEmail } from "../utils/emailService.js";
+import axios from "axios";
 
 const router = express.Router();
 
-// ─── Credentials from .env ONLY — never hardcode these ───────────────────────
-const PAYFAST_MERCHANT_ID  = process.env.PAYFAST_MERCHANT_ID;
-const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY;
-const PAYFAST_PASSPHRASE   = process.env.PAYFAST_PASSPHRASE;
-const SITE_URL             = process.env.SITE_URL || "http://localhost:3000";
-const BACKEND_URL          = process.env.BACKEND_URL || "http://localhost:5000";
+// ─────────────────────────────────────────────────────────────────────────────
+// Step 1 — Generate payment identifier (UUID)
+// POST /api/payfast/identifier/:id
+// ─────────────────────────────────────────────────────────────────────────────
+router.post(
+  "/identifier/:id",
+  protect,
+  asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id).populate("user", "name email");
 
-// Sandbox for dev, live for production — toggled by NODE_ENV
-const PAYFAST_HOST = process.env.NODE_ENV === "production"
-  ? "www.payfast.co.za"
-  : "sandbox.payfast.co.za";
-
-const PAYFAST_URL = `https://${PAYFAST_HOST}/eng/process`;
-
-// ─── EXACT field order required by PayFast for signature generation ───────────
-// Source: https://developers.payfast.co.za/docs#step_2_signature
-// WARNING: Field order MUST match this exactly — wrong order = signature mismatch
-const FIELD_ORDER = [
-  "merchant_id",
-  "merchant_key",
-  "return_url",
-  "cancel_url",
-  "notify_url",
-  "name_first",
-  "name_last",
-  "email_address",
-  "m_payment_id",
-  "amount",
-  "item_name",
-];
-
-// ─── Signature generator (payment form) ──────────────────────────────────────
-// Builds the query string in exact field order, then MD5 hashes it
-const generateSignature = (data, passPhrase) => {
-  let pfOutput = "";
-
-  for (const key of FIELD_ORDER) {
-    const value = data[key];
-    // Skip undefined, null, and empty string fields
-    if (value !== undefined && value !== null && value !== "") {
-      pfOutput += `${key}=${encodeURIComponent(String(value).trim()).replace(/%20/g, "+")}&`;
+    if (!order) {
+      res.status(404);
+      throw new Error("Order not found");
     }
-  }
 
-  // Remove trailing ampersand
-  pfOutput = pfOutput.slice(0, -1);
+    const merchantId  = process.env.PAYFAST_MERCHANT_ID;
+    const merchantKey = process.env.PAYFAST_MERCHANT_KEY;
+    const passPhrase  = process.env.PAYFAST_PASSPHRASE;
+    const backendUrl  = process.env.BACKEND_URL;
+    const testingMode = process.env.PAYFAST_TESTING === "true";
+    const pfHost      = testingMode ? "sandbox.payfast.co.za" : "www.payfast.co.za";
 
-  // Append passphrase if set (strongly recommended in production)
-  if (passPhrase) {
-    pfOutput += `&passphrase=${encodeURIComponent(passPhrase.trim()).replace(/%20/g, "+")}`;
-  }
+    if (!merchantId || !merchantKey) {
+      res.status(500);
+      throw new Error("PayFast credentials are not configured on the server");
+    }
 
-  return crypto.createHash("md5").update(pfOutput).digest("hex");
+    // Field order matters for the signature — must match PayFast's attribute order
+const paymentData = {
+  merchant_id:   merchantId,
+  merchant_key:  merchantKey,
+  return_url:    `${backendUrl}/order/${order._id}`,
+  cancel_url:    `${backendUrl}/order/${order._id}`,
+  notify_url:    `${backendUrl}/api/payfast/notify`,
+  name_first:    order.user.name.split(" ")[0],
+  email_address: testingMode ? "buyer@example.com" : order.user.email,
+  m_payment_id:  order._id.toString(),
+  amount:        order.totalPrice.toFixed(2),
+  item_name:     `Meka.WC Order ${order._id}`,
 };
 
-// ─── IPN Signature validator ──────────────────────────────────────────────────
-// IPN uses ALL received fields (except signature itself), sorted alphabetically
-const generateIPNSignature = (data, passPhrase) => {
-  const keys = Object.keys(data)
-    .filter((k) => k !== "signature")
-    .sort(); // PayFast IPN fields are sorted alphabetically
+// Only add name_last if it has a value — blank fields affect the signature
+const nameLast = order.user.name.split(" ").slice(1).join(" ");
+if (nameLast) {
+  paymentData.name_last = nameLast;
+}
 
-  let pfOutput = "";
-  for (const key of keys) {
-    const value = data[key];
-    if (value !== undefined && value !== null && value !== "") {
-      pfOutput += `${key}=${encodeURIComponent(String(value).trim()).replace(/%20/g, "+")}&`;
+    // Append signature (signature field excluded from its own hash)
+    paymentData.signature = generateSignature(paymentData, passPhrase);
+
+    const pfParamString = dataToString(paymentData);
+
+    console.log("📤 PayFast payment data:", JSON.stringify(paymentData, null, 2));
+    console.log("📤 PayFast param string:", pfParamString);
+    console.log("📤 Sending to host:", pfHost);
+
+    let pfResponse;
+    try {
+      pfResponse = await axios.post(
+        `https://${pfHost}/onsite/process`,
+        pfParamString,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "Mozilla/5.0 (compatible; MekaWC/1.0)",
+          },
+        }
+      );
+      console.log("✅ PayFast response status:", pfResponse.status);
+      console.log("✅ PayFast response data:", JSON.stringify(pfResponse.data, null, 2));
+    } catch (err) {
+      console.error("❌ PayFast error status:", err.response?.status);
+      console.error("❌ PayFast error headers:", JSON.stringify(err.response?.headers, null, 2));
+      console.error("❌ PayFast error data:", JSON.stringify(err.response?.data, null, 2));
+      console.error("❌ Param string sent:", pfParamString);
+      res.status(502);
+      throw new Error(`PayFast rejected the request: ${JSON.stringify(err.response?.data)}`);
     }
-  }
 
-  pfOutput = pfOutput.slice(0, -1);
+    const uuid = pfResponse.data?.uuid || null;
 
-  if (passPhrase) {
-    pfOutput += `&passphrase=${encodeURIComponent(passPhrase.trim()).replace(/%20/g, "+")}`;
-  }
-
-  return crypto.createHash("md5").update(pfOutput).digest("hex");
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/payfast/session
-// Called by frontend OrderScreen to get signed form data
-// ─────────────────────────────────────────────────────────────────────────────
-router.post("/session", async (req, res) => {
-  try {
-    const order = req.body;
-
-    if (!order?._id || !order?.totalPrice) {
-      return res.status(400).json({ message: "Invalid order data" });
+    if (!uuid) {
+      res.status(502);
+      throw new Error("PayFast did not return a payment identifier");
     }
 
-    // Truncate item_name to PayFast's 100-char limit
-    const itemName = order.orderItems
-      .map((i) => i.name)
-      .join(", ")
-      .substring(0, 100);
-
-    // Split name into first/last for PayFast fields
-    const nameParts = (order.user?.name || "Customer").split(" ");
-    const nameFirst = nameParts[0] || "Customer";
-    const nameLast  = nameParts.slice(1).join(" ") || "";
-
-    const formData = {
-      merchant_id:   PAYFAST_MERCHANT_ID,
-      merchant_key:  PAYFAST_MERCHANT_KEY,
-      return_url:    `${SITE_URL}/order/${order._id}?payment=success`,
-      cancel_url:    `${SITE_URL}/order/${order._id}?payment=cancelled`,
-      notify_url:    `${BACKEND_URL}/api/payfast/notify`,
-      name_first:    nameFirst,
-      name_last:     nameLast,
-      email_address: order.user?.email || "",
-      m_payment_id:  order._id.toString(),
-      amount:        Number(order.totalPrice).toFixed(2),
-      item_name:     itemName,
-    };
-
-    formData.signature = generateSignature(formData, PAYFAST_PASSPHRASE);
-
-    res.json({
-      ...formData,
-      payfast_url:  PAYFAST_URL,
-      field_order:  FIELD_ORDER,
-    });
-  } catch (error) {
-    console.error("PayFast session error:", error.message);
-    res.status(500).json({ message: "Failed to create PayFast session" });
-  }
-});
+    res.json({ uuid });
+  })
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Step 5 — ITN (Instant Transaction Notification)
 // POST /api/payfast/notify
-// PayFast IPN webhook — called server-to-server after payment
-// Must return 200 quickly or PayFast will retry
 // ─────────────────────────────────────────────────────────────────────────────
-router.post("/notify", async (req, res) => {
-  // Respond 200 immediately so PayFast doesn't timeout and retry
+router.post("/notify", (req, res) => {
   res.status(200).send("OK");
 
-  try {
-    const pfData = { ...req.body };
-    const receivedSignature = pfData.signature;
-    delete pfData.signature;
-
-    // Step 1: Verify signature
-    const generatedSignature = generateIPNSignature(pfData, PAYFAST_PASSPHRASE);
-    if (receivedSignature !== generatedSignature) {
-      console.error("❌ PayFast IPN: Invalid signature");
-      console.error("Received:", receivedSignature);
-      console.error("Expected:", generatedSignature);
-      return;
-    }
-
-    // Step 2: Only process COMPLETE payments
-    if (pfData.payment_status !== "COMPLETE") {
-      console.log("PayFast IPN: Payment status not COMPLETE:", pfData.payment_status);
-      return;
-    }
-
-    // Step 3: Find the order
-    const order = await Order.findById(pfData.m_payment_id).populate("user", "name email");
-    if (!order) {
-      console.error("❌ PayFast IPN: Order not found:", pfData.m_payment_id);
-      return;
-    }
-
-    // Step 4: Idempotency guard — don't process twice
-    if (order.isPaid) {
-      console.log("PayFast IPN: Order already paid:", order._id);
-      return;
-    }
-
-    // Step 5: Verify the amount matches (within R0.01 tolerance for float rounding)
-    const paidAmount     = parseFloat(pfData.amount_gross);
-    const expectedAmount = parseFloat(Number(order.totalPrice).toFixed(2));
-    if (Math.abs(paidAmount - expectedAmount) > 0.01) {
-      console.error(`❌ PayFast IPN: Amount mismatch — paid R${paidAmount}, expected R${expectedAmount}`);
-      return;
-    }
-
-    // Step 6: Mark order as paid
-    order.isPaid = true;
-    order.paidAt = Date.now();
-    order.paymentResult = {
-      id:            pfData.pf_payment_id,
-      status:        pfData.payment_status,
-      update_time:   new Date().toISOString(),
-      email_address: pfData.email_address,
-    };
-
-    const updatedOrder = await order.save();
-    console.log("✅ PayFast IPN: Order marked as paid:", updatedOrder._id);
-
-    // Step 7: Send confirmation email (non-blocking — never let email failure break payment)
+  (async () => {
     try {
-      await sendOrderConfirmationEmail(updatedOrder, paidAmount.toFixed(2), "ZAR");
-      console.log("✅ Confirmation email sent to:", updatedOrder.user.email);
-    } catch (emailErr) {
-      console.error("❌ Confirmation email failed (payment still processed):", emailErr.message);
-    }
-  } catch (error) {
-    console.error("❌ PayFast IPN processing error:", error.message);
-  }
-});
+      const pfData      = req.body;
+      const passPhrase  = process.env.PAYFAST_PASSPHRASE;
+      const merchantId  = process.env.PAYFAST_MERCHANT_ID;
+      const testingMode = process.env.PAYFAST_TESTING === "true";
+      const pfHost      = testingMode ? "sandbox.payfast.co.za" : "www.payfast.co.za";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/payfast/verify/:orderId
-// Called by frontend after user returns from PayFast
-// Polls until IPN has updated isPaid (max ~20 seconds with polling)
-// ─────────────────────────────────────────────────────────────────────────────
-router.get("/verify/:orderId", async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.orderId).select("isPaid paidAt paymentResult");
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      console.log("📩 PayFast ITN received:", pfData);
+
+      // Check 1: Verify signature
+      const check1 = pfValidSignature(pfData, passPhrase);
+      if (!check1) { console.error("❌ ITN rejected: signature invalid"); return; }
+      console.log("✅ Check 1 passed: signature valid");
+
+      // Check 2: Verify PayFast IP
+      const check2 = await pfValidIP(req);
+      if (!check2) { console.error("❌ ITN rejected: invalid IP"); return; }
+      console.log("✅ Check 2 passed: valid IP");
+
+      // Fetch order
+      const order = await Order.findById(pfData.m_payment_id).populate("user", "name email");
+      if (!order) { console.error("❌ ITN: order not found:", pfData.m_payment_id); return; }
+
+      // Check 3: Verify amount
+      const check3 = pfValidPaymentData(order.totalPrice, pfData);
+      if (!check3) { console.error(`❌ ITN rejected: amount mismatch — expected R${order.totalPrice}, got R${pfData.amount_gross}`); return; }
+      console.log("✅ Check 3 passed: amount matches");
+
+      // Check 4: Server confirmation
+      const check4 = await pfValidServerConfirmation(pfHost, pfData);
+      if (!check4) { console.error("❌ ITN rejected: server confirmation INVALID"); return; }
+      console.log("✅ Check 4 passed: server confirmation VALID");
+
+      if (pfData.payment_status !== "COMPLETE") {
+        console.log(`ℹ️  ITN status is "${pfData.payment_status}" — no action taken`);
+        return;
+      }
+
+      if (order.isPaid) {
+        console.log("ℹ️  ITN: order already paid — skipping:", order._id);
+        return;
+      }
+
+      order.isPaid  = true;
+      order.paidAt  = Date.now();
+      order.paymentResult = {
+        id:            pfData.pf_payment_id,
+        status:        pfData.payment_status,
+        update_time:   new Date().toISOString(),
+        email_address: pfData.email_address || order.user.email,
+      };
+
+      const updatedOrder = await order.save();
+      console.log("✅ ITN: order marked as paid:", updatedOrder._id);
+
+      sendOrderConfirmationEmail(updatedOrder, pfData.amount_gross, "ZAR")
+        .then((result) => { if (result.success) console.log("✅ Confirmation email sent"); })
+        .catch((err) => { console.error("❌ Email failed:", err); });
+
+    } catch (err) {
+      console.error("❌ ITN processing error:", err);
     }
-    res.json({ isPaid: order.isPaid, paidAt: order.paidAt });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
+  })();
 });
 
 export default router;

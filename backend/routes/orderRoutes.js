@@ -3,7 +3,6 @@ import {
   addOrderItems,
   getMyOrders,
   getOrderById,
-  updateOrderToPaid,
   updateOrderToDelivered,
   getOrders,
   deleteOrder,
@@ -14,8 +13,11 @@ const router = express.Router();
 
 router.route("/").post(protect, addOrderItems).get(protect, admin, getOrders);
 router.route("/mine").get(protect, getMyOrders);
-router.route("/:id").get(protect, getOrderById).delete(protect, admin, deleteOrder); // ✅ Add delete route
-router.route("/:id/pay").put(protect, updateOrderToPaid);
+router.route("/:id").get(protect, getOrderById).delete(protect, admin, deleteOrder);
 router.route("/:id/deliver").put(protect, admin, updateOrderToDelivered);
+
+// NOTE: /:id/pay (PayPal) has been removed.
+// Payment is now handled entirely by PayFast via the ITN webhook
+// at POST /api/payfast/notify — no manual pay route needed.
 
 export default router;

@@ -2,21 +2,11 @@ import asyncHandler from "../middleware/asyncHandler.js";
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import { calcPrices } from "../utils/calcPrices.js";
-import { sendOrderConfirmationEmail, sendOrderShippedEmail } from "../utils/emailService.js";
-import axios from "axios";
+import { sendOrderShippedEmail } from "../utils/emailService.js";
 
-// Function to fetch the exchange rate from the API
-const fetchExchangeRate = async () => {
-  try {
-    const response = await axios.get(
-      `https://v6.exchangerate-api.com/v6/dcb8b5d35cce0be56b199997/latest/ZAR`
-    );
-    return response.data.conversion_rates.USD;
-  } catch (error) {
-    console.error("Error fetching exchange rate:", error);
-    throw new Error("Failed to fetch exchange rate");
-  }
-};
+// NOTE: verifyPayPalPayment, checkIfNewTransaction, fetchExchangeRate and
+// the updateOrderToPaid handler have all been removed. Payment is now
+// handled exclusively by PayFast via the ITN webhook in payfastRoutes.js.
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -28,12 +18,11 @@ const addOrderItems = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("No order items");
   } else {
-    // Get the ordered items from our database
+    // Fetch prices from the database — never trust prices sent from the client
     const itemsFromDB = await Product.find({
       _id: { $in: orderItems.map((x) => x._id) },
     });
 
-    // Map over the order items and use the price from our items from database
     const dbOrderItems = orderItems.map((itemFromClient) => {
       const matchingItemFromDB = itemsFromDB.find(
         (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id
@@ -41,12 +30,11 @@ const addOrderItems = asyncHandler(async (req, res) => {
       return {
         ...itemFromClient,
         product: itemFromClient._id,
-        price: matchingItemFromDB.price,
-        _id: undefined,
+        price:   matchingItemFromDB.price, // server-side price only
+        _id:     undefined,
       };
     });
 
-    // Calculate prices
     const { itemsPrice, vatPrice, shippingPrice, totalPrice } = calcPrices(
       dbOrderItems,
       shippingAddress
@@ -64,13 +52,12 @@ const addOrderItems = asyncHandler(async (req, res) => {
     });
 
     const createdOrder = await order.save();
-
     res.status(201).json(createdOrder);
   }
 });
 
 // @desc    Get logged in user orders
-// @route   GET /api/orders/myorders
+// @route   GET /api/orders/mine
 // @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find({ user: req.user._id });
@@ -81,62 +68,10 @@ const getMyOrders = asyncHandler(async (req, res) => {
 // @route   GET /api/orders/:id
 // @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
-  const order = await Order.findById(req.params.id).populate(
-    "user",
-    "name email"
-  );
-
-  if (order) {
-    res.status(200).json(order);
-  } else {
-    res.status(404);
-    throw new Error("Order not found");
-  }
-});
-
-// @desc    Update order to paid
-// @route   PUT /api/orders/:id/pay
-// @access  Private
-const updateOrderToPaid = asyncHandler(async (req, res) => {
-  const { verified, value } = await verifyPayPalPayment(req.body.id);
-  if (!verified) throw new Error("Payment not verified");
-
-  const isNewTransaction = await checkIfNewTransaction(Order, req.body.id);
-  if (!isNewTransaction) throw new Error("Transaction has been used before");
-
-  // Populate user data before accessing it
   const order = await Order.findById(req.params.id).populate("user", "name email");
 
   if (order) {
-    const zarToUsdRate = await fetchExchangeRate();
-    const expectedUsdAmount = (order.totalPrice * zarToUsdRate).toFixed(2);
-
-    const paidCorrectAmount = expectedUsdAmount === value;
-    if (!paidCorrectAmount) throw new Error("Incorrect amount paid");
-
-    order.isPaid = true;
-    order.paidAt = Date.now();
-    order.paymentResult = {
-      id: req.body.id,
-      status: req.body.status,
-      update_time: req.body.update_time,
-      email_address: req.body.payer.email_address,
-    };
-
-    const updatedOrder = await order.save();
-
-    // Send confirmation email (don't block response if email fails)
-    sendOrderConfirmationEmail(updatedOrder, value, 'USD')
-      .then(result => {
-        if (result.success) {
-          console.log('✅ Confirmation email sent to:', order.user.email);
-        }
-      })
-      .catch(error => {
-        console.error('❌ Email failed but order is still valid:', error);
-      });
-
-    res.json(updatedOrder);
+    res.status(200).json(order);
   } else {
     res.status(404);
     throw new Error("Order not found");
@@ -155,16 +90,16 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // Send shipped email with tracking number (optional)
+    // Send shipped notification email — non-blocking, failure does not affect response
     const trackingNumber = req.body.trackingNumber || "Will be provided shortly";
     sendOrderShippedEmail(updatedOrder, trackingNumber)
-      .then(result => {
-        if (result.success) {
-          console.log('✅ Shipping notification sent to:', order.user.email);
+      .then((result) => {
+        if (result?.success) {
+          console.log("✅ Shipping notification sent to:", order.user.email);
         }
       })
-      .catch(error => {
-        console.error('❌ Shipping email failed:', error);
+      .catch((error) => {
+        console.error("❌ Shipping email failed:", error.message);
       });
 
     res.json(updatedOrder);
@@ -174,24 +109,20 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get all orders
+// @desc    Get all orders (admin)
 // @route   GET /api/orders
 // @access  Private/Admin
 const getOrders = asyncHandler(async (req, res) => {
   const pageSize = Number(req.query.pageSize) || 10;
-  const page = Number(req.query.page) || 1;
+  const page     = Number(req.query.page) || 1;
 
-  const count = await Order.countDocuments({});
+  const count  = await Order.countDocuments({});
   const orders = await Order.find({})
     .populate("user", "id name")
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 
-  res.json({
-    orders,
-    page,
-    pages: Math.ceil(count / pageSize),
-  });
+  res.json({ orders, page, pages: Math.ceil(count / pageSize) });
 });
 
 // @desc    Delete order by ID
@@ -213,8 +144,7 @@ export {
   addOrderItems,
   getMyOrders,
   getOrderById,
-  updateOrderToPaid,
   updateOrderToDelivered,
   getOrders,
-  deleteOrder, 
+  deleteOrder,
 };

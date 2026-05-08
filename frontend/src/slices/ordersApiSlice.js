@@ -1,5 +1,5 @@
 import { apiSlice } from "./apiSlice";
-import { ORDERS_URL, PAYPAL_URL } from "../constants";
+import { ORDERS_URL, PAYFAST_URL } from "../constants";
 
 export const ordersApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -16,18 +16,19 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       }),
       keepUnusedDataFor: 5,
     }),
+    // Step 1: Get a PayFast payment identifier (UUID) for onsite payments
+    getPayFastIdentifier: builder.mutation({
+      query: (orderId) => ({
+        url: `${PAYFAST_URL}/identifier/${orderId}`,
+        method: "POST",
+      }),
+    }),
     payOrder: builder.mutation({
       query: ({ orderId, details }) => ({
         url: `${ORDERS_URL}/${orderId}/pay`,
         method: "PUT",
         body: { ...details },
       }),
-    }),
-    getPayPalClientId: builder.query({
-      query: () => ({
-        url: PAYPAL_URL,
-      }),
-      keepUnusedDataFor: 5,
     }),
     getMyOrders: builder.query({
       query: () => ({
@@ -59,8 +60,8 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
 export const {
   useCreateOrderMutation,
   useGetOrderDetailsQuery,
+  useGetPayFastIdentifierMutation,
   usePayOrderMutation,
-  useGetPayPalClientIdQuery,
   useGetMyOrdersQuery,
   useGetOrdersQuery,
   useDeliverOrderMutation,
