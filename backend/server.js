@@ -17,6 +17,7 @@ import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import payfastRoutes from "./routes/payfastRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 const port = process.env.PORT || 5000;
 
@@ -43,6 +44,7 @@ app.use("/api/users",    userRoutes);
 app.use("/api/orders",   orderRoutes);
 app.use("/api/upload",   uploadRoutes);
 app.use("/api/payfast",  payfastRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 

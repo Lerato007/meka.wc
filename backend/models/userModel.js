@@ -3,50 +3,26 @@ import bcrypt from "bcryptjs";
 
 const userSchema = mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
-    isAdmin: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
+    name:  { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password:{ type: String, required: true },
+    isAdmin: { type: Boolean, required: true, default: false },
     address: {
-      street: {
-        type: String,
-        required: false,
-      },
-      city: {
-        type: String,
-        required: false,
-      },
-      state: {
-        type: String,
-        required: false,
-      },
-      postalCode: {
-        type: String,
-        required: false,
-      },
-      phoneNumber: {
-        type: String,
-        required: false,
-      },
+      street:     { type: String },
+      city:       { type: String },
+      state:      { type: String },
+      postalCode: { type: String },
+      phoneNumber:{ type: String },
     },
+    // Wishlist: array of product ObjectIds
+    wishlist: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
@@ -54,14 +30,10 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    next();
-  }
-
+  if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
 const User = mongoose.model("User", userSchema);
-
 export default User;

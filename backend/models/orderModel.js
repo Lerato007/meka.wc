@@ -1,5 +1,25 @@
 import mongoose from "mongoose";
 
+// Valid order statuses in progression order
+export const ORDER_STATUSES = [
+  "Processing",   // order placed, payment pending or confirmed
+  "Confirmed",    // payment confirmed
+  "Packed",       // items packed and ready
+  "Dispatched",   // handed to courier
+  "Delivered",    // received by customer
+  "Cancelled",    // cancelled
+];
+
+const statusHistorySchema = mongoose.Schema(
+  {
+    status:  { type: String, required: true },
+    note:    { type: String, default: "" },
+    // who updated it — admin name or "System"
+    updatedBy: { type: String, default: "System" },
+  },
+  { timestamps: true }
+);
+
 const orderSchema = mongoose.Schema(
   {
     user: {
@@ -9,11 +29,11 @@ const orderSchema = mongoose.Schema(
     },
     orderItems: [
       {
-        name: { type: String, required: true },
-        size: { type: String, required: true },
-        qty: { type: Number, required: true },
-        image: { type: String, required: true },
-        price: { type: Number, required: true },
+        name:    { type: String, required: true },
+        size:    { type: String, required: true },
+        qty:     { type: Number, required: true },
+        image:   { type: String, required: true },
+        price:   { type: Number, required: true },
         product: {
           type: mongoose.Schema.Types.ObjectId,
           required: true,
@@ -22,64 +42,38 @@ const orderSchema = mongoose.Schema(
       },
     ],
     shippingAddress: {
-      address: { type: String, required: true },
-      city: { type: String, required: true },
+      address:    { type: String, required: true },
+      city:       { type: String, required: true },
       postalCode: { type: String, required: true },
-      phone: { type: String, required: true },
-      country: { type: String, required: true },
+      phone:      { type: String, required: true },
+      country:    { type: String, required: true },
     },
-    paymentMethod: {
-      type: String,
-      required: true,
-    },
+    paymentMethod: { type: String, required: true },
     paymentResult: {
-      id: { type: String },
-      status: { type: String },
-      update_time: { type: String },
+      id:            { type: String },
+      status:        { type: String },
+      update_time:   { type: String },
       email_address: { type: String },
     },
-    itemsPrice: {
-      type: Number,
-      required: true,
-      default: 0.0,
+    itemsPrice:    { type: Number, required: true, default: 0.0 },
+    vatPrice:      { type: Number, required: true, default: 0.0 },
+    shippingPrice: { type: Number, required: true, default: 0.0 },
+    totalPrice:    { type: Number, required: true, default: 0.0 },
+    isPaid:        { type: Boolean, required: true, default: false },
+    paidAt:        { type: Date },
+    isDelivered:   { type: Boolean, required: true, default: false },
+    deliveredAt:   { type: Date },
+    // New: tracking status
+    status: {
+      type: String,
+      enum: ORDER_STATUSES,
+      default: "Processing",
     },
-    vatPrice: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
-    shippingPrice: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
-    totalPrice: {
-      type: Number,
-      required: true,
-      default: 0.0,
-    },
-    isPaid: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
-    paidAt: {
-      type: Date,
-    },
-    isDelivered: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
-    deliveredAt: {
-      type: Date,
-    },
+    // New: full status history timeline
+    statusHistory: [statusHistorySchema],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Order = mongoose.model("Order", orderSchema);
-
 export default Order;

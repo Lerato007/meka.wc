@@ -3,6 +3,7 @@ import {
   addOrderItems,
   getMyOrders,
   getOrderById,
+  updateOrderStatus,
   updateOrderToDelivered,
   getOrders,
   deleteOrder,
@@ -15,9 +16,6 @@ router.route("/").post(protect, addOrderItems).get(protect, admin, getOrders);
 router.route("/mine").get(protect, getMyOrders);
 router.route("/:id").get(protect, getOrderById).delete(protect, admin, deleteOrder);
 router.route("/:id/deliver").put(protect, admin, updateOrderToDelivered);
-
-// NOTE: /:id/pay (PayPal) has been removed.
-// Payment is now handled entirely by PayFast via the ITN webhook
-// at POST /api/payfast/notify — no manual pay route needed.
+router.route("/:id/status").put(protect, admin, updateOrderStatus);
 
 export default router;

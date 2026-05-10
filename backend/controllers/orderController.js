@@ -4,56 +4,113 @@ import Product from "../models/productModel.js";
 import { calcPrices } from "../utils/calcPrices.js";
 import { sendOrderShippedEmail } from "../utils/emailService.js";
 
-// NOTE: verifyPayPalPayment, checkIfNewTransaction, fetchExchangeRate and
-// the updateOrderToPaid handler have all been removed. Payment is now
-// handled exclusively by PayFast via the ITN webhook in payfastRoutes.js.
-
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
 const addOrderItems = asyncHandler(async (req, res) => {
   const { orderItems, shippingAddress, paymentMethod } = req.body;
 
-  if (orderItems && orderItems.length === 0) {
+  if (!orderItems || orderItems.length === 0) {
     res.status(400);
     throw new Error("No order items");
-  } else {
-    // Fetch prices from the database — never trust prices sent from the client
-    const itemsFromDB = await Product.find({
-      _id: { $in: orderItems.map((x) => x._id) },
-    });
+  }
 
-    const dbOrderItems = orderItems.map((itemFromClient) => {
-      const matchingItemFromDB = itemsFromDB.find(
-        (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id
-      );
-      return {
-        ...itemFromClient,
-        product: itemFromClient._id,
-        price:   matchingItemFromDB.price, // server-side price only
-        _id:     undefined,
-      };
-    });
+  // ── Fetch products from DB ────────────────────────────────────────
+  const itemsFromDB = await Product.find({
+    _id: { $in: orderItems.map((x) => x._id) },
+  });
 
-    const { itemsPrice, vatPrice, shippingPrice, totalPrice } = calcPrices(
-      dbOrderItems,
-      shippingAddress
+  // ── Stock validation per size ─────────────────────────────────────
+  const stockErrors = [];
+
+  for (const itemFromClient of orderItems) {
+    const product = itemsFromDB.find(
+      (p) => p._id.toString() === itemFromClient._id
     );
 
-    const order = new Order({
-      orderItems: dbOrderItems,
-      user: req.user._id,
-      shippingAddress,
-      paymentMethod,
-      itemsPrice,
-      vatPrice,
-      shippingPrice,
-      totalPrice,
-    });
+    if (!product) {
+      stockErrors.push(`Product ${itemFromClient.name} no longer exists`);
+      continue;
+    }
 
-    const createdOrder = await order.save();
-    res.status(201).json(createdOrder);
+    const size = itemFromClient.size;
+    const qty  = itemFromClient.qty;
+
+    if (product.sizeStock && size) {
+      const availableStock = product.sizeStock[size] || 0;
+      if (qty > availableStock) {
+        stockErrors.push(
+          `${product.name} (${size}) — only ${availableStock} left in stock, you requested ${qty}`
+        );
+      }
+    } else {
+      // Fallback to flat countInStock
+      if (qty > product.countInStock) {
+        stockErrors.push(
+          `${product.name} — only ${product.countInStock} left in stock`
+        );
+      }
+    }
   }
+
+  if (stockErrors.length > 0) {
+    res.status(400);
+    throw new Error(stockErrors.join(" | "));
+  }
+
+  // ── Build order items using server-side prices only ───────────────
+  const dbOrderItems = orderItems.map((itemFromClient) => {
+    const matchingItem = itemsFromDB.find(
+      (p) => p._id.toString() === itemFromClient._id
+    );
+    return {
+      ...itemFromClient,
+      product: itemFromClient._id,
+      price:   matchingItem.price,
+      _id:     undefined,
+    };
+  });
+
+  const { itemsPrice, vatPrice, shippingPrice, totalPrice } = calcPrices(
+    dbOrderItems,
+    shippingAddress
+  );
+
+  const order = new Order({
+    orderItems:     dbOrderItems,
+    user:           req.user._id,
+    shippingAddress,
+    paymentMethod,
+    itemsPrice,
+    vatPrice,
+    shippingPrice,
+    totalPrice,
+    status:         "Processing",
+    statusHistory:  [{ status: "Processing", note: "Order placed", updatedBy: "System" }],
+  });
+
+  const createdOrder = await order.save();
+
+  // ── Decrement stock per size after order is saved ─────────────────
+  for (const item of dbOrderItems) {
+    const product = itemsFromDB.find(
+      (p) => p._id.toString() === item.product.toString()
+    );
+
+    if (product && item.size && product.sizeStock) {
+      product.sizeStock[item.size] = Math.max(
+        0,
+        (product.sizeStock[item.size] || 0) - item.qty
+      );
+      // pre-save hook updates countInStock automatically
+      await product.save();
+    } else if (product) {
+      product.countInStock = Math.max(0, product.countInStock - item.qty);
+      await product.save();
+    }
+  }
+
+  res.status(201).json(createdOrder);
 });
 
 // @desc    Get logged in user orders
@@ -69,44 +126,83 @@ const getMyOrders = asyncHandler(async (req, res) => {
 // @access  Private
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate("user", "name email");
+  if (order) return res.status(200).json(order);
+  res.status(404);
+  throw new Error("Order not found");
+});
 
-  if (order) {
-    res.status(200).json(order);
-  } else {
+// @desc    Update order status (admin)
+// @route   PUT /api/orders/:id/status
+// @access  Private/Admin
+const updateOrderStatus = asyncHandler(async (req, res) => {
+  const { status, note } = req.body;
+  const order = await Order.findById(req.params.id).populate("user", "name email");
+
+  if (!order) {
     res.status(404);
     throw new Error("Order not found");
   }
+
+  const validStatuses = ["Processing", "Confirmed", "Packed", "Dispatched", "Delivered", "Cancelled"];
+  if (!validStatuses.includes(status)) {
+    res.status(400);
+    throw new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
+  }
+
+  order.status = status;
+  order.statusHistory.push({
+    status,
+    note:      note || "",
+    updatedBy: req.user.name,
+  });
+
+  // Sync isDelivered flag when status reaches Delivered
+  if (status === "Delivered") {
+    order.isDelivered  = true;
+    order.deliveredAt  = Date.now();
+  }
+
+  const updatedOrder = await order.save();
+
+  // Send shipping email when dispatched
+  if (status === "Dispatched") {
+    const trackingNumber = req.body.trackingNumber || "Will be provided shortly";
+    sendOrderShippedEmail(updatedOrder, trackingNumber)
+      .then(() => console.log("Shipping email sent:", order.user.email))
+      .catch((err) => console.error("Shipping email failed:", err.message));
+  }
+
+  res.json(updatedOrder);
 });
 
-// @desc    Update order to delivered
+// @desc    Update order to delivered (kept for backwards compat)
 // @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
 const updateOrderToDelivered = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate("user", "name email");
 
-  if (order) {
-    order.isDelivered = true;
-    order.deliveredAt = Date.now();
-
-    const updatedOrder = await order.save();
-
-    // Send shipped notification email — non-blocking, failure does not affect response
-    const trackingNumber = req.body.trackingNumber || "Will be provided shortly";
-    sendOrderShippedEmail(updatedOrder, trackingNumber)
-      .then((result) => {
-        if (result?.success) {
-          console.log("✅ Shipping notification sent to:", order.user.email);
-        }
-      })
-      .catch((error) => {
-        console.error("❌ Shipping email failed:", error.message);
-      });
-
-    res.json(updatedOrder);
-  } else {
+  if (!order) {
     res.status(404);
     throw new Error("Order not found");
   }
+
+  order.isDelivered = true;
+  order.deliveredAt = Date.now();
+  order.status      = "Delivered";
+  order.statusHistory.push({
+    status:    "Delivered",
+    note:      "Marked as delivered by admin",
+    updatedBy: req.user.name,
+  });
+
+  const updatedOrder = await order.save();
+
+  const trackingNumber = req.body.trackingNumber || "Will be provided shortly";
+  sendOrderShippedEmail(updatedOrder, trackingNumber)
+    .then(() => console.log("Shipping email sent:", order.user.email))
+    .catch((err) => console.error("Shipping email failed:", err.message));
+
+  res.json(updatedOrder);
 });
 
 // @desc    Get all orders (admin)
@@ -119,31 +215,31 @@ const getOrders = asyncHandler(async (req, res) => {
   const count  = await Order.countDocuments({});
   const orders = await Order.find({})
     .populate("user", "id name")
+    .sort({ createdAt: -1 })
     .limit(pageSize)
     .skip(pageSize * (page - 1));
 
-  res.json({ orders, page, pages: Math.ceil(count / pageSize) });
+  res.json({ orders, page, pages: Math.ceil(count / pageSize), total: count });
 });
 
-// @desc    Delete order by ID
+// @desc    Delete order
 // @route   DELETE /api/orders/:id
 // @access  Private/Admin
 const deleteOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id);
-
   if (!order) {
     res.status(404);
     throw new Error("Order not found");
   }
-
   await order.deleteOne();
-  res.json({ message: "Order removed successfully" });
+  res.json({ message: "Order removed" });
 });
 
 export {
   addOrderItems,
   getMyOrders,
   getOrderById,
+  updateOrderStatus,
   updateOrderToDelivered,
   getOrders,
   deleteOrder,
