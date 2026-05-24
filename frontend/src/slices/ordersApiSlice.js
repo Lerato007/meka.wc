@@ -1,6 +1,8 @@
 import { apiSlice } from "./apiSlice";
 import { ORDERS_URL } from "../constants";
 
+const PAYFAST_URL = "/api/payfast";
+
 export const ordersApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
 
@@ -56,6 +58,23 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       }),
     }),
 
+    // Matches backend: POST /api/payfast/identifier/:id
+    getPayFastIdentifier: builder.mutation({
+      query: (orderId) => ({
+        url:    `${PAYFAST_URL}/identifier/${orderId}`,
+        method: "POST",
+      }),
+    }),
+
+    // Mark order as paid after PayFast onsite callback
+    payOrder: builder.mutation({
+      query: ({ orderId, details }) => ({
+        url:    `${ORDERS_URL}/${orderId}/pay`,
+        method: "PUT",
+        body:   { ...details },
+      }),
+    }),
+
   }),
 });
 
@@ -67,4 +86,6 @@ export const {
   useUpdateOrderStatusMutation,
   useDeliverOrderMutation,
   useDeleteOrderMutation,
+  useGetPayFastIdentifierMutation,
+  usePayOrderMutation,
 } = ordersApiSlice;

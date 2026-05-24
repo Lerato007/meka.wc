@@ -36,7 +36,12 @@ const addOrderItems = asyncHandler(async (req, res) => {
     const size = itemFromClient.size;
     const qty  = itemFromClient.qty;
 
-    if (product.sizeStock && size) {
+    // Check if sizeStock has been configured (any size > 0)
+    const hasSizeStock = product.sizeStock &&
+      Object.values(product.sizeStock).some((v) => v > 0);
+
+    if (hasSizeStock && size) {
+      // Use per-size stock
       const availableStock = product.sizeStock[size] || 0;
       if (qty > availableStock) {
         stockErrors.push(
@@ -44,7 +49,7 @@ const addOrderItems = asyncHandler(async (req, res) => {
         );
       }
     } else {
-      // Fallback to flat countInStock
+      // Fall back to flat countInStock
       if (qty > product.countInStock) {
         stockErrors.push(
           `${product.name} — only ${product.countInStock} left in stock`
