@@ -2541,8 +2541,8 @@ main {
   border: 1.5px solid rgba(243, 156, 18, 0.28);
 }
 
-/* PayFast pay button */
-.payfast-btn {
+/* Payment gateway pay button */
+.pay-btn {
   display: block;
   width: 100%;
   padding: 0.85rem;
@@ -2560,7 +2560,7 @@ main {
   text-align: center;
 }
 
-.payfast-btn:hover {
+.pay-btn:hover {
   background-color: var(--meka-green-dark);
   border-color: var(--meka-green-dark);
   transform: translateY(-1px);

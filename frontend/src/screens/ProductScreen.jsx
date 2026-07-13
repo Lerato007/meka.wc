@@ -57,16 +57,16 @@ const ProductScreen = () => {
 
   // Get stock for a given size
   const hasSizeStock = product
-    ? Object.values(product.sizeStock || {}).some((v) => v > 0)
-    : false;
+  ? Object.values(product.sizeStock || {}).some((v) => v > 0)
+  : false;
 
-  const sizeStockAvailable = (sz) => {
-    if (!product) return 0;
-    // If sizeStock has been configured (any size > 0), use per-size stock
-    if (hasSizeStock) return product.sizeStock?.[sz] || 0;
-    // Otherwise fall back to flat countInStock — all sizes available
-    return product.countInStock || 0;
-  };
+const sizeStockAvailable = (sz) => {
+  if (!product) return 0;
+  // If sizeStock has been configured (any size > 0), use per-size stock
+  if (hasSizeStock) return product.sizeStock?.[sz] || 0;
+  // Otherwise fall back to flat countInStock — all sizes available
+  return product.countInStock || 0;
+};
 
   const selectedSizeStock = size ? sizeStockAvailable(size) : 0;
 
@@ -112,9 +112,13 @@ const ProductScreen = () => {
 
   return (
     <>
-      <Link to="/home" className="product-screen__back">
+      <button
+        onClick={() => navigate(-1)}
+        className="product-screen__back"
+        style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+      >
         <FaArrowLeft size={11} /> Back to Products
-      </Link>
+      </button>
 
       {isLoading ? <Loader /> : error ? (
         <Message variant="danger">{error?.data?.message || error.error}</Message>
