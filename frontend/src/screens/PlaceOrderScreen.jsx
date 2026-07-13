@@ -29,7 +29,7 @@ const PlaceOrderScreen = () => {
       const res = await createOrder({
         orderItems:      cart.cartItems,
         shippingAddress: cart.shippingAddress,
-        paymentMethod:   "PayFast",
+        paymentMethod:   "Credit Card",
         itemsPrice:      cart.itemsPrice,
         shippingPrice:   cart.shippingPrice,
         vatPrice:        cart.vatPrice,
@@ -78,7 +78,7 @@ const PlaceOrderScreen = () => {
             </div>
             <div className="placeorder-section__body">
               <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-                PayFast
+                Credit Card
               </p>
               <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.25rem 0 0" }}>
                 You will be redirected to PayFast to complete payment securely.

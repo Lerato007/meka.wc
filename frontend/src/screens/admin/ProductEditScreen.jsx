@@ -20,7 +20,7 @@ const ProductEditScreen = () => {
   const [image,        setImage]        = useState("");
   const [brand,        setBrand]        = useState("");
   const [category,     setCategory]     = useState("");
-  const [countInStock, setCountInStock] = useState(0);
+  const [sizeStock,    setSizeStock]    = useState({ S: 0, M: 0, L: 0, XL: 0 });
   const [description,  setDescription]  = useState("");
 
   const { data: product, isLoading, error } = useGetProductDetailsQuery(productId);
@@ -34,7 +34,12 @@ const ProductEditScreen = () => {
       setImage(product.image);
       setBrand(product.brand);
       setCategory(product.category);
-      setCountInStock(product.countInStock);
+      setSizeStock({
+        S:  product.sizeStock?.S  || 0,
+        M:  product.sizeStock?.M  || 0,
+        L:  product.sizeStock?.L  || 0,
+        XL: product.sizeStock?.XL || 0,
+      });
       setDescription(product.description);
     }
   }, [product]);
@@ -42,7 +47,7 @@ const ProductEditScreen = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      await updateProduct({ productId, name, price, image, brand, category, description, countInStock });
+      await updateProduct({ productId, name, price, image, brand, category, description, sizeStock });
       toast.success("Product updated");
       navigate("/admin/productlist");
     } catch (err) {
@@ -141,15 +146,28 @@ const ProductEditScreen = () => {
               />
             </Form.Group>
 
-            <Form.Group controlId="countInStock" className="mb-3">
-              <Form.Label>Count In Stock</Form.Label>
-              <Form.Control
-                type="number"
-                placeholder="0"
-                value={countInStock}
-                onChange={(e) => setCountInStock(e.target.value)}
-                min="0"
-              />
+            <Form.Group controlId="sizeStock" className="mb-3">
+              <Form.Label>Stock by Size</Form.Label>
+              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                {["S", "M", "L", "XL"].map((sz) => (
+                  <div key={sz} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
+                    <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-muted)" }}>{sz}</span>
+                    <Form.Control
+                      type="number"
+                      placeholder="0"
+                      value={sizeStock[sz]}
+                      onChange={(e) =>
+                        setSizeStock((prev) => ({ ...prev, [sz]: Number(e.target.value) }))
+                      }
+                      min="0"
+                      style={{ width: "80px", textAlign: "center" }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <Form.Text muted>
+                Total stock: {Object.values(sizeStock).reduce((a, b) => a + Number(b || 0), 0)}
+              </Form.Text>
             </Form.Group>
 
             <Form.Group controlId="description" className="mb-3">

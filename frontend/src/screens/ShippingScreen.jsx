@@ -34,7 +34,7 @@ const ShippingScreen = () => {
     if (!isFormValid) return;
     dispatch(saveShippingAddress({ address, city, postalCode, country, phone }));
     // Payment method is always PayFast — set it and skip the payment screen
-    dispatch(savePaymentMethod("PayFast"));
+    dispatch(savePaymentMethod("Credit Card"));
     navigate("/placeorder");
   };
 
