@@ -1,8 +1,3 @@
-// ── PART 1: Imports, state, handlers ──
-// Copy everything below into your ProductScreen.jsx
-// replacing the existing imports and logic section.
-// Stop before the return statement.
-
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Row, Col, Form } from "react-bootstrap";
@@ -17,6 +12,7 @@ import { addToCart } from "../slices/cartSlice";
 import {
   useGetProductDetailsQuery,
   useCreateReviewMutation,
+  useCheckCanReviewQuery,
   useDeleteReviewMutation,
 } from "../slices/productsApiSlice";
 import {
@@ -43,6 +39,10 @@ const ProductScreen = () => {
   const { data: product, isLoading, refetch, error } = useGetProductDetailsQuery(productId);
   const [createReview, { isLoading: loadingReview }] = useCreateReviewMutation();
   const [deleteReview]                               = useDeleteReviewMutation();
+  const { data: canReviewData, isLoading: canReviewLoading } = useCheckCanReviewQuery(
+    productId,
+    { skip: !userInfo, refetchOnMountOrArgChange: true }
+  );
 
   const { data: wishlistStatus } = useCheckWishlistQuery(productId, { skip: !userInfo });
   const [addToWishlist,      { isLoading: addingWishlist }]   = useAddToWishlistMutation();
@@ -57,16 +57,16 @@ const ProductScreen = () => {
 
   // Get stock for a given size
   const hasSizeStock = product
-  ? Object.values(product.sizeStock || {}).some((v) => v > 0)
-  : false;
+    ? Object.values(product.sizeStock || {}).some((v) => v > 0)
+    : false;
 
-const sizeStockAvailable = (sz) => {
-  if (!product) return 0;
-  // If sizeStock has been configured (any size > 0), use per-size stock
-  if (hasSizeStock) return product.sizeStock?.[sz] || 0;
-  // Otherwise fall back to flat countInStock — all sizes available
-  return product.countInStock || 0;
-};
+  const sizeStockAvailable = (sz) => {
+    if (!product) return 0;
+    // If sizeStock has been configured (any size > 0), use per-size stock
+    if (hasSizeStock) return product.sizeStock?.[sz] || 0;
+    // Otherwise fall back to flat countInStock — all sizes available
+    return product.countInStock || 0;
+  };
 
   const selectedSizeStock = size ? sizeStockAvailable(size) : 0;
 
@@ -109,11 +109,6 @@ const sizeStockAvailable = (sz) => {
       toast.success("Review deleted");
     } catch (err) { toast.error(err?.data?.message || err.error); }
   };
-
-  // ── Part 2 continues: return statement starts here ──
-// ── PART 2: return statement — back link, loader, gallery + details + purchase box ──
-// Replace your existing return statement with this.
-// Stop before the reviews section.
 
   return (
     <>
@@ -284,11 +279,6 @@ const sizeStockAvailable = (sz) => {
             </Col>
           </Row>
 
-          {/* ── Part 3 continues: reviews section ── */}
-// ── PART 3: Reviews section + closing tags ──
-// Append this after Part 2, replacing everything from
-// the reviews section to the end of the file.
-
           <Row className="reviews-section">
             <Col md={7}>
               <h2 className="reviews-section__title">Reviews</h2>
@@ -328,7 +318,11 @@ const sizeStockAvailable = (sz) => {
                   <Message>
                     Please <Link to="/login">sign in</Link> to write a review.
                   </Message>
-                ) : (
+                ) : canReviewLoading ? (
+                  <Loader />
+                ) : canReviewData?.reason === "already_reviewed" ? (
+                  <Message>You've already reviewed this product.</Message>
+                ) : canReviewData?.canReview ? (
                   <>
                     {loadingReview && <Loader />}
                     <Form onSubmit={submitHandler}>
@@ -365,6 +359,10 @@ const sizeStockAvailable = (sz) => {
                       </button>
                     </Form>
                   </>
+                ) : (
+                  <Message>
+                    Only customers who've purchased this product can leave a review.
+                  </Message>
                 )}
               </div>
             </Col>

@@ -57,6 +57,12 @@ export const productsApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Product"],
     }),
+    checkCanReview: builder.query({
+  query: (productId) => ({
+    url: `${PRODUCTS_URL}/${productId}/can-review`,
+  }),
+  providesTags: ["Product"],
+}),
     deleteReview: builder.mutation({
       query: ({ productId, reviewId }) => ({
         url: `${PRODUCTS_URL}/${productId}/reviews/${reviewId}`, // Adjust the URL to your API endpoint
@@ -82,6 +88,7 @@ export const {
   useUploadProductImageMutation,
   useDeleteProductMutation,
   useCreateReviewMutation,
+  useCheckCanReviewQuery,
   useDeleteReviewMutation,
   useGetTopProductsQuery,
 } = productsApiSlice;
