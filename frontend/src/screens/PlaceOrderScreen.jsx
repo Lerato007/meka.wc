@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Row, Col } from "react-bootstrap";
@@ -8,6 +8,8 @@ import Message from "../components/Message";
 import CheckoutSteps from "../components/CheckoutSteps";
 import Loader from "../components/Loader";
 import { useCreateOrderMutation } from "../slices/ordersApiSlice";
+import { useCreatePayfastIdentifierMutation } from "../slices/PayfastApiSlice";
+import { loadPayfastEngine } from "../utils/payfast";
 import { clearCartItems } from "../slices/cartSlice";
 
 const PlaceOrderScreen = () => {
@@ -15,9 +17,10 @@ const PlaceOrderScreen = () => {
   const dispatch = useDispatch();
   const cart     = useSelector((state) => state.cart);
 
-  const [createOrder, { isLoading, error }] = useCreateOrderMutation();
+  const [createOrder, { isLoading, error }]   = useCreateOrderMutation();
+  const [createPayfastIdentifier]             = useCreatePayfastIdentifierMutation();
+  const [payingNow, setPayingNow]              = useState(false);
 
-  // Only guard against missing shipping — payment is always PayFast now
   useEffect(() => {
     if (!cart.shippingAddress.address) {
       navigate("/shipping");
@@ -29,7 +32,7 @@ const PlaceOrderScreen = () => {
       const res = await createOrder({
         orderItems:      cart.cartItems,
         shippingAddress: cart.shippingAddress,
-        paymentMethod:   "Credit Card",
+        paymentMethod:   "PayFast",
         itemsPrice:      cart.itemsPrice,
         shippingPrice:   cart.shippingPrice,
         vatPrice:        cart.vatPrice,
@@ -37,7 +40,28 @@ const PlaceOrderScreen = () => {
       }).unwrap();
 
       dispatch(clearCartItems());
-      navigate(`/order/${res._id}`);
+
+      // Immediately trigger the PayFast Onsite payment modal for the order just created
+      try {
+        setPayingNow(true);
+        const { uuid, mode } = await createPayfastIdentifier(res._id).unwrap();
+        await loadPayfastEngine(mode);
+
+        window.payfast_do_onsite_payment({ uuid }, (result) => {
+          setPayingNow(false);
+          if (result === true) {
+            toast.success("Payment successful! Confirming with PayFast...");
+          } else {
+            toast.info("Payment wasn't completed — you can pay again from your order page.");
+          }
+          navigate(`/order/${res._id}`);
+        });
+      } catch (payErr) {
+        setPayingNow(false);
+        toast.error(payErr?.data?.message || payErr.message || "Could not start payment");
+        // Order still exists (unpaid) — send them to the order page where they can retry
+        navigate(`/order/${res._id}`);
+      }
     } catch (err) {
       toast.error(err?.data?.message || err.message);
     }
@@ -71,17 +95,17 @@ const PlaceOrderScreen = () => {
             </div>
           </div>
 
-          {/* Payment — informational only */}
+          {/* Payment */}
           <div className="placeorder-section">
             <div className="placeorder-section__header">
               <p className="placeorder-section__title">Payment</p>
             </div>
             <div className="placeorder-section__body">
               <p style={{ fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-                Credit Card
+                PayFast
               </p>
               <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: "0.25rem 0 0" }}>
-                You will be redirected to PayFast to complete payment securely.
+                You'll be asked to pay securely via PayFast right after placing your order.
               </p>
             </div>
           </div>
@@ -154,13 +178,15 @@ const PlaceOrderScreen = () => {
 
             <button
               className="place-order-btn"
-              disabled={cart.cartItems.length === 0 || isLoading}
+              disabled={cart.cartItems.length === 0 || isLoading || payingNow}
               onClick={placeOrderHandler}
             >
-              Place Order & Pay <FaArrowRight size={12} style={{ marginLeft: "0.4rem" }} />
+              {isLoading ? "Placing order…" : payingNow ? "Opening PayFast…" : (
+                <>Place Order & Pay <FaArrowRight size={12} style={{ marginLeft: "0.4rem" }} /></>
+              )}
             </button>
 
-            {isLoading && <div style={{ padding: "0 1.25rem 1rem" }}><Loader /></div>}
+            {(isLoading || payingNow) && <div style={{ padding: "0 1.25rem 1rem" }}><Loader /></div>}
           </div>
         </Col>
       </Row>

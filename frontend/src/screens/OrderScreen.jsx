@@ -9,10 +9,14 @@ import {
 } from "react-icons/fa";
 import Message from "../components/Message";
 import Loader from "../components/Loader";
+import PayNowButton from "../components/PayNowButton";
 import {
   useGetOrderDetailsQuery,
   useDeliverOrderMutation,
+  useCancelOrderMutation,
 } from "../slices/ordersApiSlice";
+
+const CUSTOMER_CANCELLABLE_STATUSES = ["Processing", "Confirmed"];
 
 const STATUS_CONFIG = {
   Processing: { icon: <FaClock size={12} />,       color: "#f39c12" },
@@ -30,6 +34,7 @@ const OrderScreen = () => {
 
   const { data: order, refetch, isLoading, error } = useGetOrderDetailsQuery(orderId);
   const [deliverOrder, { isLoading: loadingDeliver }] = useDeliverOrderMutation();
+  const [cancelOrder,  { isLoading: loadingCancel }]  = useCancelOrderMutation();
   const { userInfo } = useSelector((state) => state.auth);
 
   const deliverHandler = async () => {
@@ -37,6 +42,19 @@ const OrderScreen = () => {
       await deliverOrder(orderId);
       refetch();
       toast.success("Order marked as delivered");
+    } catch (err) {
+      toast.error(err?.data?.message || err.message);
+    }
+  };
+
+  const cancelHandler = async () => {
+    if (!window.confirm("Are you sure you want to cancel this order? This cannot be undone.")) {
+      return;
+    }
+    try {
+      await cancelOrder({ orderId }).unwrap();
+      refetch();
+      toast.success("Order cancelled");
     } catch (err) {
       toast.error(err?.data?.message || err.message);
     }
@@ -257,9 +275,22 @@ const OrderScreen = () => {
                   background: "rgba(243,156,18,0.07)", border: "1.5px solid rgba(243,156,18,0.28)",
                   borderRadius: "var(--radius-md)", padding: "0.85rem 1rem",
                   color: "#784212", fontFamily: "var(--font-body)", fontSize: "0.88rem", lineHeight: 1.5,
+                  marginBottom: currentStatus !== "Cancelled" ? "0.85rem" : 0,
                 }}>
-                  Payment instructions will be sent to your email shortly.
+                  This order hasn't been paid yet.
                 </div>
+              )}
+
+              {!order.isPaid && currentStatus !== "Cancelled" && userInfo && order.user._id === userInfo._id && (
+                <PayNowButton
+                  orderId={order._id}
+                  onPaymentResult={() => {
+                    refetch();
+                    // ITN confirmation from PayFast can land a moment after the modal closes —
+                    // refetch again shortly after in case the first refetch was too early
+                    setTimeout(refetch, 3000);
+                  }}
+                />
               )}
             </div>
 
@@ -268,6 +299,22 @@ const OrderScreen = () => {
                 {loadingDeliver && <div style={{ padding: "0 1.25rem" }}><Loader size="sm" /></div>}
                 <button className="deliver-btn" onClick={deliverHandler} disabled={loadingDeliver}>
                   {loadingDeliver ? "Updating…" : "Mark as Delivered"}
+                </button>
+              </>
+            )}
+
+            {userInfo &&
+              (order.user._id === userInfo._id || userInfo.isAdmin) &&
+              CUSTOMER_CANCELLABLE_STATUSES.includes(currentStatus) && (
+              <>
+                {loadingCancel && <div style={{ padding: "0 1.25rem" }}><Loader size="sm" /></div>}
+                <button
+                  className="deliver-btn"
+                  style={{ backgroundColor: "transparent", color: "#e74c3c", border: "1.5px solid #e74c3c" }}
+                  onClick={cancelHandler}
+                  disabled={loadingCancel}
+                >
+                  {loadingCancel ? "Cancelling…" : "Cancel Order"}
                 </button>
               </>
             )}

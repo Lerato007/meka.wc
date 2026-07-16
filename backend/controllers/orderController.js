@@ -4,6 +4,27 @@ import Product from "../models/productModel.js";
 import { calcPrices } from "../utils/calcPrices.js";
 import { sendOrderShippedEmail } from "../utils/emailService.js";
 
+// Statuses a customer is still allowed to self-cancel from.
+// Once an order is Packed/Dispatched/Delivered it's too far along for self-service cancellation.
+const CUSTOMER_CANCELLABLE_STATUSES = ["Processing", "Confirmed"];
+
+// Restore per-size (or flat) stock for every item in an order.
+// Used whenever an order transitions into "Cancelled" so reserved stock isn't lost forever.
+const restoreStockForOrder = async (order) => {
+  for (const item of order.orderItems) {
+    const product = await Product.findById(item.product);
+    if (!product) continue; // product may have been deleted since order was placed
+
+    if (item.size && product.sizeStock) {
+      product.sizeStock[item.size] = (product.sizeStock[item.size] || 0) + item.qty;
+      // pre-save hook syncs countInStock automatically
+    } else {
+      product.countInStock = (product.countInStock || 0) + item.qty;
+    }
+    await product.save();
+  }
+};
+
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
@@ -154,6 +175,8 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     throw new Error(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
   }
 
+  const previousStatus = order.status;
+
   order.status = status;
   order.statusHistory.push({
     status,
@@ -165,6 +188,12 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (status === "Delivered") {
     order.isDelivered  = true;
     order.deliveredAt  = Date.now();
+  }
+
+  // Restore reserved stock when an order is cancelled — but only once,
+  // in case this endpoint is somehow called twice on an already-cancelled order.
+  if (status === "Cancelled" && previousStatus !== "Cancelled") {
+    await restoreStockForOrder(order);
   }
 
   const updatedOrder = await order.save();
@@ -210,6 +239,50 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
   res.json(updatedOrder);
 });
 
+// @desc    Cancel own order (customer self-service)
+// @route   PUT /api/orders/:id/cancel
+// @access  Private
+const cancelOrder = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id).populate("user", "name email");
+
+  if (!order) {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+
+  // Only the order's owner (or an admin) can cancel it
+  if (order.user._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+    res.status(403);
+    throw new Error("Not authorized to cancel this order");
+  }
+
+  if (order.status === "Cancelled") {
+    res.status(400);
+    throw new Error("This order is already cancelled");
+  }
+
+  if (!CUSTOMER_CANCELLABLE_STATUSES.includes(order.status)) {
+    res.status(400);
+    throw new Error(
+      `This order can no longer be cancelled — it's already ${order.status.toLowerCase()}. Please contact support.`
+    );
+  }
+
+  await restoreStockForOrder(order);
+
+  order.status = "Cancelled";
+  order.statusHistory.push({
+    status:    "Cancelled",
+    note:      req.body.reason || "Cancelled by customer",
+    updatedBy: req.user.isAdmin && req.user._id.toString() !== order.user._id.toString()
+      ? req.user.name
+      : order.user.name,
+  });
+
+  const updatedOrder = await order.save();
+  res.json(updatedOrder);
+});
+
 // @desc    Get all orders (admin)
 // @route   GET /api/orders
 // @access  Private/Admin
@@ -245,6 +318,7 @@ export {
   getMyOrders,
   getOrderById,
   updateOrderStatus,
+  cancelOrder,
   updateOrderToDelivered,
   getOrders,
   deleteOrder,

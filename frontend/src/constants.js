@@ -6,3 +6,4 @@ export const USERS_URL       = "/api/users";
 export const ORDERS_URL      = "/api/orders";
 export const UPLOADS_URL      = "/api/upload";
 export const WISHLIST_URL    = "/api/wishlist";
+export const PAYFAST_URL     = "/api/payfast";
