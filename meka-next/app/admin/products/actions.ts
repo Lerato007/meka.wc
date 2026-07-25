@@ -265,3 +265,150 @@ export async function createProduct(
 
   redirect("/admin/products")
 }
+
+export async function updateProduct(
+  productId: string,
+  previousState: ProductFormState,
+  formData: FormData
+): Promise<ProductFormState> {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return {
+      error: "You are not authorised to update products.",
+    }
+  }
+
+  if (!productId) {
+    return {
+      error: "The product could not be identified.",
+    }
+  }
+
+  const name = String(formData.get("name") ?? "").trim()
+
+  const slug = String(formData.get("slug") ?? "")
+    .trim()
+    .toLowerCase()
+
+  const description = String(
+    formData.get("description") ?? ""
+  ).trim()
+
+  const categoryId = String(
+    formData.get("categoryId") ?? ""
+  ).trim()
+
+  const priceValue = String(
+    formData.get("price") ?? ""
+  ).trim()
+
+  if (
+    !name ||
+    !slug ||
+    !description ||
+    !categoryId ||
+    !priceValue
+  ) {
+    return {
+      error: "Complete all required fields.",
+    }
+  }
+
+  const price = Number(priceValue)
+
+  if (!Number.isFinite(price) || price <= 0) {
+    return {
+      error: "Enter a valid product price greater than zero.",
+    }
+  }
+
+  const validSlug =
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
+
+  if (!validSlug) {
+    return {
+      error:
+        "The slug may only contain lowercase letters, numbers and hyphens.",
+    }
+  }
+
+  const existingProduct = await prisma.product.findUnique({
+    where: {
+      id: productId,
+    },
+    select: {
+      id: true,
+      slug: true,
+    },
+  })
+
+  if (!existingProduct) {
+    return {
+      error: "The product no longer exists.",
+    }
+  }
+
+  const category = await prisma.category.findUnique({
+    where: {
+      id: categoryId,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!category) {
+    return {
+      error: "The selected category does not exist.",
+    }
+  }
+
+  const productUsingSlug = await prisma.product.findFirst({
+    where: {
+      slug,
+      id: {
+        not: productId,
+      },
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (productUsingSlug) {
+    return {
+      error: "Another product already uses this slug.",
+    }
+  }
+
+  try {
+    await prisma.product.update({
+      where: {
+        id: productId,
+      },
+      data: {
+        name,
+        slug,
+        description,
+        price: new Prisma.Decimal(priceValue),
+        categoryId,
+      },
+    })
+  } catch (error) {
+    console.error("Product update failed:", error)
+
+    return {
+      error: "The product could not be updated. Please try again.",
+    }
+  }
+
+  revalidatePath("/")
+  revalidatePath("/admin/products")
+  revalidatePath(`/admin/products/${productId}/edit`)
+
+  revalidatePath(`/products/${existingProduct.slug}`)
+  revalidatePath(`/products/${slug}`)
+
+  redirect("/admin/products")
+}

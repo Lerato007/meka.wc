@@ -49,10 +49,10 @@ export default async function AdminPage() {
             />
 
             <AdminCard
-  title="Categories"
-  description="Create and manage product categories."
-  href="/admin/categories"
-/>
+              title="Categories"
+              description="Create, update and manage product categories."
+              href="/admin/categories"
+            />
 
             <AdminCard
               title="Orders"
@@ -63,7 +63,6 @@ export default async function AdminPage() {
               title="Customers"
               description="View registered customer accounts."
             />
-            
           </div>
         </div>
       </section>
@@ -84,7 +83,9 @@ function AdminCard({
 }: AdminCardProps) {
   const content = (
     <article className="h-full rounded-xl border border-gray-200 p-5 transition hover:border-gray-400 hover:bg-gray-50">
-      <h2 className="text-lg font-semibold text-gray-950">{title}</h2>
+      <h2 className="text-lg font-semibold text-gray-950">
+        {title}
+      </h2>
 
       <p className="mt-2 text-sm leading-6 text-gray-600">
         {description}
@@ -97,7 +98,7 @@ function AdminCard({
   }
 
   return (
-    <Link href={href} className="block">
+    <Link href={href} className="block h-full">
       {content}
     </Link>
   )

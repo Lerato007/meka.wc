@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react"
 
 import {
   createProduct,
+  updateProduct,
   type ProductFormState,
 } from "./actions"
 
@@ -12,8 +13,18 @@ type CategoryOption = {
   name: string
 }
 
+type EditableProduct = {
+  id: string
+  name: string
+  slug: string
+  description: string
+  price: string
+  categoryId: string
+}
+
 type ProductFormProps = {
   categories: CategoryOption[]
+  product?: EditableProduct
 }
 
 const initialState: ProductFormState = {}
@@ -29,15 +40,24 @@ function createSlug(value: string) {
 
 export default function ProductForm({
   categories,
+  product,
 }: ProductFormProps) {
+  const isEditing = Boolean(product)
+
+  const action = product
+    ? updateProduct.bind(null, product.id)
+    : createProduct
+
   const [state, formAction, isPending] = useActionState(
-    createProduct,
+    action,
     initialState
   )
 
-  const [name, setName] = useState("")
-  const [slug, setSlug] = useState("")
-  const [slugWasEdited, setSlugWasEdited] = useState(false)
+  const [name, setName] = useState(product?.name ?? "")
+  const [slug, setSlug] = useState(product?.slug ?? "")
+  const [slugWasEdited, setSlugWasEdited] = useState(
+    Boolean(product)
+  )
 
   useEffect(() => {
     if (!slugWasEdited) {
@@ -47,14 +67,14 @@ export default function ProductForm({
 
   return (
     <form action={formAction} className="space-y-6">
-      {state.error && (
+      {state.error ? (
         <div
           role="alert"
           className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
         >
           {state.error}
         </div>
-      )}
+      ) : null}
 
       <div>
         <label
@@ -116,6 +136,7 @@ export default function ProductForm({
           name="description"
           required
           rows={6}
+          defaultValue={product?.description ?? ""}
           placeholder="Describe the product, material and important details."
           className="w-full resize-y rounded-lg border border-gray-300 px-4 py-3 text-gray-950 outline-none transition focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
         />
@@ -134,7 +155,7 @@ export default function ProductForm({
             id="categoryId"
             name="categoryId"
             required
-            defaultValue=""
+            defaultValue={product?.categoryId ?? ""}
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-950 outline-none transition focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
           >
             <option value="" disabled>
@@ -142,7 +163,10 @@ export default function ProductForm({
             </option>
 
             {categories.map((category) => (
-              <option key={category.id} value={category.id}>
+              <option
+                key={category.id}
+                value={category.id}
+              >
                 {category.name}
               </option>
             ))}
@@ -169,6 +193,7 @@ export default function ProductForm({
               required
               min="0.01"
               step="0.01"
+              defaultValue={product?.price ?? ""}
               placeholder="499.99"
               className="w-full rounded-lg border border-gray-300 py-3 pl-9 pr-4 text-gray-950 outline-none transition focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
             />
@@ -176,27 +201,37 @@ export default function ProductForm({
         </div>
       </div>
 
-      <div>
-  <label
-    htmlFor="images"
-    className="mb-2 block text-sm font-medium text-gray-800"
-  >
-    Product images
-  </label>
+      {!isEditing ? (
+        <div>
+          <label
+            htmlFor="images"
+            className="mb-2 block text-sm font-medium text-gray-800"
+          >
+            Product images
+          </label>
 
-  <input
-    id="images"
-    name="images"
-    type="file"
-    accept="image/jpeg,image/png,image/webp"
-    multiple
-    className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-gray-800 hover:file:bg-gray-200"
-  />
+          <input
+            id="images"
+            name="images"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-gray-800 hover:file:bg-gray-200"
+          />
 
-  <p className="mt-2 text-sm text-gray-500">
-    Upload up to 5 JPG, PNG or WebP images. Maximum 5 MB per image.
-  </p>
-</div>
+          <p className="mt-2 text-sm text-gray-500">
+            Upload up to 5 JPG, PNG or WebP images. Maximum
+            5 MB per image.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+          <p className="text-sm text-gray-600">
+            Existing product images will not be changed during
+            this update.
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-end">
         <button
@@ -204,7 +239,13 @@ export default function ProductForm({
           disabled={isPending}
           className="rounded-lg bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? "Creating product..." : "Create product"}
+          {isPending
+            ? isEditing
+              ? "Saving changes..."
+              : "Creating product..."
+            : isEditing
+              ? "Save changes"
+              : "Create product"}
         </button>
       </div>
     </form>
