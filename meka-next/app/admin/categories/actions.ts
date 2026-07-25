@@ -180,3 +180,75 @@ export async function updateCategory(
 
   redirect("/admin/categories")
 }
+
+export type DeleteCategoryState = {
+  error?: string
+}
+
+export async function deleteCategory(
+  categoryId: string,
+  previousState: DeleteCategoryState
+): Promise<DeleteCategoryState> {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return {
+      error: "You are not authorised to delete categories.",
+    }
+  }
+
+  if (!categoryId) {
+    return {
+      error: "The category could not be identified.",
+    }
+  }
+
+  const category = await prisma.category.findUnique({
+    where: {
+      id: categoryId,
+    },
+    select: {
+      id: true,
+      name: true,
+      _count: {
+        select: {
+          products: true,
+        },
+      },
+    },
+  })
+
+  if (!category) {
+    return {
+      error: "The category no longer exists.",
+    }
+  }
+
+  if (category._count.products > 0) {
+    return {
+      error: `Cannot delete "${category.name}" because it contains ${category._count.products} ${
+        category._count.products === 1 ? "product" : "products"
+      }.`,
+    }
+  }
+
+  try {
+    await prisma.category.delete({
+      where: {
+        id: categoryId,
+      },
+    })
+  } catch (error) {
+    console.error("Category deletion failed:", error)
+
+    return {
+      error: "The category could not be deleted. Please try again.",
+    }
+  }
+
+  revalidatePath("/admin")
+  revalidatePath("/admin/categories")
+  revalidatePath("/admin/products/new")
+
+  redirect("/admin/categories")
+}

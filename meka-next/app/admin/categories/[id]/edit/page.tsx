@@ -5,6 +5,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
 import EditCategoryForm from "@/app/admin/categories/EditCategoryForm"
+import DeleteCategoryButton from "@/app/admin/categories/DeleteCategoryButton"
 
 type EditCategoryPageProps = {
   params: Promise<{
@@ -78,6 +79,24 @@ export default async function EditCategoryPage({
               name: category.name,
             }}
           />
+
+          <div className="mt-6 rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+  <h2 className="text-lg font-semibold text-gray-950">
+    Delete category
+  </h2>
+
+  <p className="mt-2 text-sm text-gray-600">
+    Categories containing products cannot be deleted.
+  </p>
+
+  <DeleteCategoryButton
+    category={{
+      id: category.id,
+      name: category.name,
+      productCount: category._count.products,
+    }}
+  />
+</div>
         </div>
       </section>
     </main>
