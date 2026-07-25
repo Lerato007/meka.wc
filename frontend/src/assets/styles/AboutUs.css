@@ -1,0 +1,40 @@
+.about-us {
+    background-color: #f9f9f9;
+    padding: 50px 0;
+  }
+  
+  .about-us h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .about-us h2 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #444;
+  }
+  
+  .about-us p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #555;
+  }
+  
+  .about-us img {
+    max-width: 420px; /* Restricts width to 300px */
+    max-height: 420px; /* Restricts height to 300px */
+    width: 100%; /* Makes images responsive */
+    height: auto; /* Maintains aspect ratio */
+    border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: block; /* Ensures proper alignment */
+    margin: 0 auto; /* Centers the images */
+  }
+  
+  .about-us img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  

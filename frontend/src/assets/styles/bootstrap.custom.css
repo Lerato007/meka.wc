@@ -1,0 +1,232 @@
+/* ============================================
+   MEKA.WC — Bootstrap Custom Overrides
+   Injects brand tokens into Bootstrap's CSS
+   variable system so all BS components
+   automatically pick up MEKA's palette.
+   ============================================ */
+
+@charset "UTF-8";
+
+:root,
+[data-bs-theme="light"] {
+
+  /* ---- Bootstrap color remaps to MEKA brand ---- */
+  --bs-primary:           #409118;
+  --bs-primary-rgb:       64, 145, 24;
+  --bs-primary-text:      #2e6810;
+  --bs-primary-bg-subtle: rgba(64, 145, 24, 0.08);
+  --bs-primary-border-subtle: rgba(64, 145, 24, 0.22);
+
+  --bs-secondary:         #4a4a45;
+  --bs-secondary-rgb:     74, 74, 69;
+
+  --bs-success:           #18bc9c;
+  --bs-success-rgb:       24, 188, 156;
+
+  --bs-danger:            #e74c3c;
+  --bs-danger-rgb:        231, 76, 60;
+
+  --bs-warning:           #f39c12;
+  --bs-warning-rgb:       243, 156, 18;
+
+  --bs-info:              #3498db;
+  --bs-info-rgb:          52, 152, 219;
+
+  --bs-light:             #f5f3ef;
+  --bs-light-rgb:         245, 243, 239;
+
+  --bs-dark:              #1a1a18;
+  --bs-dark-rgb:          26, 26, 24;
+
+  /* ---- Body ---- */
+  --bs-body-font-family:  'Space Grotesk', system-ui, sans-serif;
+  --bs-body-bg:           #f5f3ef;
+  --bs-body-bg-rgb:       245, 243, 239;
+  --bs-body-color:        #4a4a45;
+  --bs-body-color-rgb:    74, 74, 69;
+  --bs-body-font-size:    1rem;
+  --bs-body-font-weight:  400;
+  --bs-body-line-height:  1.6;
+
+  --bs-emphasis-color:    #1a1a18;
+  --bs-emphasis-color-rgb:26, 26, 24;
+
+  /* ---- Heading ---- */
+  --bs-heading-color:     #1a1a18;
+
+  /* ---- Grays remapped to warm off-white scale ---- */
+  --bs-gray-100: #f5f3ef;
+  --bs-gray-200: #eeecea;
+  --bs-gray-300: #dddbd6;
+  --bs-gray-400: #c5c3bc;
+  --bs-gray-500: #9a9890;
+  --bs-gray-600: #7a7a72;
+  --bs-gray-700: #5a5a52;
+  --bs-gray-800: #3a3a34;
+  --bs-gray-900: #1a1a18;
+
+  /* ---- Links ---- */
+  --bs-link-color:            #409118;
+  --bs-link-color-rgb:        64, 145, 24;
+  --bs-link-hover-color:      #2e6810;
+  --bs-link-hover-color-rgb:  46, 104, 16;
+  --bs-link-decoration:       none;
+
+  /* ---- Borders ---- */
+  --bs-border-color:              rgba(26, 26, 24, 0.13);
+  --bs-border-color-translucent:  rgba(26, 26, 24, 0.10);
+  --bs-border-radius:     6px;
+  --bs-border-radius-sm:  4px;
+  --bs-border-radius-lg:  10px;
+  --bs-border-radius-xl:  16px;
+  --bs-border-radius-2xl: 24px;
+  --bs-border-radius-pill:50rem;
+
+  /* ---- Surfaces ---- */
+  --bs-secondary-bg:      #eeecea;
+  --bs-secondary-bg-rgb:  238, 236, 234;
+  --bs-tertiary-bg:       #e8e6e2;
+  --bs-tertiary-bg-rgb:   232, 230, 226;
+
+  /* Secondary & tertiary text */
+  --bs-secondary-color:       rgba(74, 74, 69, 0.72);
+  --bs-secondary-color-rgb:   74, 74, 69;
+  --bs-tertiary-color:        rgba(74, 74, 69, 0.48);
+  --bs-tertiary-color-rgb:    74, 74, 69;
+
+  /* ---- Subtle backgrounds ---- */
+  --bs-success-bg-subtle:  rgba(24, 188, 156, 0.08);
+  --bs-info-bg-subtle:     rgba(52, 152, 219, 0.08);
+  --bs-warning-bg-subtle:  rgba(243, 156, 18, 0.08);
+  --bs-danger-bg-subtle:   rgba(231, 76, 60, 0.08);
+  --bs-light-bg-subtle:    #faf9f6;
+  --bs-dark-bg-subtle:     #3a3a34;
+
+  /* ---- Subtle text ---- */
+  --bs-success-text:  #0e7a63;
+  --bs-info-text:     #1a5f88;
+  --bs-warning-text:  #8a5a08;
+  --bs-danger-text:   #922b21;
+  --bs-light-text:    #7a7a72;
+  --bs-dark-text:     #3a3a34;
+
+  /* ---- Subtle borders ---- */
+  --bs-success-border-subtle: rgba(24, 188, 156, 0.25);
+  --bs-info-border-subtle:    rgba(52, 152, 219, 0.25);
+  --bs-warning-border-subtle: rgba(243, 156, 18, 0.30);
+  --bs-danger-border-subtle:  rgba(231, 76, 60, 0.22);
+  --bs-light-border-subtle:   rgba(26, 26, 24, 0.10);
+  --bs-dark-border-subtle:    rgba(26, 26, 24, 0.25);
+
+  /* ---- Form controls ---- */
+  --bs-form-control-bg: #faf9f6;
+
+  /* ---- Shadows ---- */
+  --bs-box-shadow:       0 4px 12px rgba(26, 26, 24, 0.08);
+  --bs-box-shadow-sm:    0 1px 3px rgba(26, 26, 24, 0.06);
+  --bs-box-shadow-lg:    0 12px 32px rgba(26, 26, 24, 0.10);
+  --bs-box-shadow-inset: inset 0 1px 3px rgba(26, 26, 24, 0.08);
+
+  /* ---- Breakpoints (unchanged) ---- */
+  --bs-breakpoint-xs:  0;
+  --bs-breakpoint-sm:  576px;
+  --bs-breakpoint-md:  768px;
+  --bs-breakpoint-lg:  992px;
+  --bs-breakpoint-xl:  1200px;
+  --bs-breakpoint-xxl: 1400px;
+}
+
+/* ---- Navbar active/hover dropdown ---- */
+.dropdown-menu {
+  --bs-dropdown-link-active-bg: #409118;
+}
+
+/* ---- Nav pills ---- */
+.nav-pills {
+  --bs-nav-pills-link-active-bg: #409118;
+}
+
+/* ---- Pagination ---- */
+.pagination {
+  --bs-pagination-active-bg:           #409118;
+  --bs-pagination-active-border-color: #409118;
+  --bs-pagination-color:               #409118;
+  --bs-pagination-focus-box-shadow:    0 0 0 3px rgba(64, 145, 24, 0.20);
+}
+
+/* ---- Progress bars ---- */
+.progress {
+  --bs-progress-bar-bg: #409118;
+  border-radius: 999px;
+  height: 6px;
+  background-color: rgba(64, 145, 24, 0.12);
+}
+
+/* ---- List group ---- */
+.list-group {
+  --bs-list-group-active-bg:           #409118;
+  --bs-list-group-active-border-color: #409118;
+}
+
+/* ---- Accordion ---- */
+.accordion {
+  --bs-accordion-active-color:  #2e6810;
+  --bs-accordion-active-bg:     rgba(64, 145, 24, 0.06);
+  --bs-accordion-btn-focus-box-shadow: 0 0 0 3px rgba(64, 145, 24, 0.18);
+}
+
+/* ---- Form check (checkbox / radio) ---- */
+.form-check-input:checked {
+  background-color: #409118;
+  border-color: #409118;
+}
+
+.form-check-input[type="checkbox"]:indeterminate {
+  background-color: #409118;
+  border-color: #409118;
+}
+
+/* ---- Range slider ---- */
+.form-range::-webkit-slider-thumb {
+  background-color: #409118;
+}
+.form-range::-moz-range-thumb {
+  background-color: #409118;
+}
+
+/* ---- Buttons primary override ---- */
+.btn-primary {
+  --bs-btn-color:               #fff;
+  --bs-btn-bg:                  #409118;
+  --bs-btn-border-color:        #409118;
+  --bs-btn-hover-color:         #fff;
+  --bs-btn-hover-bg:            #2e6810;
+  --bs-btn-hover-border-color:  #2e6810;
+  --bs-btn-active-color:        #fff;
+  --bs-btn-active-bg:           #245008;
+  --bs-btn-active-border-color: #245008;
+  --bs-btn-disabled-bg:         #409118;
+  --bs-btn-disabled-border-color: #409118;
+  --bs-btn-focus-shadow-rgb:    64, 145, 24;
+}
+
+.btn-outline-primary {
+  --bs-btn-color:               #409118;
+  --bs-btn-border-color:        #409118;
+  --bs-btn-hover-color:         #fff;
+  --bs-btn-hover-bg:            #409118;
+  --bs-btn-hover-border-color:  #409118;
+  --bs-btn-active-color:        #fff;
+  --bs-btn-active-bg:           #409118;
+  --bs-btn-active-border-color: #409118;
+  --bs-btn-focus-shadow-rgb:    64, 145, 24;
+  --bs-btn-disabled-color:      #409118;
+  --bs-btn-disabled-border-color: #409118;
+}
+
+/* ---- Bootstrap grid + utilities: keep as-is ---- */
+/* The full Bootstrap grid, flexbox, display, and spacing
+   utilities are preserved from your original file.
+   Only color tokens and component defaults are overridden above.
+   Import your full bootstrap.min.css BEFORE this file,
+   then this file applies MEKA brand tokens on top. */
