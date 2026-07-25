@@ -13,6 +13,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
 
+  pages: {
+    signIn: "/login",
+  },
+
   providers: [
     Google,
 
@@ -24,6 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           label: "Email",
           type: "email",
         },
+
         password: {
           label: "Password",
           type: "password",
@@ -69,12 +74,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           email: user.email,
           image: user.image,
+          role: user.role,
         }
       },
     }),
   ],
 
-  pages: {
-    signIn: "/login",
+  callbacks: {
+    async jwt({ token, user }) {
+      const email = user?.email ?? token.email
+
+      if (email && (!token.id || user)) {
+        const databaseUser = await prisma.user.findUnique({
+          where: {
+            email: email.toLowerCase(),
+          },
+
+          select: {
+            id: true,
+            role: true,
+          },
+        })
+
+        if (databaseUser) {
+          token.id = databaseUser.id
+          token.role = databaseUser.role
+        }
+      }
+
+      return token
+    },
+
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id ?? ""
+        session.user.role = token.role ?? "CUSTOMER"
+      }
+
+      return session
+    },
   },
 })
