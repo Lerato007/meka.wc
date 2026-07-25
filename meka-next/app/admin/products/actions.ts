@@ -412,3 +412,59 @@ export async function updateProduct(
 
   redirect("/admin/products")
 }
+
+export async function deleteProductImage(imageId: string) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    throw new Error("You are not authorised.")
+  }
+
+  const image = await prisma.productImage.findUnique({
+    where: {
+      id: imageId,
+    },
+    include: {
+      product: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  })
+
+  if (!image) {
+    throw new Error("Image not found.")
+  }
+
+  const bucket =
+    process.env.SUPABASE_STORAGE_BUCKET || "product-images"
+
+  const publicUrlPrefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/`
+
+  let storagePath = ""
+
+  if (image.url.startsWith(publicUrlPrefix)) {
+    storagePath = image.url.replace(publicUrlPrefix, "")
+  }
+
+  if (storagePath) {
+    const { error } = await supabaseAdmin.storage
+      .from(bucket)
+      .remove([storagePath])
+
+    if (error) {
+      console.error(error)
+    }
+  }
+
+  await prisma.productImage.delete({
+    where: {
+      id: image.id,
+    },
+  })
+
+  revalidatePath(
+    `/admin/products/${image.product.id}/edit`
+  )
+}

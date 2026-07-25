@@ -1,4 +1,5 @@
 import Image from "next/image"
+import DeleteImageButton from "./DeleteImageButton"
 
 type ProductImage = {
   id: string
@@ -44,16 +45,18 @@ export default function ImageGallery({
             </div>
 
             <div className="mt-3">
-              <p className="text-xs text-gray-500">
-                Image {index + 1}
-              </p>
+  <p className="text-xs text-gray-500">
+    Image {index + 1}
+  </p>
 
-              {index === 0 && (
-                <span className="mt-2 inline-block rounded-full bg-black px-3 py-1 text-xs font-medium text-white">
-                  Primary Image
-                </span>
-              )}
-            </div>
+  {index === 0 && (
+    <span className="mt-2 inline-block rounded-full bg-black px-3 py-1 text-xs font-medium text-white">
+      Primary Image
+    </span>
+  )}
+
+  <DeleteImageButton imageId={image.id} />
+</div>
           </div>
         ))}
       </div>
