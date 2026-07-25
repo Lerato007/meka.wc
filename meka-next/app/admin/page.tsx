@@ -49,6 +49,12 @@ export default async function AdminPage() {
             />
 
             <AdminCard
+  title="Categories"
+  description="Create and manage product categories."
+  href="/admin/categories"
+/>
+
+            <AdminCard
               title="Orders"
               description="Review customer orders and fulfilment."
             />
@@ -57,6 +63,7 @@ export default async function AdminPage() {
               title="Customers"
               description="View registered customer accounts."
             />
+            
           </div>
         </div>
       </section>
