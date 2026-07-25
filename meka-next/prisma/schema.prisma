@@ -60,12 +60,16 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  password      String?
-  role          Role      @default(CUSTOMER)
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+
+  password String?
+
+  role Role @default(CUSTOMER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+  sessions Session[]
 }
 
 model Account {
