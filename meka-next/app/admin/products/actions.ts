@@ -8,6 +8,10 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { supabaseAdmin } from "@/lib/supabase-admin"
 
+export type ProductImageFormState = {
+  error?: string
+  success?: string
+}
 export type ProductFormState = {
   error?: string
 }
@@ -32,6 +36,85 @@ function sanitiseFileName(fileName: string) {
     .replace(/^-+|-+$/g, "")
 
   return `${baseName || "image"}.${extension}`
+}
+
+async function uploadProductImages(
+  productId: string,
+  productName: string,
+  images: File[],
+  startingOrder = 0
+) {
+  const bucket =
+    process.env.SUPABASE_STORAGE_BUCKET || "product-images"
+
+  const uploadedPaths: string[] = []
+
+  const uploadedImages: {
+    url: string
+    alt: string
+    order: number
+  }[] = []
+
+  try {
+    for (const [index, image] of images.entries()) {
+      const safeName = sanitiseFileName(image.name)
+
+      const uniqueFileName =
+        `${crypto.randomUUID()}-${safeName}`
+
+      const storagePath =
+        `products/${productId}/${uniqueFileName}`
+
+      const arrayBuffer = await image.arrayBuffer()
+
+      const { error: uploadError } =
+        await supabaseAdmin.storage
+          .from(bucket)
+          .upload(storagePath, arrayBuffer, {
+            contentType: image.type,
+            cacheControl: "3600",
+            upsert: false,
+          })
+
+      if (uploadError) {
+        throw new Error(
+          `Failed to upload ${image.name}: ${uploadError.message}`
+        )
+      }
+
+      uploadedPaths.push(storagePath)
+
+      const { data: publicUrlData } =
+        supabaseAdmin.storage
+          .from(bucket)
+          .getPublicUrl(storagePath)
+
+      uploadedImages.push({
+        url: publicUrlData.publicUrl,
+        alt: `${productName} image ${startingOrder + index + 1}`,
+        order: startingOrder + index,
+      })
+    }
+
+    if (uploadedImages.length > 0) {
+      await prisma.productImage.createMany({
+        data: uploadedImages.map((image) => ({
+          productId,
+          url: image.url,
+          alt: image.alt,
+          order: image.order,
+        })),
+      })
+    }
+  } catch (error) {
+    if (uploadedPaths.length > 0) {
+      await supabaseAdmin.storage
+        .from(bucket)
+        .remove(uploadedPaths)
+    }
+
+    throw error
+  }
 }
 
 export async function createProduct(
@@ -144,126 +227,60 @@ export async function createProduct(
     }
   }
 
-  const bucket =
-    process.env.SUPABASE_STORAGE_BUCKET || "product-images"
-
   let productId: string | null = null
-  const uploadedPaths: string[] = []
 
-  try {
-    const product = await prisma.product.create({
-      data: {
-        name,
-        slug,
-        description,
-        price: new Prisma.Decimal(priceValue),
-        categoryId,
-      },
-      select: {
-        id: true,
-      },
-    })
+try {
+  const product = await prisma.product.create({
+    data: {
+      name,
+      slug,
+      description,
+      price: new Prisma.Decimal(priceValue),
+      categoryId,
+    },
+    select: {
+      id: true,
+    },
+  })
 
-    productId = product.id
+  productId = product.id
 
-    const uploadedImages: {
-      url: string
-      alt: string
-      order: number
-    }[] = []
+  await uploadProductImages(
+    product.id,
+    name,
+    images
+  )
+} catch (error) {
+  console.error("Product creation failed:", error)
 
-    for (const [index, image] of images.entries()) {
-      const safeName = sanitiseFileName(image.name)
-
-      const uniqueFileName = `${crypto.randomUUID()}-${safeName}`
-
-      const storagePath =
-        `products/${product.id}/${uniqueFileName}`
-
-      const arrayBuffer = await image.arrayBuffer()
-
-      const { error: uploadError } =
-        await supabaseAdmin.storage
-          .from(bucket)
-          .upload(storagePath, arrayBuffer, {
-            contentType: image.type,
-            cacheControl: "3600",
-            upsert: false,
-          })
-
-      if (uploadError) {
-        throw new Error(
-          `Failed to upload ${image.name}: ${uploadError.message}`
-        )
-      }
-
-      uploadedPaths.push(storagePath)
-
-      const { data: publicUrlData } =
-        supabaseAdmin.storage
-          .from(bucket)
-          .getPublicUrl(storagePath)
-
-      uploadedImages.push({
-        url: publicUrlData.publicUrl,
-        alt: `${name} image ${index + 1}`,
-        order: index,
-      })
-    }
-
-    if (uploadedImages.length > 0) {
-      await prisma.productImage.createMany({
-        data: uploadedImages.map((image) => ({
-          productId: product.id,
-          url: image.url,
-          alt: image.alt,
-          order: image.order,
-        })),
-      })
-    }
-  } catch (error) {
-    console.error("Product creation failed:", error)
-
-    if (uploadedPaths.length > 0) {
-      const { error: removalError } =
-        await supabaseAdmin.storage
-          .from(bucket)
-          .remove(uploadedPaths)
-
-      if (removalError) {
-        console.error(
-          "Failed to remove uploaded files:",
-          removalError
-        )
-      }
-    }
-
-    if (productId) {
-      await prisma.product.delete({
+  if (productId) {
+    await prisma.product
+      .delete({
         where: {
           id: productId,
         },
-      }).catch((deleteError) => {
+      })
+      .catch((deleteError) => {
         console.error(
           "Failed to remove incomplete product:",
           deleteError
         )
       })
-    }
-
-    return {
-      error:
-        error instanceof Error
-          ? error.message
-          : "The product could not be created. Please try again.",
-    }
   }
 
-  revalidatePath("/admin/products")
-  revalidatePath("/")
-  revalidatePath(`/products/${slug}`)
+  return {
+    error:
+      error instanceof Error
+        ? error.message
+        : "The product could not be created. Please try again.",
+  }
+}
 
-  redirect("/admin/products")
+revalidatePath("/admin/products")
+revalidatePath("/")
+revalidatePath(`/products/${slug}`)
+
+redirect("/admin/products")
 }
 
 export async function updateProduct(
@@ -411,6 +428,137 @@ export async function updateProduct(
   revalidatePath(`/products/${slug}`)
 
   redirect("/admin/products")
+}
+
+export async function addProductImages(
+  productId: string,
+  previousState: ProductImageFormState,
+  formData: FormData
+): Promise<ProductImageFormState> {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return {
+      error: "You are not authorised to upload product images.",
+    }
+  }
+
+  if (!productId) {
+    return {
+      error: "The product could not be identified.",
+    }
+  }
+
+  const images = formData
+    .getAll("images")
+    .filter(
+      (entry): entry is File =>
+        entry instanceof File && entry.size > 0
+    )
+
+  if (images.length === 0) {
+    return {
+      error: "Select at least one image.",
+    }
+  }
+
+  const product = await prisma.product.findUnique({
+    where: {
+      id: productId,
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      images: {
+        orderBy: {
+          order: "desc",
+        },
+        take: 1,
+        select: {
+          order: true,
+        },
+      },
+      _count: {
+        select: {
+          images: true,
+        },
+      },
+    },
+  })
+
+  if (!product) {
+    return {
+      error: "The product no longer exists.",
+    }
+  }
+
+  const remainingImageSlots =
+    maximumImageCount - product._count.images
+
+  if (remainingImageSlots <= 0) {
+    return {
+      error: `This product already has the maximum of ${maximumImageCount} images.`,
+    }
+  }
+
+  if (images.length > remainingImageSlots) {
+    return {
+      error: `You can only upload ${remainingImageSlots} more ${
+        remainingImageSlots === 1 ? "image" : "images"
+      } for this product.`,
+    }
+  }
+
+  for (const image of images) {
+    if (!allowedImageTypes.includes(image.type)) {
+      return {
+        error: `${image.name} is not a supported image format.`,
+      }
+    }
+
+    if (image.size > maximumImageSize) {
+      return {
+        error: `${image.name} is larger than 5 MB.`,
+      }
+    }
+  }
+
+  const highestCurrentOrder =
+    product.images[0]?.order ?? -1
+
+  const startingOrder = highestCurrentOrder + 1
+
+  try {
+    await uploadProductImages(
+      product.id,
+      product.name,
+      images,
+      startingOrder
+    )
+  } catch (error) {
+    console.error("Additional image upload failed:", error)
+
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "The images could not be uploaded. Please try again.",
+    }
+  }
+
+  revalidatePath("/admin/products")
+  revalidatePath(`/admin/products/${product.id}/edit`)
+  revalidatePath(`/products/${product.slug}`)
+  revalidatePath("/")
+
+  return {
+    success: `${
+      images.length === 1
+        ? "1 image was"
+        : `${images.length} images were`
+    } uploaded successfully.`,
+  }
 }
 
 export async function deleteProductImage(imageId: string) {

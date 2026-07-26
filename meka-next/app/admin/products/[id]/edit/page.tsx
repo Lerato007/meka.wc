@@ -4,8 +4,9 @@ import { notFound, redirect } from "next/navigation"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
-import ProductForm from "@/app/admin/products/ProductForm"
+import AddProductImagesForm from "@/app/admin/products/AddProductImagesForm"
 import ImageGallery from "@/app/admin/products/ImageGallery"
+import ProductForm from "@/app/admin/products/ProductForm"
 
 type EditProductPageProps = {
   params: Promise<{
@@ -28,45 +29,42 @@ export default async function EditProductPage({
 
   const { id } = await params
 
-  
-
   const [product, categories] = await Promise.all([
-  prisma.product.findUnique({
-    where: {
-      id,
-    },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      price: true,
-      categoryId: true,
-
-      images: {
-        orderBy: {
-          order: "asc",
-        },
-        select: {
-          id: true,
-          url: true,
-          alt: true,
-          order: true,
+    prisma.product.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        price: true,
+        categoryId: true,
+        images: {
+          orderBy: {
+            order: "asc",
+          },
+          select: {
+            id: true,
+            url: true,
+            alt: true,
+            order: true,
+          },
         },
       },
-    },
-  }),
+    }),
 
-  prisma.category.findMany({
-    orderBy: {
-      name: "asc",
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  }),
-])
+    prisma.category.findMany({
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
+  ])
 
   if (!product) {
     notFound()
@@ -94,20 +92,25 @@ export default async function EditProductPage({
 
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 sm:p-8">
           <div className="space-y-10">
-  <ImageGallery images={product.images} />
+            <ImageGallery images={product.images} />
 
-  <ProductForm
-    categories={categories}
-    product={{
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description,
-      price: product.price.toString(),
-      categoryId: product.categoryId,
-    }}
-  />
-</div>
+            <AddProductImagesForm
+              productId={product.id}
+              currentImageCount={product.images.length}
+            />
+
+            <ProductForm
+              categories={categories}
+              product={{
+                id: product.id,
+                name: product.name,
+                slug: product.slug,
+                description: product.description,
+                price: product.price.toString(),
+                categoryId: product.categoryId,
+              }}
+            />
+          </div>
         </div>
       </section>
     </main>
