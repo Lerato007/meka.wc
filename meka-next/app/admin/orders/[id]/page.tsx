@@ -4,18 +4,12 @@ import { notFound, redirect } from "next/navigation"
 import { auth } from "@/auth"
 import OrderStatusForm from "@/components/admin/OrderStatusForm"
 import { prisma } from "@/lib/prisma"
+import { formatPrice } from "@/lib/formatPrice"
 
 type PageProps = {
   params: Promise<{
     id: string
   }>
-}
-
-function formatPrice(value: number | string) {
-  return new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-  }).format(Number(value))
 }
 
 function formatDate(date: Date) {

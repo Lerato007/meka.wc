@@ -2,18 +2,12 @@ import { notFound } from "next/navigation"
 
 import { prisma } from "@/lib/prisma"
 import PayFastPaymentButton from "@/components/payment/PayFastPaymentButton"
+import { formatPrice } from "@/lib/formatPrice"
 
 type PaymentPageProps = {
   params: Promise<{
     orderId: string
   }>
-}
-
-function formatPrice(value: number | string) {
-  return new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-  }).format(Number(value))
 }
 
 export default async function PaymentPage({

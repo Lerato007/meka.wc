@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 
 import { auth } from "@/auth"
+import { formatPrice } from "@/lib/formatPrice"
 
 const session = await auth()
 
@@ -16,13 +17,6 @@ if (session.user.role !== "ADMIN") {
 }
 
 export const dynamic = "force-dynamic"
-
-function formatPrice(value: number | string) {
-  return new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-  }).format(Number(value))
-}
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-ZA", {

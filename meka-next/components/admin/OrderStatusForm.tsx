@@ -2,19 +2,10 @@
 
 import { type FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
-
-type OrderStatus =
-  | "PENDING"
-  | "PROCESSING"
-  | "SHIPPED"
-  | "DELIVERED"
-  | "CANCELLED"
-
-type PaymentStatus =
-  | "PENDING"
-  | "PAID"
-  | "FAILED"
-  | "REFUNDED"
+import {
+  OrderStatus,
+  PaymentStatus,
+} from "@prisma/client"
 
 type OrderStatusFormProps = {
   orderId: string
