@@ -177,17 +177,18 @@ export default function CartPage() {
               </span>
             </div>
 
-            <p className="mt-4 text-sm text-gray-500">
-              Shipping will be calculated during checkout.
-            </p>
+            <p className="mt-4 text-sm leading-6 text-gray-500">
+  Shipping is calculated during checkout.
+  <br />
+  Orders over <strong>R500</strong> qualify for free shipping.
+</p>
 
-            <button
-              type="button"
-              disabled
-              className="mt-6 w-full cursor-not-allowed rounded-xl bg-gray-300 px-6 py-3 font-semibold text-gray-600"
-            >
-              Checkout
-            </button>
+            <Link
+  href="/checkout"
+  className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white transition hover:bg-gray-800"
+>
+  Proceed to checkout
+</Link>
 
             <Link
               href="/products"
