@@ -171,12 +171,8 @@ const [submitError, setSubmitError] =
     clearCart()
 
     router.push(
-      `/orders/confirmation?orderNumber=${encodeURIComponent(
-        result.order.orderNumber
-      )}&total=${encodeURIComponent(
-        result.order.total.toString()
-      )}`
-    )
+  `/payment/${encodeURIComponent(result.order.id)}`
+)
   } catch (error) {
     console.error("Checkout failed:", error)
 
@@ -540,7 +536,7 @@ const [submitError, setSubmitError] =
             >
               {isSubmitting
                 ? "Creating order..."
-                : "Place Order"}
+                : "Continue to payment"}
             </button>
 
             <Link
