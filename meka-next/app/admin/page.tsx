@@ -55,9 +55,10 @@ export default async function AdminPage() {
             />
 
             <AdminCard
-              title="Orders"
-              description="Review customer orders and fulfilment."
-            />
+  title="Orders"
+  description="Review customer orders and fulfilment."
+  href="/admin/orders"
+/>
 
             <AdminCard
               title="Customers"
