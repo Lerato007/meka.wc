@@ -1,77 +1,123 @@
- import { getProductBySlug } from "@/lib/services/product-service"
+import Link from "next/link"
 import { notFound } from "next/navigation"
-import Image from "next/image"
 
+import { getProductBySlug } from "@/lib/services/product-service"
 
+import ProductImageGallery from "./ProductImageGallery"
+import AddToCartButton from "./AddToCartButton"
 
-export default async function ProductDetailPage({
+type ProductDetailsPageProps = {
+  params: Promise<{
+    slug: string
+  }>
+}
+
+export default async function ProductDetailsPage({
   params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
-
+}: ProductDetailsPageProps) {
   const { slug } = await params
 
   const product = await getProductBySlug(slug)
-
 
   if (!product) {
     notFound()
   }
 
+  const formattedPrice = new Intl.NumberFormat("en-ZA", {
+    style: "currency",
+    currency: "ZAR",
+  }).format(Number(product.price))
 
   return (
-    <main className="max-w-5xl mx-auto p-8">
-
-      <div className="grid md:grid-cols-2 gap-8">
-
-
-        <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
-          <Image
-src={product.images[0].url}
-alt={product.name}
-width={600}
-height={600}
-/>
-        </div>
-
-
-        <div>
-
-          <h1 className="text-4xl font-bold">
-            {product.name}
-          </h1>
-
-
-          <p className="mt-4 text-gray-600">
-            {product.description}
-          </p>
-
-
-          <p className="mt-6 text-2xl font-bold">
-            R {Number(product.price).toFixed(2)}
-          </p>
-
-
-          <p className="mt-3">
-            Category:
-            <span className="ml-2 font-medium">
-              {product.category.name}
-            </span>
-          </p>
-
-
-          <button
-            className="mt-8 bg-black text-white px-6 py-3 rounded-lg"
+    <section className="min-h-screen bg-gray-50 px-4 py-10">
+      <div className="mx-auto max-w-7xl">
+        <nav className="mb-8 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+          <Link
+            href="/products"
+            className="transition hover:text-gray-950"
           >
-            Add to Cart
-          </button>
+            Products
+          </Link>
 
+          <span aria-hidden="true">/</span>
 
+          <span className="text-gray-950">
+            {product.name}
+          </span>
+        </nav>
+
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
+          <ProductImageGallery
+            images={product.images}
+            productName={product.name}
+          />
+
+          <div className="lg:py-6">
+            <p className="text-sm font-semibold uppercase tracking-widest text-gray-500">
+              {product.category.name}
+            </p>
+
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-gray-950 sm:text-5xl">
+              {product.name}
+            </h1>
+
+            <p className="mt-6 text-3xl font-bold text-gray-950">
+              {formattedPrice}
+            </p>
+
+            <div className="my-8 border-t border-gray-200" />
+
+            <div>
+              <h2 className="text-lg font-semibold text-gray-950">
+                Product description
+              </h2>
+
+              <p className="mt-4 whitespace-pre-line leading-7 text-gray-600">
+                {product.description}
+              </p>
+            </div>
+
+            <div className="mt-10 rounded-xl bg-white p-5 ring-1 ring-gray-200">
+              <p className="font-semibold text-gray-950">
+                Interested in this product?
+              </p>
+
+              <p className="mt-1 text-sm text-gray-600">
+                Cart and checkout functionality will be added next.
+              </p>
+
+              <div className="mt-10 rounded-xl bg-white p-5 ring-1 ring-gray-200">
+  <p className="font-semibold text-gray-950">
+    Add this product to your cart
+  </p>
+
+  <p className="mt-1 text-sm text-gray-600">
+    You can review quantities before checkout.
+  </p>
+
+  <div className="mt-5">
+    <AddToCartButton
+      product={{
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: Number(product.price),
+        imageUrl: product.images[0]?.url ?? null,
+      }}
+    />
+  </div>
+</div>
+            </div>
+
+            <Link
+              href="/products"
+              className="mt-8 inline-flex text-sm font-semibold text-gray-700 transition hover:text-gray-950"
+            >
+              ← Back to all products
+            </Link>
+          </div>
         </div>
-
       </div>
-
-    </main>
+    </section>
   )
 }

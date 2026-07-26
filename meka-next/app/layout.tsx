@@ -1,5 +1,9 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+
+import { CartProvider } from "@/components/cart/CartProvider"
+import Header from "@/components/layout/Header"
+
 import "./globals.css"
 
 const geistSans = Geist({
@@ -25,13 +29,23 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode
 }>
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({
+  children,
+}: RootLayoutProps) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} bg-gray-50 antialiased`}
       >
-        {children}
+        <CartProvider>
+          <div className="flex min-h-screen flex-col">
+            <Header />
+
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
+        </CartProvider>
       </body>
     </html>
   )
