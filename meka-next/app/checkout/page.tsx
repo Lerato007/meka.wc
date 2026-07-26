@@ -22,6 +22,7 @@ import { useCart } from "@/components/cart/CartProvider"
 import Input from "@/components/ui/Input"
 import Label from "@/components/ui/Label"
 import Select from "@/components/ui/Select"
+import { useRouter } from "next/navigation"
 
 const SHIPPING_FEE = 100
 const FREE_SHIPPING_THRESHOLD = 500
@@ -34,16 +35,26 @@ function formatPrice(value: number) {
 }
 
 export default function CheckoutPage() {
-  const { items, itemCount, subtotal } = useCart()
+  const {
+  items,
+  itemCount,
+  subtotal,
+  clearCart,
+} = useCart()
+
+const router = useRouter()
 
   const [form, setForm] =
-    useState<CheckoutForm>(initialCheckoutForm)
+  useState<CheckoutForm>(initialCheckoutForm)
 
-  const [errors, setErrors] =
-    useState<CheckoutFormErrors>({})
+const [errors, setErrors] =
+  useState<CheckoutFormErrors>({})
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false)
+const [isSubmitting, setIsSubmitting] =
+  useState(false)
+
+const [submitError, setSubmitError] =
+  useState("")
 
   const shipping = useMemo(() => {
     if (
@@ -91,51 +102,93 @@ export default function CheckoutPage() {
     updateField(field, event.target.value)
   }
 
-  function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault()
+  async function handleSubmit(
+  event: FormEvent<HTMLFormElement>
+) {
+  event.preventDefault()
 
-    const validationErrors =
-      validateCheckoutForm(form)
+  setSubmitError("")
 
-    setErrors(validationErrors)
+  const validationErrors =
+    validateCheckoutForm(form)
 
-    if (hasCheckoutErrors(validationErrors)) {
-      const firstInvalidField =
-        Object.keys(validationErrors)[0]
+  setErrors(validationErrors)
 
-      document
-        .getElementById(firstInvalidField)
-        ?.focus()
+  if (hasCheckoutErrors(validationErrors)) {
+    const firstInvalidField =
+      Object.keys(validationErrors)[0]
 
-      return
-    }
+    document
+      .getElementById(firstInvalidField)
+      ?.focus()
 
-    setIsSubmitting(true)
-
-    const checkoutPayload = {
-      customer: {
-        ...form,
-        email: form.email.trim().toLowerCase(),
-        phone: form.phone.replace(/[\s()-]/g, ""),
-      },
-      items,
-      subtotal,
-      shipping,
-      total,
-    }
-
-    console.log("Valid checkout payload:", checkoutPayload)
-
-    window.setTimeout(() => {
-      setIsSubmitting(false)
-
-      alert(
-        "Checkout details are valid. The next step will save the order."
-      )
-    }, 500)
+    return
   }
+
+  if (items.length === 0) {
+    setSubmitError(
+      "Your cart is empty. Add a product before checking out."
+    )
+
+    return
+  }
+
+  setIsSubmitting(true)
+
+  try {
+    const response = await fetch("/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone,
+        addressLine1: form.addressLine1,
+        addressLine2: form.addressLine2,
+        city: form.city,
+        province: form.province,
+        postalCode: form.postalCode,
+
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      }),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message ||
+          "We could not create your order."
+      )
+    }
+
+    clearCart()
+
+    router.push(
+      `/orders/confirmation?orderNumber=${encodeURIComponent(
+        result.order.orderNumber
+      )}&total=${encodeURIComponent(
+        result.order.total.toString()
+      )}`
+    )
+  } catch (error) {
+    console.error("Checkout failed:", error)
+
+    setSubmitError(
+      error instanceof Error
+        ? error.message
+        : "We could not create your order. Please try again."
+    )
+  } finally {
+    setIsSubmitting(false)
+  }
+}
 
   if (items.length === 0) {
     return (
@@ -471,14 +524,23 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {submitError && (
+  <div
+    role="alert"
+    className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+  >
+    {submitError}
+  </div>
+)}
+
             <button
               type="submit"
               disabled={isSubmitting}
               className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-gray-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               {isSubmitting
-                ? "Processing..."
-                : "Continue to payment"}
+                ? "Creating order..."
+                : "Place Order"}
             </button>
 
             <Link
