@@ -2,8 +2,22 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { FormEvent, useMemo, useState } from "react"
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useMemo,
+  useState,
+} from "react"
 
+import {
+  initialCheckoutForm,
+  type CheckoutForm,
+  type CheckoutFormErrors,
+} from "@/app/checkout/types"
+import {
+  hasCheckoutErrors,
+  validateCheckoutForm,
+} from "@/app/checkout/validation"
 import { useCart } from "@/components/cart/CartProvider"
 import Input from "@/components/ui/Input"
 import Label from "@/components/ui/Label"
@@ -11,30 +25,6 @@ import Select from "@/components/ui/Select"
 
 const SHIPPING_FEE = 100
 const FREE_SHIPPING_THRESHOLD = 500
-
-type CheckoutForm = {
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  addressLine1: string
-  addressLine2: string
-  city: string
-  province: string
-  postalCode: string
-}
-
-const initialForm: CheckoutForm = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  addressLine1: "",
-  addressLine2: "",
-  city: "",
-  province: "",
-  postalCode: "",
-}
 
 function formatPrice(value: number) {
   return new Intl.NumberFormat("en-ZA", {
@@ -46,11 +36,20 @@ function formatPrice(value: number) {
 export default function CheckoutPage() {
   const { items, itemCount, subtotal } = useCart()
 
-  const [form, setForm] = useState<CheckoutForm>(initialForm)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [form, setForm] =
+    useState<CheckoutForm>(initialCheckoutForm)
+
+  const [errors, setErrors] =
+    useState<CheckoutFormErrors>({})
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false)
 
   const shipping = useMemo(() => {
-    if (subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD) {
+    if (
+      subtotal === 0 ||
+      subtotal >= FREE_SHIPPING_THRESHOLD
+    ) {
       return 0
     }
 
@@ -59,28 +58,82 @@ export default function CheckoutPage() {
 
   const total = subtotal + shipping
 
-  function updateField(field: keyof CheckoutForm, value: string) {
+  function updateField(
+    field: keyof CheckoutForm,
+    value: string
+  ) {
     setForm((currentForm) => ({
       ...currentForm,
       [field]: value,
     }))
+
+    if (errors[field]) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        [field]: undefined,
+      }))
+    }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleInputChange(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const field = event.target.name as keyof CheckoutForm
+
+    updateField(field, event.target.value)
+  }
+
+  function handleSelectChange(
+    event: ChangeEvent<HTMLSelectElement>
+  ) {
+    const field = event.target.name as keyof CheckoutForm
+
+    updateField(field, event.target.value)
+  }
+
+  function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault()
+
+    const validationErrors =
+      validateCheckoutForm(form)
+
+    setErrors(validationErrors)
+
+    if (hasCheckoutErrors(validationErrors)) {
+      const firstInvalidField =
+        Object.keys(validationErrors)[0]
+
+      document
+        .getElementById(firstInvalidField)
+        ?.focus()
+
+      return
+    }
+
     setIsSubmitting(true)
 
-    console.log({
-      customer: form,
+    const checkoutPayload = {
+      customer: {
+        ...form,
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.replace(/[\s()-]/g, ""),
+      },
       items,
       subtotal,
       shipping,
       total,
-    })
+    }
 
-    setTimeout(() => {
+    console.log("Valid checkout payload:", checkoutPayload)
+
+    window.setTimeout(() => {
       setIsSubmitting(false)
-      alert("Checkout form submitted successfully.")
+
+      alert(
+        "Checkout details are valid. The next step will save the order."
+      )
     }, 500)
   }
 
@@ -93,7 +146,8 @@ export default function CheckoutPage() {
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-gray-600">
-            Add products to your cart before continuing to checkout.
+            Add products to your cart before continuing to
+            checkout.
           </p>
 
           <Link
@@ -112,7 +166,8 @@ export default function CheckoutPage() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <p className="text-sm font-medium text-gray-500">
-            {itemCount} {itemCount === 1 ? "item" : "items"}
+            {itemCount}{" "}
+            {itemCount === 1 ? "item" : "items"}
           </p>
 
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-gray-900">
@@ -122,6 +177,7 @@ export default function CheckoutPage() {
 
         <form
           onSubmit={handleSubmit}
+          noValidate
           className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]"
         >
           <div className="space-y-8">
@@ -132,7 +188,8 @@ export default function CheckoutPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-600">
-                  Enter the contact details we should use for your order.
+                  Enter the contact details we should use for
+                  your order.
                 </p>
               </div>
 
@@ -146,12 +203,10 @@ export default function CheckoutPage() {
                     id="firstName"
                     name="firstName"
                     value={form.firstName}
-                    onChange={(event) =>
-                      updateField("firstName", event.target.value)
-                    }
+                    onChange={handleInputChange}
                     autoComplete="given-name"
                     placeholder="Lerato"
-                    required
+                    error={errors.firstName}
                   />
                 </div>
 
@@ -164,12 +219,10 @@ export default function CheckoutPage() {
                     id="lastName"
                     name="lastName"
                     value={form.lastName}
-                    onChange={(event) =>
-                      updateField("lastName", event.target.value)
-                    }
+                    onChange={handleInputChange}
                     autoComplete="family-name"
                     placeholder="Moshabi"
-                    required
+                    error={errors.lastName}
                   />
                 </div>
 
@@ -183,12 +236,10 @@ export default function CheckoutPage() {
                     name="email"
                     type="email"
                     value={form.email}
-                    onChange={(event) =>
-                      updateField("email", event.target.value)
-                    }
+                    onChange={handleInputChange}
                     autoComplete="email"
                     placeholder="name@example.com"
-                    required
+                    error={errors.email}
                   />
                 </div>
 
@@ -202,12 +253,11 @@ export default function CheckoutPage() {
                     name="phone"
                     type="tel"
                     value={form.phone}
-                    onChange={(event) =>
-                      updateField("phone", event.target.value)
-                    }
+                    onChange={handleInputChange}
                     autoComplete="tel"
+                    inputMode="tel"
                     placeholder="071 234 5678"
-                    required
+                    error={errors.phone}
                   />
                 </div>
               </div>
@@ -220,7 +270,8 @@ export default function CheckoutPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-600">
-                  Enter the address where your order should be delivered.
+                  Enter the address where your order should be
+                  delivered.
                 </p>
               </div>
 
@@ -234,12 +285,10 @@ export default function CheckoutPage() {
                     id="addressLine1"
                     name="addressLine1"
                     value={form.addressLine1}
-                    onChange={(event) =>
-                      updateField("addressLine1", event.target.value)
-                    }
+                    onChange={handleInputChange}
                     autoComplete="address-line1"
                     placeholder="Street address"
-                    required
+                    error={errors.addressLine1}
                   />
                 </div>
 
@@ -252,11 +301,10 @@ export default function CheckoutPage() {
                     id="addressLine2"
                     name="addressLine2"
                     value={form.addressLine2}
-                    onChange={(event) =>
-                      updateField("addressLine2", event.target.value)
-                    }
+                    onChange={handleInputChange}
                     autoComplete="address-line2"
                     placeholder="Apartment, unit or complex"
+                    error={errors.addressLine2}
                   />
                 </div>
 
@@ -269,12 +317,10 @@ export default function CheckoutPage() {
                     id="city"
                     name="city"
                     value={form.city}
-                    onChange={(event) =>
-                      updateField("city", event.target.value)
-                    }
+                    onChange={handleInputChange}
                     autoComplete="address-level2"
                     placeholder="Paarl"
-                    required
+                    error={errors.city}
                   />
                 </div>
 
@@ -287,24 +333,40 @@ export default function CheckoutPage() {
                     id="province"
                     name="province"
                     value={form.province}
-                    onChange={(event) =>
-                      updateField("province", event.target.value)
-                    }
+                    onChange={handleSelectChange}
                     autoComplete="address-level1"
-                    required
+                    error={errors.province}
                   >
                     <option value="" disabled>
                       Select a province
                     </option>
-                    <option value="Eastern Cape">Eastern Cape</option>
-                    <option value="Free State">Free State</option>
-                    <option value="Gauteng">Gauteng</option>
-                    <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-                    <option value="Limpopo">Limpopo</option>
-                    <option value="Mpumalanga">Mpumalanga</option>
-                    <option value="North West">North West</option>
-                    <option value="Northern Cape">Northern Cape</option>
-                    <option value="Western Cape">Western Cape</option>
+                    <option value="Eastern Cape">
+                      Eastern Cape
+                    </option>
+                    <option value="Free State">
+                      Free State
+                    </option>
+                    <option value="Gauteng">
+                      Gauteng
+                    </option>
+                    <option value="KwaZulu-Natal">
+                      KwaZulu-Natal
+                    </option>
+                    <option value="Limpopo">
+                      Limpopo
+                    </option>
+                    <option value="Mpumalanga">
+                      Mpumalanga
+                    </option>
+                    <option value="North West">
+                      North West
+                    </option>
+                    <option value="Northern Cape">
+                      Northern Cape
+                    </option>
+                    <option value="Western Cape">
+                      Western Cape
+                    </option>
                   </Select>
                 </div>
 
@@ -317,14 +379,12 @@ export default function CheckoutPage() {
                     id="postalCode"
                     name="postalCode"
                     value={form.postalCode}
-                    onChange={(event) =>
-                      updateField("postalCode", event.target.value)
-                    }
+                    onChange={handleInputChange}
                     autoComplete="postal-code"
                     inputMode="numeric"
                     maxLength={4}
                     placeholder="7646"
-                    required
+                    error={errors.postalCode}
                   />
                 </div>
               </div>
@@ -338,7 +398,10 @@ export default function CheckoutPage() {
 
             <div className="mt-6 max-h-[360px] space-y-5 overflow-y-auto pr-1">
               {items.map((item) => (
-                <div key={item.productId} className="flex gap-4">
+                <div
+                  key={item.productId}
+                  className="flex gap-4"
+                >
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100">
                     {item.imageUrl ? (
                       <Image
@@ -368,7 +431,9 @@ export default function CheckoutPage() {
                     </p>
 
                     <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {formatPrice(item.price * item.quantity)}
+                      {formatPrice(
+                        item.price * item.quantity
+                      )}
                     </p>
                   </div>
                 </div>
@@ -383,13 +448,20 @@ export default function CheckoutPage() {
 
               <div className="flex items-center justify-between text-gray-600">
                 <span>Shipping</span>
-                <span>{shipping === 0 ? "Free" : formatPrice(shipping)}</span>
+                <span>
+                  {shipping === 0
+                    ? "Free"
+                    : formatPrice(shipping)}
+                </span>
               </div>
 
               {subtotal < FREE_SHIPPING_THRESHOLD && (
                 <p className="rounded-lg bg-gray-50 p-3 text-xs leading-5 text-gray-600">
-                  Add {formatPrice(FREE_SHIPPING_THRESHOLD - subtotal)} more to
-                  qualify for free shipping.
+                  Add{" "}
+                  {formatPrice(
+                    FREE_SHIPPING_THRESHOLD - subtotal
+                  )}{" "}
+                  more to qualify for free shipping.
                 </p>
               )}
 
@@ -404,7 +476,9 @@ export default function CheckoutPage() {
               disabled={isSubmitting}
               className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-gray-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-400"
             >
-              {isSubmitting ? "Processing..." : "Continue to payment"}
+              {isSubmitting
+                ? "Processing..."
+                : "Continue to payment"}
             </button>
 
             <Link
