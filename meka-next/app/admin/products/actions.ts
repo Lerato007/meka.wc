@@ -561,6 +561,90 @@ export async function addProductImages(
   }
 }
 
+export async function deleteProduct(productId: string) {
+  const session = await auth()
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    throw new Error("You are not authorised to delete products.")
+  }
+
+  if (!productId) {
+    throw new Error("The product could not be identified.")
+  }
+
+  const product = await prisma.product.findUnique({
+    where: {
+      id: productId,
+    },
+    select: {
+      id: true,
+      slug: true,
+      images: {
+        select: {
+          url: true,
+        },
+      },
+    },
+  })
+
+  if (!product) {
+    throw new Error("The product no longer exists.")
+  }
+
+  const bucket =
+    process.env.SUPABASE_STORAGE_BUCKET || "product-images"
+
+  const publicUrlPrefix =
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/`
+
+  const storagePaths = product.images
+    .map((image) => {
+      if (!image.url.startsWith(publicUrlPrefix)) {
+        return null
+      }
+
+      return image.url.replace(publicUrlPrefix, "")
+    })
+    .filter((path): path is string => Boolean(path))
+
+  if (storagePaths.length > 0) {
+    const { error: removalError } =
+      await supabaseAdmin.storage
+        .from(bucket)
+        .remove(storagePaths)
+
+    if (removalError) {
+      console.error(
+        "Failed to remove product images from storage:",
+        removalError
+      )
+
+      throw new Error(
+        "The product images could not be removed from storage."
+      )
+    }
+  }
+
+  try {
+    await prisma.product.delete({
+      where: {
+        id: product.id,
+      },
+    })
+  } catch (error) {
+    console.error("Product deletion failed:", error)
+
+    throw new Error(
+      "The product could not be deleted. Please try again."
+    )
+  }
+
+  revalidatePath("/admin/products")
+  revalidatePath("/admin")
+  revalidatePath("/")
+  revalidatePath(`/products/${product.slug}`)
+}
+
 export async function deleteProductImage(imageId: string) {
   const session = await auth()
 

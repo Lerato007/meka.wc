@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import DeleteProductButton from "@/app/admin/products/DeleteProductButton"
 
 export default async function AdminProductsPage() {
   const session = await auth()
@@ -164,21 +165,26 @@ export default async function AdminProductsPage() {
                         </td>
 
                         <td className="whitespace-nowrap px-6 py-4 text-right text-sm">
-                          <div className="flex justify-end gap-3">
-                            <Link
-                              href={`/products/${product.slug}`}
-                              className="font-medium text-gray-600 hover:text-gray-950"
-                            >
-                              View
-                            </Link>
+                          <div className="flex justify-end gap-4">
+  <Link
+    href={`/products/${product.slug}`}
+    className="font-medium text-gray-600 hover:text-gray-950"
+  >
+    View
+  </Link>
 
-                            <Link
-                              href={`/admin/products/${product.id}/edit`}
-                              className="font-medium text-gray-950 hover:underline"
-                            >
-                              Edit
-                            </Link>
-                          </div>
+  <Link
+    href={`/admin/products/${product.id}/edit`}
+    className="font-medium text-gray-950 hover:underline"
+  >
+    Edit
+  </Link>
+
+  <DeleteProductButton
+  productId={product.id}
+  productName={product.name}
+/>
+</div>
                         </td>
                       </tr>
                     )
