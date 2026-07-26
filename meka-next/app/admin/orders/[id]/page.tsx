@@ -1,5 +1,8 @@
-import { notFound } from "next/navigation"
+import Link from "next/link"
+import { notFound, redirect } from "next/navigation"
 
+import { auth } from "@/auth"
+import OrderStatusForm from "@/components/admin/OrderStatusForm"
 import { prisma } from "@/lib/prisma"
 
 type PageProps = {
@@ -34,6 +37,20 @@ export default async function OrderDetailsPage({
 }: PageProps) {
   const { id } = await params
 
+  const session = await auth()
+
+if (!session?.user) {
+  redirect(
+    `/login?callbackUrl=${encodeURIComponent(
+      `/admin/orders/${id}`
+    )}`
+  )
+}
+
+if (session.user.role !== "ADMIN") {
+  redirect("/")
+}
+
   const order = await prisma.order.findUnique({
     where: {
       id,
@@ -52,14 +69,21 @@ export default async function OrderDetailsPage({
       <div className="mx-auto max-w-6xl space-y-8">
 
         <div>
-          <h1 className="text-3xl font-bold">
-            {order.orderNumber}
-          </h1>
+  <Link
+    href="/admin/orders"
+    className="text-sm font-semibold text-gray-600 hover:text-gray-950 hover:underline"
+  >
+    ← Back to orders
+  </Link>
 
-          <p className="mt-2 text-gray-600">
-            Created {formatDate(order.createdAt)}
-          </p>
-        </div>
+  <h1 className="mt-4 text-3xl font-bold">
+    {order.orderNumber}
+  </h1>
+
+  <p className="mt-2 text-gray-600">
+    Created {formatDate(order.createdAt)}
+  </p>
+</div>
 
         <div className="grid gap-6 lg:grid-cols-2">
 
@@ -192,30 +216,11 @@ export default async function OrderDetailsPage({
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-
-            <h2 className="font-semibold">
-              Payment Status
-            </h2>
-
-            <p className="mt-3 text-lg">
-              {prettyStatus(order.paymentStatus)}
-            </p>
-
-          </div>
-
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200">
-
-            <h2 className="font-semibold">
-              Order Status
-            </h2>
-
-            <p className="mt-3 text-lg">
-              {prettyStatus(order.orderStatus)}
-            </p>
-
-          </div>
+           <OrderStatusForm
+  orderId={order.id}
+  initialOrderStatus={order.orderStatus}
+  initialPaymentStatus={order.paymentStatus}
+/>
 
         </div>
 

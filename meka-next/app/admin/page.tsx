@@ -2,6 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 
 import { auth } from "@/auth"
+import SignOutButton from "@/components/auth/SignOutButton"
 
 export default async function AdminPage() {
   const session = await auth()
@@ -39,6 +40,7 @@ export default async function AdminPage() {
             >
               Return to store
             </Link>
+            <SignOutButton />
           </div>
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

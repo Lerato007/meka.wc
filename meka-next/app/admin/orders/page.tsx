@@ -1,6 +1,19 @@
 import Link from "next/link"
 
 import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
+
+import { auth } from "@/auth"
+
+const session = await auth()
+
+if (!session?.user) {
+  redirect("/login?callbackUrl=/admin/orders")
+}
+
+if (session.user.role !== "ADMIN") {
+  redirect("/")
+}
 
 export const dynamic = "force-dynamic"
 
