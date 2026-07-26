@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
+import { auth } from "@/auth"
 
 const SHIPPING_FEE = 100
 const FREE_SHIPPING_THRESHOLD = 500
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Partial<CreateOrderInput>
 
+    const session = await auth()
     if (
       !isValidText(body.firstName) ||
       !isValidText(body.lastName) ||
@@ -151,6 +153,8 @@ export async function POST(request: Request) {
       data: {
         orderNumber: createOrderNumber(),
 
+        userId: session?.user?.id || null,
+        
         firstName: body.firstName.trim(),
         lastName: body.lastName.trim(),
         email: body.email.trim().toLowerCase(),

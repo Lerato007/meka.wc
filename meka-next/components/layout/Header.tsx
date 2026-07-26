@@ -1,23 +1,25 @@
-"use client"
-
 import Link from "next/link"
 
-import { useCart } from "@/components/cart/CartProvider"
+import { auth, signOut } from "@/auth"
+import CartButton from "@/components/layout/CartButton"
 
-export default function Header() {
-  const { itemCount } = useCart()
+export default async function Header() {
+  const session = await auth()
+
+  const isSignedIn = Boolean(session?.user)
+  const isAdmin = session?.user?.role === "ADMIN"
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-6 px-4 py-3">
         <Link
           href="/"
-          className="text-2xl font-bold tracking-tight"
+          className="shrink-0 text-2xl font-bold tracking-tight"
         >
           Meka.WC
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm font-medium">
+        <nav className="flex flex-wrap items-center justify-end gap-x-6 gap-y-3 text-sm font-medium">
           <Link
             href="/"
             className="transition hover:text-gray-600"
@@ -32,18 +34,68 @@ export default function Header() {
             Shop
           </Link>
 
-          <Link
-            href="/cart"
-            className="relative transition hover:text-gray-600"
-          >
-            Cart
+          {isSignedIn && (
+            <Link
+              href="/orders"
+              className="transition hover:text-gray-600"
+            >
+              My Orders
+            </Link>
+          )}
 
-            {itemCount > 0 && (
-              <span className="absolute -right-4 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-xs text-white">
-                {itemCount}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="transition hover:text-gray-600"
+            >
+              Admin
+            </Link>
+          )}
+
+          <CartButton />
+
+          {!isSignedIn ? (
+            <>
+              <Link
+                href="/login"
+                className="transition hover:text-gray-600"
+              >
+                Login
+              </Link>
+
+              <Link
+                href="/register"
+                className="rounded-lg bg-gray-950 px-4 py-2 text-white transition hover:bg-gray-800"
+              >
+                Register
+              </Link>
+            </>
+          ) : (
+            <div className="flex items-center gap-4">
+              <span className="hidden text-gray-600 sm:inline">
+                {session.user.name ??
+                  session.user.email ??
+                  "My account"}
               </span>
-            )}
-          </Link>
+
+              <form
+                action={async () => {
+                  "use server"
+
+                  await signOut({
+                    redirectTo: "/",
+                  })
+                }}
+              >
+                <button
+                  type="submit"
+                  className="rounded-lg border border-gray-300 px-4 py-2 transition hover:border-gray-950 hover:text-gray-950"
+                >
+                  Logout
+                </button>
+              </form>
+            </div>
+          )}
         </nav>
       </div>
     </header>
