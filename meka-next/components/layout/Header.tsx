@@ -35,13 +35,22 @@ export default async function Header() {
           </Link>
 
           {isSignedIn && (
-            <Link
-              href="/orders"
-              className="transition hover:text-gray-600"
-            >
-              My Orders
-            </Link>
-          )}
+  <>
+    <Link
+      href="/wishlist"
+      className="transition hover:text-gray-600"
+    >
+      Wishlist
+    </Link>
+
+    <Link
+      href="/orders"
+      className="transition hover:text-gray-600"
+    >
+      My Orders
+    </Link>
+  </>
+)}
 
           {isAdmin && (
             <Link
