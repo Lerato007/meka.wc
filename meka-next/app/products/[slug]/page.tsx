@@ -5,6 +5,9 @@ import { getProductBySlug } from "@/lib/services/product-service"
 
 import ProductImageGallery from "./ProductImageGallery"
 import AddToCartButton from "./AddToCartButton"
+import WishlistButton from "@/components/products/WishlistButton";
+import { auth } from "@/auth"
+import { isProductInWishlist } from "@/lib/services/wishlist-service"
 
 type ProductDetailsPageProps = {
   params: Promise<{
@@ -22,6 +25,16 @@ export default async function ProductDetailsPage({
   if (!product) {
     notFound()
   }
+
+  const session = await auth()
+
+const initialWishlisted =
+  session?.user?.id
+    ? await isProductInWishlist(
+        session.user.id,
+        product.id
+      )
+    : false
 
   const formattedPrice = new Intl.NumberFormat("en-ZA", {
     style: "currency",
@@ -57,9 +70,16 @@ export default async function ProductDetailsPage({
               {product.category.name}
             </p>
 
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-gray-950 sm:text-5xl">
-              {product.name}
-            </h1>
+            <div className="mt-3 flex items-start justify-between gap-4">
+  <h1 className="text-4xl font-bold tracking-tight text-gray-950 sm:text-5xl">
+    {product.name}
+  </h1>
+
+  <WishlistButton
+  productId={product.id}
+  initialWishlisted={initialWishlisted}
+/>
+</div>
 
             <p className="mt-6 text-3xl font-bold text-gray-950">
               {formattedPrice}

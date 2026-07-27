@@ -23,6 +23,7 @@ model Product {
   category    Category       @relation(fields: [categoryId], references: [id])
   images      ProductImage[]
   orderItems  OrderItem[]
+  wishlists Wishlist[]
   createdAt   DateTime       @default(now())
 }
 
@@ -71,6 +72,7 @@ model User {
   accounts Account[]
   sessions Session[]
   orders   Order[]
+  wishlists Wishlist[]
 }
 
 model Account {
@@ -144,4 +146,16 @@ model OrderItem {
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
 }

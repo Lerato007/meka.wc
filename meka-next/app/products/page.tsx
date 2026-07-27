@@ -7,6 +7,9 @@ import {
   getProducts,
   type ProductSort,
 } from "@/lib/services/product-service"
+import WishlistButton from "@/components/products/WishlistButton";
+import { auth } from "@/auth"
+import { getWishlistProductIds } from "@/lib/services/wishlist-service"
 
 type ProductsPageProps = {
   searchParams: Promise<{
@@ -90,21 +93,33 @@ export default async function ProductsPage({
       : 1
   const pageSize = 12
 
-  const [products, totalProducts, categories] =
-    await Promise.all([
-      getProducts({
-        categoryId,
-        search,
-        sort,
-        page: currentPage,
-        pageSize,
-      }),
-      countProducts({
-        categoryId,
-        search,
-      }),
-      getCategories(),
-    ])
+  const session = await auth()
+
+  const [
+  products,
+  totalProducts,
+  categories,
+  wishlistIds,
+] = await Promise.all([
+  getProducts({
+    categoryId,
+    search,
+    sort,
+    page: currentPage,
+    pageSize,
+  }),
+
+  countProducts({
+    categoryId,
+    search,
+  }),
+
+  getCategories(),
+
+  session?.user?.id
+    ? getWishlistProductIds(session.user.id)
+    : Promise.resolve(new Set<string>()),
+])
 
   const totalPages = Math.max(
     1,
@@ -259,6 +274,13 @@ export default async function ProductsPage({
                     className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-1 hover:shadow-lg"
                   >
                     <div className="relative aspect-square overflow-hidden bg-gray-100">
+
+                      <div className="absolute right-3 top-3 z-10">
+    <WishlistButton
+  productId={product.id}
+  initialWishlisted={wishlistIds.has(product.id)}
+/>
+</div>
                       {primaryImage ? (
                         <Image
                           src={primaryImage.url}
