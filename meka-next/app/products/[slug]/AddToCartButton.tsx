@@ -11,6 +11,7 @@ type AddToCartButtonProps = {
     slug: string
     price: number
     imageUrl: string | null
+    stock: number
   }
 }
 
@@ -21,12 +22,17 @@ export default function AddToCartButton({
   const [added, setAdded] = useState(false)
 
   function handleAddToCart() {
+    if (product.stock <= 0) {
+      return
+    }
+
     addItem({
       productId: product.id,
       name: product.name,
       slug: product.slug,
       price: product.price,
       imageUrl: product.imageUrl,
+      stock: product.stock,
     })
 
     setAdded(true)
@@ -36,13 +42,24 @@ export default function AddToCartButton({
     }, 1500)
   }
 
+  const outOfStock = product.stock <= 0
+
   return (
     <button
       type="button"
       onClick={handleAddToCart}
-      className="w-full rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white transition hover:bg-gray-800"
+      disabled={outOfStock}
+      className={`w-full rounded-xl px-6 py-3 font-semibold transition ${
+        outOfStock
+          ? "cursor-not-allowed bg-gray-300 text-gray-600"
+          : "bg-gray-950 text-white hover:bg-gray-800"
+      }`}
     >
-      {added ? "Added to cart" : "Add to cart"}
+      {outOfStock
+        ? "Out of stock"
+        : added
+          ? "Added to cart"
+          : "Add to cart"}
     </button>
   )
 }

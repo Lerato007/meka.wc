@@ -70,6 +70,9 @@ export default function CartPage() {
           <div className="space-y-4">
             {items.map((item) => {
               const itemTotal = item.price * item.quantity
+              const hasReachedStockLimit =
+                item.quantity >= item.stock
+              const isOutOfStock = item.stock <= 0
 
               return (
                 <article
@@ -110,6 +113,20 @@ export default function CartPage() {
                           currency: "ZAR",
                         }).format(item.price)}
                       </p>
+
+                      {isOutOfStock ? (
+                        <p className="mt-2 text-sm font-semibold text-red-600">
+                          This product is out of stock.
+                        </p>
+                      ) : hasReachedStockLimit ? (
+                        <p className="mt-2 text-sm font-semibold text-amber-700">
+                          Maximum available stock reached.
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-sm text-gray-500">
+                          {item.stock} available
+                        </p>
+                      )}
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
@@ -120,7 +137,7 @@ export default function CartPage() {
                             decreaseQuantity(item.productId)
                           }
                           aria-label={`Decrease quantity of ${item.name}`}
-                          className="px-3 py-2 text-lg"
+                          className="px-3 py-2 text-lg transition hover:bg-gray-100"
                         >
                           −
                         </button>
@@ -134,8 +151,15 @@ export default function CartPage() {
                           onClick={() =>
                             increaseQuantity(item.productId)
                           }
+                          disabled={
+                            hasReachedStockLimit || isOutOfStock
+                          }
                           aria-label={`Increase quantity of ${item.name}`}
-                          className="px-3 py-2 text-lg"
+                          className={`px-3 py-2 text-lg transition ${
+                            hasReachedStockLimit || isOutOfStock
+                              ? "cursor-not-allowed text-gray-300"
+                              : "hover:bg-gray-100"
+                          }`}
                         >
                           +
                         </button>
@@ -151,7 +175,9 @@ export default function CartPage() {
 
                         <button
                           type="button"
-                          onClick={() => removeItem(item.productId)}
+                          onClick={() =>
+                            removeItem(item.productId)
+                          }
                           className="mt-1 text-sm text-red-600 hover:text-red-700"
                         >
                           Remove
@@ -170,7 +196,9 @@ export default function CartPage() {
             </h2>
 
             <div className="mt-6 flex items-center justify-between border-b border-gray-200 pb-5">
-              <span className="text-gray-600">Subtotal</span>
+              <span className="text-gray-600">
+                Subtotal
+              </span>
 
               <span className="font-semibold text-gray-950">
                 {formattedSubtotal}
@@ -178,17 +206,18 @@ export default function CartPage() {
             </div>
 
             <p className="mt-4 text-sm leading-6 text-gray-500">
-  Shipping is calculated during checkout.
-  <br />
-  Orders over <strong>R500</strong> qualify for free shipping.
-</p>
+              Shipping is calculated during checkout.
+              <br />
+              Orders over <strong>R500</strong> qualify for free
+              shipping.
+            </p>
 
             <Link
-  href="/checkout"
-  className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white transition hover:bg-gray-800"
->
-  Proceed to checkout
-</Link>
+              href="/checkout"
+              className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-gray-950 px-6 py-3 font-semibold text-white transition hover:bg-gray-800"
+            >
+              Proceed to checkout
+            </Link>
 
             <Link
               href="/products"

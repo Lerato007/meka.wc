@@ -59,7 +59,10 @@ export function CartProvider({
     }
 
     try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+      localStorage.setItem(
+        CART_STORAGE_KEY,
+        JSON.stringify(items)
+      )
     } catch (error) {
       console.error("Failed to save cart:", error)
     }
@@ -68,10 +71,15 @@ export function CartProvider({
   function addItem(item: AddToCartItem) {
     setItems((currentItems) => {
       const existingItem = currentItems.find(
-        (currentItem) => currentItem.productId === item.productId
+        (currentItem) =>
+          currentItem.productId === item.productId
       )
 
       if (existingItem) {
+        if (existingItem.quantity >= existingItem.stock) {
+          return currentItems
+        }
+
         return currentItems.map((currentItem) =>
           currentItem.productId === item.productId
             ? {
@@ -94,14 +102,20 @@ export function CartProvider({
 
   function increaseQuantity(productId: string) {
     setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.productId === productId
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-            }
-          : item
-      )
+      currentItems.map((item) => {
+        if (item.productId !== productId) {
+          return item
+        }
+
+        if (item.quantity >= item.stock) {
+          return item
+        }
+
+        return {
+          ...item,
+          quantity: item.quantity + 1,
+        }
+      })
     )
   }
 
@@ -122,7 +136,9 @@ export function CartProvider({
 
   function removeItem(productId: string) {
     setItems((currentItems) =>
-      currentItems.filter((item) => item.productId !== productId)
+      currentItems.filter(
+        (item) => item.productId !== productId
+      )
     )
   }
 
@@ -131,14 +147,19 @@ export function CartProvider({
   }
 
   const itemCount = useMemo(
-    () => items.reduce((total, item) => total + item.quantity, 0),
+    () =>
+      items.reduce(
+        (total, item) => total + item.quantity,
+        0
+      ),
     [items]
   )
 
   const subtotal = useMemo(
     () =>
       items.reduce(
-        (total, item) => total + item.price * item.quantity,
+        (total, item) =>
+          total + item.price * item.quantity,
         0
       ),
     [items]
@@ -169,7 +190,9 @@ export function useCart() {
   const context = useContext(CartContext)
 
   if (!context) {
-    throw new Error("useCart must be used inside CartProvider")
+    throw new Error(
+      "useCart must be used inside CartProvider"
+    )
   }
 
   return context

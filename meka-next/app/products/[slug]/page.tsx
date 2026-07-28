@@ -30,8 +30,7 @@ export default async function ProductDetailsPage({
 }: ProductDetailsPageProps) {
   const { slug } = await params
 
-  const product =
-    await getProductBySlug(slug)
+  const product = await getProductBySlug(slug)
 
   if (!product) {
     notFound()
@@ -51,25 +50,23 @@ export default async function ProductDetailsPage({
     getProductReviews(product.id),
 
     userId
-      ? isProductInWishlist(
-          userId,
-          product.id
-        )
+      ? isProductInWishlist(userId, product.id)
       : Promise.resolve(false),
 
     userId
-      ? getUserReview(
-          userId,
-          product.id
-        )
+      ? getUserReview(userId, product.id)
       : Promise.resolve(null),
   ])
 
-  const formattedPrice =
-    new Intl.NumberFormat("en-ZA", {
-      style: "currency",
-      currency: "ZAR",
-    }).format(Number(product.price))
+  const formattedPrice = new Intl.NumberFormat("en-ZA", {
+    style: "currency",
+    currency: "ZAR",
+  }).format(Number(product.price))
+
+  const isOutOfStock = product.stock <= 0
+  const isLowStock =
+    product.stock > 0 &&
+    product.stock <= product.lowStockThreshold
 
   return (
     <section className="min-h-screen bg-gray-50 px-4 py-10">
@@ -82,9 +79,7 @@ export default async function ProductDetailsPage({
             Products
           </Link>
 
-          <span aria-hidden="true">
-            /
-          </span>
+          <span aria-hidden="true">/</span>
 
           <span className="text-gray-950">
             {product.name}
@@ -109,24 +104,18 @@ export default async function ProductDetailsPage({
 
               <WishlistButton
                 productId={product.id}
-                initialWishlisted={
-                  initialWishlisted
-                }
+                initialWishlisted={initialWishlisted}
               />
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <StarRating
-                rating={
-                  ratingSummary.average
-                }
+                rating={ratingSummary.average}
                 size="md"
               />
 
               <span className="text-sm text-gray-600">
-                {ratingSummary.average.toFixed(
-                  1
-                )}{" "}
+                {ratingSummary.average.toFixed(1)}{" "}
                 (
                 {ratingSummary.count}{" "}
                 {ratingSummary.count === 1
@@ -139,6 +128,22 @@ export default async function ProductDetailsPage({
             <p className="mt-6 text-3xl font-bold text-gray-950">
               {formattedPrice}
             </p>
+
+            <div className="mt-4">
+              {isOutOfStock ? (
+                <span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700">
+                  Out of stock
+                </span>
+              ) : isLowStock ? (
+                <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">
+                  Only {product.stock} left
+                </span>
+              ) : (
+                <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
+                  In stock
+                </span>
+              )}
+            </div>
 
             <div className="my-8 border-t border-gray-200" />
 
@@ -154,13 +159,13 @@ export default async function ProductDetailsPage({
 
             <div className="mt-10 rounded-xl bg-white p-5 ring-1 ring-gray-200">
               <p className="font-semibold text-gray-950">
-                Add this product to your
-                cart
+                Add this product to your cart
               </p>
 
               <p className="mt-1 text-sm text-gray-600">
-                You can review quantities
-                before checkout.
+                {isOutOfStock
+                  ? "This product is currently unavailable."
+                  : "You can review quantities before checkout."}
               </p>
 
               <div className="mt-5">
@@ -169,12 +174,10 @@ export default async function ProductDetailsPage({
                     id: product.id,
                     name: product.name,
                     slug: product.slug,
-                    price: Number(
-                      product.price
-                    ),
+                    price: Number(product.price),
                     imageUrl:
-                      product.images[0]
-                        ?.url ?? null,
+                      product.images[0]?.url ?? null,
+                    stock: product.stock,
                   }}
                 />
               </div>
@@ -197,9 +200,7 @@ export default async function ProductDetailsPage({
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <StarRating
-                rating={
-                  ratingSummary.average
-                }
+                rating={ratingSummary.average}
                 size="lg"
               />
 
@@ -217,9 +218,7 @@ export default async function ProductDetailsPage({
             <div>
               <ReviewForm
                 productId={product.id}
-                initialRating={
-                  userReview?.rating ?? 0
-                }
+                initialRating={userReview?.rating ?? 0}
                 initialComment={
                   userReview?.comment ?? ""
                 }
@@ -227,9 +226,7 @@ export default async function ProductDetailsPage({
             </div>
 
             <div>
-              <ReviewList
-                reviews={reviews}
-              />
+              <ReviewList reviews={reviews} />
             </div>
           </div>
         </section>
