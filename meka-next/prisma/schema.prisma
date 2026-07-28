@@ -14,18 +14,24 @@ model Category {
 }
 
 model Product {
-  id          String         @id @default(cuid())
-  name        String
-  slug        String         @unique
-  description String
-  price       Decimal        @db.Decimal(10, 2)
-  categoryId  String
-  category    Category       @relation(fields: [categoryId], references: [id])
-  images      ProductImage[]
-  orderItems  OrderItem[]
-  wishlists Wishlist[]
-  reviews   Review[]
-  createdAt   DateTime       @default(now())
+  id                String         @id @default(cuid())
+  name              String
+  slug              String         @unique
+  description       String
+  price             Decimal        @db.Decimal(10, 2)
+
+  stock             Int            @default(0)
+  lowStockThreshold Int            @default(5)
+
+  categoryId        String
+  category          Category       @relation(fields: [categoryId], references: [id])
+
+  images            ProductImage[]
+  orderItems        OrderItem[]
+  wishlists         Wishlist[]
+  reviews           Review[]
+
+  createdAt         DateTime       @default(now())
 }
 
 model ProductImage {

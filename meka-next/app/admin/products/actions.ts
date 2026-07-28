@@ -12,6 +12,7 @@ export type ProductImageFormState = {
   error?: string
   success?: string
 }
+
 export type ProductFormState = {
   error?: string
 }
@@ -26,7 +27,8 @@ const maximumImageSize = 5 * 1024 * 1024
 const maximumImageCount = 5
 
 function sanitiseFileName(fileName: string) {
-  const extension = fileName.split(".").pop()?.toLowerCase() || "jpg"
+  const extension =
+    fileName.split(".").pop()?.toLowerCase() || "jpg"
 
   const baseName = fileName
     .replace(/\.[^/.]+$/, "")
@@ -36,6 +38,34 @@ function sanitiseFileName(fileName: string) {
     .replace(/^-+|-+$/g, "")
 
   return `${baseName || "image"}.${extension}`
+}
+
+function parseInventoryValue(
+  value: FormDataEntryValue | null,
+  fieldName: string
+) {
+  const stringValue = String(value ?? "").trim()
+
+  if (!stringValue) {
+    return {
+      value: null,
+      error: `${fieldName} is required.`,
+    }
+  }
+
+  const numberValue = Number(stringValue)
+
+  if (!Number.isInteger(numberValue) || numberValue < 0) {
+    return {
+      value: null,
+      error: `${fieldName} must be a whole number of zero or more.`,
+    }
+  }
+
+  return {
+    value: numberValue,
+    error: null,
+  }
 }
 
 async function uploadProductImages(
@@ -147,6 +177,36 @@ export async function createProduct(
     formData.get("price") ?? ""
   ).trim()
 
+  const stockResult = parseInventoryValue(
+    formData.get("stock"),
+    "Stock quantity"
+  )
+
+  if (stockResult.error || stockResult.value === null) {
+    return {
+      error: stockResult.error ?? "Enter a valid stock quantity.",
+    }
+  }
+
+  const lowStockThresholdResult = parseInventoryValue(
+    formData.get("lowStockThreshold"),
+    "Low-stock threshold"
+  )
+
+  if (
+    lowStockThresholdResult.error ||
+    lowStockThresholdResult.value === null
+  ) {
+    return {
+      error:
+        lowStockThresholdResult.error ??
+        "Enter a valid low-stock threshold.",
+    }
+  }
+
+  const stock = stockResult.value
+  const lowStockThreshold = lowStockThresholdResult.value
+
   const images = formData
     .getAll("images")
     .filter(
@@ -154,7 +214,13 @@ export async function createProduct(
         entry instanceof File && entry.size > 0
     )
 
-  if (!name || !slug || !description || !categoryId || !priceValue) {
+  if (
+    !name ||
+    !slug ||
+    !description ||
+    !categoryId ||
+    !priceValue
+  ) {
     return {
       error: "Complete all required fields.",
     }
@@ -168,7 +234,8 @@ export async function createProduct(
     }
   }
 
-  const validSlug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
+  const validSlug =
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
 
   if (!validSlug) {
     return {
@@ -229,58 +296,60 @@ export async function createProduct(
 
   let productId: string | null = null
 
-try {
-  const product = await prisma.product.create({
-    data: {
+  try {
+    const product = await prisma.product.create({
+      data: {
+        name,
+        slug,
+        description,
+        price: new Prisma.Decimal(priceValue),
+        stock,
+        lowStockThreshold,
+        categoryId,
+      },
+      select: {
+        id: true,
+      },
+    })
+
+    productId = product.id
+
+    await uploadProductImages(
+      product.id,
       name,
-      slug,
-      description,
-      price: new Prisma.Decimal(priceValue),
-      categoryId,
-    },
-    select: {
-      id: true,
-    },
-  })
+      images
+    )
+  } catch (error) {
+    console.error("Product creation failed:", error)
 
-  productId = product.id
+    if (productId) {
+      await prisma.product
+        .delete({
+          where: {
+            id: productId,
+          },
+        })
+        .catch((deleteError) => {
+          console.error(
+            "Failed to remove incomplete product:",
+            deleteError
+          )
+        })
+    }
 
-  await uploadProductImages(
-    product.id,
-    name,
-    images
-  )
-} catch (error) {
-  console.error("Product creation failed:", error)
-
-  if (productId) {
-    await prisma.product
-      .delete({
-        where: {
-          id: productId,
-        },
-      })
-      .catch((deleteError) => {
-        console.error(
-          "Failed to remove incomplete product:",
-          deleteError
-        )
-      })
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "The product could not be created. Please try again.",
+    }
   }
 
-  return {
-    error:
-      error instanceof Error
-        ? error.message
-        : "The product could not be created. Please try again.",
-  }
-}
+  revalidatePath("/admin/products")
+  revalidatePath("/")
+  revalidatePath(`/products/${slug}`)
 
-revalidatePath("/admin/products")
-revalidatePath("/")
-revalidatePath(`/products/${slug}`)
-
-redirect("/admin/products")
+  redirect("/admin/products")
 }
 
 export async function updateProduct(
@@ -319,6 +388,36 @@ export async function updateProduct(
   const priceValue = String(
     formData.get("price") ?? ""
   ).trim()
+
+  const stockResult = parseInventoryValue(
+    formData.get("stock"),
+    "Stock quantity"
+  )
+
+  if (stockResult.error || stockResult.value === null) {
+    return {
+      error: stockResult.error ?? "Enter a valid stock quantity.",
+    }
+  }
+
+  const lowStockThresholdResult = parseInventoryValue(
+    formData.get("lowStockThreshold"),
+    "Low-stock threshold"
+  )
+
+  if (
+    lowStockThresholdResult.error ||
+    lowStockThresholdResult.value === null
+  ) {
+    return {
+      error:
+        lowStockThresholdResult.error ??
+        "Enter a valid low-stock threshold.",
+    }
+  }
+
+  const stock = stockResult.value
+  const lowStockThreshold = lowStockThresholdResult.value
 
   if (
     !name ||
@@ -409,6 +508,8 @@ export async function updateProduct(
         slug,
         description,
         price: new Prisma.Decimal(priceValue),
+        stock,
+        lowStockThreshold,
         categoryId,
       },
     })
@@ -421,9 +522,9 @@ export async function updateProduct(
   }
 
   revalidatePath("/")
+  revalidatePath("/products")
   revalidatePath("/admin/products")
   revalidatePath(`/admin/products/${productId}/edit`)
-
   revalidatePath(`/products/${existingProduct.slug}`)
   revalidatePath(`/products/${slug}`)
 
@@ -565,11 +666,15 @@ export async function deleteProduct(productId: string) {
   const session = await auth()
 
   if (!session?.user || session.user.role !== "ADMIN") {
-    throw new Error("You are not authorised to delete products.")
+    throw new Error(
+      "You are not authorised to delete products."
+    )
   }
 
   if (!productId) {
-    throw new Error("The product could not be identified.")
+    throw new Error(
+      "The product could not be identified."
+    )
   }
 
   const product = await prisma.product.findUnique({
@@ -642,6 +747,7 @@ export async function deleteProduct(productId: string) {
   revalidatePath("/admin/products")
   revalidatePath("/admin")
   revalidatePath("/")
+  revalidatePath("/products")
   revalidatePath(`/products/${product.slug}`)
 }
 
@@ -660,6 +766,7 @@ export async function deleteProductImage(imageId: string) {
       product: {
         select: {
           id: true,
+          slug: true,
         },
       },
     },
@@ -672,7 +779,8 @@ export async function deleteProductImage(imageId: string) {
   const bucket =
     process.env.SUPABASE_STORAGE_BUCKET || "product-images"
 
-  const publicUrlPrefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/`
+  const publicUrlPrefix =
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/`
 
   let storagePath = ""
 
@@ -686,7 +794,14 @@ export async function deleteProductImage(imageId: string) {
       .remove([storagePath])
 
     if (error) {
-      console.error(error)
+      console.error(
+        "Failed to remove product image from storage:",
+        error
+      )
+
+      throw new Error(
+        "The product image could not be removed from storage."
+      )
     }
   }
 
@@ -699,4 +814,7 @@ export async function deleteProductImage(imageId: string) {
   revalidatePath(
     `/admin/products/${image.product.id}/edit`
   )
+  revalidatePath(`/products/${image.product.slug}`)
+  revalidatePath("/products")
+  revalidatePath("/")
 }

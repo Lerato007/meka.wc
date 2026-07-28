@@ -40,6 +40,8 @@ export default async function EditProductPage({
         slug: true,
         description: true,
         price: true,
+        stock: true,
+        lowStockThreshold: true,
         categoryId: true,
         images: {
           orderBy: {
@@ -107,6 +109,8 @@ export default async function EditProductPage({
                 slug: product.slug,
                 description: product.description,
                 price: product.price.toString(),
+                stock: product.stock,
+                lowStockThreshold: product.lowStockThreshold,
                 categoryId: product.categoryId,
               }}
             />

@@ -1,6 +1,11 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
+import {
+  type WheelEvent,
+  useActionState,
+  useEffect,
+  useState,
+} from "react"
 
 import {
   createProduct,
@@ -19,6 +24,8 @@ type EditableProduct = {
   slug: string
   description: string
   price: string
+  stock: number
+  lowStockThreshold: number
   categoryId: string
 }
 
@@ -36,6 +43,12 @@ function createSlug(value: string) {
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
+}
+
+function preventNumberInputScroll(
+  event: WheelEvent<HTMLInputElement>
+) {
+  event.currentTarget.blur()
 }
 
 export default function ProductForm({
@@ -194,10 +207,66 @@ export default function ProductForm({
               min="0.01"
               step="0.01"
               defaultValue={product?.price ?? ""}
+              onWheel={preventNumberInputScroll}
               placeholder="499.99"
               className="w-full rounded-lg border border-gray-300 py-3 pl-9 pr-4 text-gray-950 outline-none transition focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
             />
           </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div>
+          <label
+            htmlFor="stock"
+            className="mb-2 block text-sm font-medium text-gray-800"
+          >
+            Stock quantity
+          </label>
+
+          <input
+            id="stock"
+            name="stock"
+            type="number"
+            required
+            min="0"
+            step="1"
+            defaultValue={product?.stock ?? 0}
+            onWheel={preventNumberInputScroll}
+            placeholder="10"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-950 outline-none transition focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
+          />
+
+          <p className="mt-2 text-sm text-gray-500">
+            Number of units currently available.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="lowStockThreshold"
+            className="mb-2 block text-sm font-medium text-gray-800"
+          >
+            Low-stock threshold
+          </label>
+
+          <input
+            id="lowStockThreshold"
+            name="lowStockThreshold"
+            type="number"
+            required
+            min="0"
+            step="1"
+            defaultValue={product?.lowStockThreshold ?? 5}
+            onWheel={preventNumberInputScroll}
+            placeholder="5"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-950 outline-none transition focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
+          />
+
+          <p className="mt-2 text-sm text-gray-500">
+            The product will be marked as low stock at or below this
+            quantity.
+          </p>
         </div>
       </div>
 
@@ -220,15 +289,15 @@ export default function ProductForm({
           />
 
           <p className="mt-2 text-sm text-gray-500">
-            Upload up to 5 JPG, PNG or WebP images. Maximum
-            5 MB per image.
+            Upload up to 5 JPG, PNG or WebP images. Maximum 5 MB per
+            image.
           </p>
         </div>
       ) : (
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
           <p className="text-sm text-gray-600">
-            Existing product images will not be changed during
-            this update.
+            Existing product images will not be changed during this
+            update.
           </p>
         </div>
       )}
