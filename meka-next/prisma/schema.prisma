@@ -14,24 +14,24 @@ model Category {
 }
 
 model Product {
-  id                String         @id @default(cuid())
-  name              String
-  slug              String         @unique
-  description       String
-  price             Decimal        @db.Decimal(10, 2)
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String
+  price       Decimal @db.Decimal(10, 2)
 
-  stock             Int            @default(0)
-  lowStockThreshold Int            @default(5)
+  stock             Int @default(0)
+  lowStockThreshold Int @default(5)
 
-  categoryId        String
-  category          Category       @relation(fields: [categoryId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
 
-  images            ProductImage[]
-  orderItems        OrderItem[]
-  wishlists         Wishlist[]
-  reviews           Review[]
+  images     ProductImage[]
+  orderItems OrderItem[]
+  wishlists  Wishlist[]
+  reviews    Review[]
 
-  createdAt         DateTime       @default(now())
+  createdAt DateTime @default(now())
 }
 
 model ProductImage {
@@ -56,6 +56,7 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  EXPIRED
 }
 
 enum PaymentStatus {
@@ -63,6 +64,7 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+  EXPIRED
 }
 
 model User {
@@ -76,9 +78,9 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  orders   Order[]
+  accounts  Account[]
+  sessions  Session[]
+  orders    Order[]
   wishlists Wishlist[]
   reviews   Review[]
 }
@@ -120,27 +122,38 @@ model VerificationToken {
 }
 
 model Order {
-  id            String        @id @default(cuid())
-  orderNumber   String        @unique
-  userId        String?
-  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  email         String
-  firstName     String
-  lastName      String
-  phone         String
-  addressLine1  String
-  addressLine2  String?
-  city          String
-  province      String
-  postalCode    String
-  subtotal      Decimal       @db.Decimal(10, 2)
-  shipping      Decimal       @db.Decimal(10, 2)
-  total         Decimal       @db.Decimal(10, 2)
+  id          String  @id @default(cuid())
+  orderNumber String  @unique
+  userId      String?
+  user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  email     String
+  firstName String
+  lastName  String
+  phone     String
+
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  province     String
+  postalCode   String
+
+  subtotal Decimal @db.Decimal(10, 2)
+  shipping Decimal @db.Decimal(10, 2)
+  total    Decimal @db.Decimal(10, 2)
+
   paymentStatus PaymentStatus @default(PENDING)
   orderStatus   OrderStatus   @default(PENDING)
-  items         OrderItem[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+
+  expiresAt DateTime @default(now())
+  inventoryReleasedAt DateTime?
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([paymentStatus, expiresAt])
 }
 
 model OrderItem {

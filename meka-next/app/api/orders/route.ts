@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 
 const SHIPPING_FEE = 100
 const FREE_SHIPPING_THRESHOLD = 500
+const ORDER_RESERVATION_MINUTES = 30
 
 type OrderItemInput = {
   productId: string
@@ -337,6 +338,9 @@ export async function POST(request: Request) {
             subtotal: subtotal.toFixed(2),
             shipping: shipping.toFixed(2),
             total: total.toFixed(2),
+            expiresAt: new Date(
+  Date.now() + ORDER_RESERVATION_MINUTES * 60 * 1000
+),
 
             items: {
               create: calculatedItems.map(
