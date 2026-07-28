@@ -1,13 +1,23 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { getProductBySlug } from "@/lib/services/product-service"
-
-import ProductImageGallery from "./ProductImageGallery"
-import AddToCartButton from "./AddToCartButton"
-import WishlistButton from "@/components/products/WishlistButton";
 import { auth } from "@/auth"
+
+import WishlistButton from "@/components/products/WishlistButton"
+import ReviewForm from "@/components/reviews/ReviewForm"
+import ReviewList from "@/components/reviews/ReviewList"
+import StarRating from "@/components/reviews/StarRating"
+
+import { getProductBySlug } from "@/lib/services/product-service"
+import {
+  getAverageRating,
+  getProductReviews,
+  getUserReview,
+} from "@/lib/services/review-service"
 import { isProductInWishlist } from "@/lib/services/wishlist-service"
+
+import AddToCartButton from "./AddToCartButton"
+import ProductImageGallery from "./ProductImageGallery"
 
 type ProductDetailsPageProps = {
   params: Promise<{
@@ -20,26 +30,46 @@ export default async function ProductDetailsPage({
 }: ProductDetailsPageProps) {
   const { slug } = await params
 
-  const product = await getProductBySlug(slug)
+  const product =
+    await getProductBySlug(slug)
 
   if (!product) {
     notFound()
   }
 
   const session = await auth()
+  const userId = session?.user?.id
 
-const initialWishlisted =
-  session?.user?.id
-    ? await isProductInWishlist(
-        session.user.id,
-        product.id
-      )
-    : false
+  const [
+    ratingSummary,
+    reviews,
+    initialWishlisted,
+    userReview,
+  ] = await Promise.all([
+    getAverageRating(product.id),
 
-  const formattedPrice = new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-  }).format(Number(product.price))
+    getProductReviews(product.id),
+
+    userId
+      ? isProductInWishlist(
+          userId,
+          product.id
+        )
+      : Promise.resolve(false),
+
+    userId
+      ? getUserReview(
+          userId,
+          product.id
+        )
+      : Promise.resolve(null),
+  ])
+
+  const formattedPrice =
+    new Intl.NumberFormat("en-ZA", {
+      style: "currency",
+      currency: "ZAR",
+    }).format(Number(product.price))
 
   return (
     <section className="min-h-screen bg-gray-50 px-4 py-10">
@@ -52,7 +82,9 @@ const initialWishlisted =
             Products
           </Link>
 
-          <span aria-hidden="true">/</span>
+          <span aria-hidden="true">
+            /
+          </span>
 
           <span className="text-gray-950">
             {product.name}
@@ -71,15 +103,38 @@ const initialWishlisted =
             </p>
 
             <div className="mt-3 flex items-start justify-between gap-4">
-  <h1 className="text-4xl font-bold tracking-tight text-gray-950 sm:text-5xl">
-    {product.name}
-  </h1>
+              <h1 className="text-4xl font-bold tracking-tight text-gray-950 sm:text-5xl">
+                {product.name}
+              </h1>
 
-  <WishlistButton
-  productId={product.id}
-  initialWishlisted={initialWishlisted}
-/>
-</div>
+              <WishlistButton
+                productId={product.id}
+                initialWishlisted={
+                  initialWishlisted
+                }
+              />
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <StarRating
+                rating={
+                  ratingSummary.average
+                }
+                size="md"
+              />
+
+              <span className="text-sm text-gray-600">
+                {ratingSummary.average.toFixed(
+                  1
+                )}{" "}
+                (
+                {ratingSummary.count}{" "}
+                {ratingSummary.count === 1
+                  ? "review"
+                  : "reviews"}
+                )
+              </span>
+            </div>
 
             <p className="mt-6 text-3xl font-bold text-gray-950">
               {formattedPrice}
@@ -99,34 +154,30 @@ const initialWishlisted =
 
             <div className="mt-10 rounded-xl bg-white p-5 ring-1 ring-gray-200">
               <p className="font-semibold text-gray-950">
-                Interested in this product?
+                Add this product to your
+                cart
               </p>
 
               <p className="mt-1 text-sm text-gray-600">
-                Cart and checkout functionality will be added next.
+                You can review quantities
+                before checkout.
               </p>
 
-              <div className="mt-10 rounded-xl bg-white p-5 ring-1 ring-gray-200">
-  <p className="font-semibold text-gray-950">
-    Add this product to your cart
-  </p>
-
-  <p className="mt-1 text-sm text-gray-600">
-    You can review quantities before checkout.
-  </p>
-
-  <div className="mt-5">
-    <AddToCartButton
-      product={{
-        id: product.id,
-        name: product.name,
-        slug: product.slug,
-        price: Number(product.price),
-        imageUrl: product.images[0]?.url ?? null,
-      }}
-    />
-  </div>
-</div>
+              <div className="mt-5">
+                <AddToCartButton
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    price: Number(
+                      product.price
+                    ),
+                    imageUrl:
+                      product.images[0]
+                        ?.url ?? null,
+                  }}
+                />
+              </div>
             </div>
 
             <Link
@@ -137,6 +188,51 @@ const initialWishlisted =
             </Link>
           </div>
         </div>
+
+        <section className="mt-16 border-t border-gray-200 pt-12">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-950">
+              Customer reviews
+            </h2>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <StarRating
+                rating={
+                  ratingSummary.average
+                }
+                size="lg"
+              />
+
+              <p className="text-gray-600">
+                Based on{" "}
+                {ratingSummary.count}{" "}
+                {ratingSummary.count === 1
+                  ? "review"
+                  : "reviews"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,420px)_1fr]">
+            <div>
+              <ReviewForm
+                productId={product.id}
+                initialRating={
+                  userReview?.rating ?? 0
+                }
+                initialComment={
+                  userReview?.comment ?? ""
+                }
+              />
+            </div>
+
+            <div>
+              <ReviewList
+                reviews={reviews}
+              />
+            </div>
+          </div>
+        </section>
       </div>
     </section>
   )

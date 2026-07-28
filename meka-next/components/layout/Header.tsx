@@ -82,9 +82,9 @@ export default async function Header() {
           ) : (
             <div className="flex items-center gap-4">
               <span className="hidden text-gray-600 sm:inline">
-                {session.user.name ??
-                  session.user.email ??
-                  "My account"}
+                {session?.user?.name ??
+  session?.user?.email ??
+  "My account"}
               </span>
 
               <form

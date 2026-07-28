@@ -24,6 +24,7 @@ model Product {
   images      ProductImage[]
   orderItems  OrderItem[]
   wishlists Wishlist[]
+  reviews   Review[]
   createdAt   DateTime       @default(now())
 }
 
@@ -73,6 +74,7 @@ model User {
   sessions Session[]
   orders   Order[]
   wishlists Wishlist[]
+  reviews   Review[]
 }
 
 model Account {
@@ -155,6 +157,23 @@ model Wishlist {
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  productId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])

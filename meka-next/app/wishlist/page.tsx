@@ -24,7 +24,7 @@ export default async function WishlistPage() {
           </h1>
 
           <p className="mt-2 text-gray-600">
-            Products you've saved for later.
+            {"Products you've saved for later."}
           </p>
         </div>
 
