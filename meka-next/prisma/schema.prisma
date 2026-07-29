@@ -74,6 +74,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  phone         String?
   role          Role      @default(CUSTOMER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -145,7 +146,7 @@ model Order {
   paymentStatus PaymentStatus @default(PENDING)
   orderStatus   OrderStatus   @default(PENDING)
 
-  expiresAt DateTime @default(now())
+  expiresAt           DateTime  @default(now())
   inventoryReleasedAt DateTime?
 
   items OrderItem[]
