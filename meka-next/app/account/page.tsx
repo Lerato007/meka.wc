@@ -222,11 +222,13 @@ export default async function AccountPage() {
               <AccountAction
                 title="My profile"
                 description="Review and update your personal details."
+                href="/account/profile"
               />
 
               <AccountAction
                 title="Addresses"
                 description="Manage your delivery addresses."
+                href="/account/addresses"
               />
 
               <AccountAction

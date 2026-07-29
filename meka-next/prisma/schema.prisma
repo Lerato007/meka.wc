@@ -75,6 +75,7 @@ model User {
   image         String?
   password      String?
   phone         String?
+  addresses     Address[]
   role          Role      @default(CUSTOMER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -197,4 +198,30 @@ model Review {
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
+}
+
+model Address {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label         String
+  recipientName String
+  phone         String
+
+  addressLine1 String
+  addressLine2 String?
+
+  suburb     String
+  city       String
+  province   String
+  postalCode String
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
