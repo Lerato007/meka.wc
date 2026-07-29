@@ -73,9 +73,10 @@ export default function QuickActions() {
         />
 
         <AdminCard
-          title="Customers"
-          description="View registered customer accounts."
-        />
+  title="Customers"
+  description="View registered customer accounts."
+  href="/admin/customers"
+/>
       </div>
     </div>
   )
