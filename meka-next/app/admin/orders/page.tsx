@@ -4,12 +4,20 @@ import { prisma } from "@/lib/prisma"
 
 export const dynamic = "force-dynamic"
 
-function formatPrice(value: number | string) {
+type PriceValue =
+  | number
+  | string
+  | {
+      toString(): string
+    }
+
+function formatPrice(value: PriceValue) {
   return new Intl.NumberFormat("en-ZA", {
     style: "currency",
     currency: "ZAR",
-  }).format(Number(value))
+  }).format(Number(value.toString()))
 }
+
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-ZA", {

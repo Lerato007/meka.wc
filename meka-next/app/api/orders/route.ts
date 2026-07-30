@@ -151,8 +151,22 @@ export async function POST(request: Request) {
       )
     }
 
+    const validatedOrder: CreateOrderInput = {
+      firstName: body.firstName.trim(),
+      lastName: body.lastName.trim(),
+      email: body.email.trim().toLowerCase(),
+      phone: body.phone.replace(/[\s()-]/g, ""),
+      addressLine1: body.addressLine1.trim(),
+      addressLine2:
+        body.addressLine2?.trim() || undefined,
+      city: body.city.trim(),
+      province: body.province.trim(),
+      postalCode: body.postalCode.trim(),
+      items: body.items,
+    }
+
     const consolidatedItems =
-      consolidateOrderItems(body.items)
+      consolidateOrderItems(validatedOrder.items)
 
     const order = await prisma.$transaction(
       async (transaction) => {
@@ -316,24 +330,18 @@ export async function POST(request: Request) {
 
             userId: session?.user?.id ?? null,
 
-            firstName: body.firstName.trim(),
-            lastName: body.lastName.trim(),
-            email: body.email
-              .trim()
-              .toLowerCase(),
-            phone: body.phone.replace(
-              /[\s()-]/g,
-              ""
-            ),
+            firstName: validatedOrder.firstName,
+            lastName: validatedOrder.lastName,
+            email: validatedOrder.email,
+            phone: validatedOrder.phone,
 
             addressLine1:
-              body.addressLine1.trim(),
+              validatedOrder.addressLine1,
             addressLine2:
-              body.addressLine2?.trim() ||
-              null,
-            city: body.city.trim(),
-            province: body.province.trim(),
-            postalCode: body.postalCode.trim(),
+              validatedOrder.addressLine2 || null,
+            city: validatedOrder.city,
+            province: validatedOrder.province,
+            postalCode: validatedOrder.postalCode,
 
             subtotal: subtotal.toFixed(2),
             shipping: shipping.toFixed(2),
