@@ -5,17 +5,21 @@ type OrderTimelineProps = {
 
 type TimelineStep = {
   label: string
+  description: string
   completed: boolean
   current: boolean
 }
 
-const ORDER_STATUS_LEVELS: Record<string, number> = {
-  PENDING: 0,
-  PAID: 1,
-  PROCESSING: 2,
-  SHIPPED: 3,
-  DELIVERED: 4,
-}
+const PROCESSING_STATUSES = new Set([
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+])
+
+const OUT_FOR_DELIVERY_STATUSES = new Set([
+  "SHIPPED",
+  "DELIVERED",
+])
 
 export default function OrderTimeline({
   orderStatus,
@@ -24,37 +28,53 @@ export default function OrderTimeline({
   const isCancelled = orderStatus === "CANCELLED"
   const isExpired =
     orderStatus === "EXPIRED" || paymentStatus === "EXPIRED"
-  const currentLevel = ORDER_STATUS_LEVELS[orderStatus] ?? 0
+
+  const isPaid =
+    paymentStatus === "PAID" ||
+    orderStatus === "PAID" ||
+    PROCESSING_STATUSES.has(orderStatus)
+
+  const isProcessing = PROCESSING_STATUSES.has(orderStatus)
+  const isOutForDelivery =
+    OUT_FOR_DELIVERY_STATUSES.has(orderStatus)
+  const isDelivered = orderStatus === "DELIVERED"
 
   const steps: TimelineStep[] = [
     {
-      label: "Order placed",
+      label: "Order received",
+      description: isPaid
+        ? "Your order and payment have been confirmed."
+        : "Your order has been received and is awaiting payment confirmation.",
       completed: true,
-      current: currentLevel === 0,
+      current: !isPaid && !isCancelled && !isExpired,
     },
     {
-      label: "Payment received",
-      completed:
-        paymentStatus === "PAID" ||
-        currentLevel >= ORDER_STATUS_LEVELS.PAID,
+      label: "Preparing order",
+      description: "Your items are being prepared for delivery.",
+      completed: isProcessing,
       current:
-        paymentStatus === "PAID" &&
-        currentLevel === ORDER_STATUS_LEVELS.PAID,
+        isPaid &&
+        !isProcessing &&
+        !isCancelled &&
+        !isExpired,
     },
     {
-      label: "Processing",
-      completed: currentLevel >= ORDER_STATUS_LEVELS.PROCESSING,
-      current: currentLevel === ORDER_STATUS_LEVELS.PROCESSING,
-    },
-    {
-      label: "Shipped",
-      completed: currentLevel >= ORDER_STATUS_LEVELS.SHIPPED,
-      current: currentLevel === ORDER_STATUS_LEVELS.SHIPPED,
+      label: "Out for delivery",
+      description: "Your order is on its way within Paarl.",
+      completed: isOutForDelivery,
+      current:
+        orderStatus === "SHIPPED" &&
+        !isCancelled &&
+        !isExpired,
     },
     {
       label: "Delivered",
-      completed: currentLevel >= ORDER_STATUS_LEVELS.DELIVERED,
-      current: currentLevel === ORDER_STATUS_LEVELS.DELIVERED,
+      description: "Your order has been delivered.",
+      completed: isDelivered,
+      current:
+        isDelivered &&
+        !isCancelled &&
+        !isExpired,
     },
   ]
 
@@ -109,7 +129,7 @@ export default function OrderTimeline({
                 )}
               </div>
 
-              <div className="min-h-16 pb-6">
+              <div className="min-h-20 pb-6">
                 <p
                   className={`pt-1 text-sm font-semibold ${
                     step.completed || step.current
@@ -120,10 +140,14 @@ export default function OrderTimeline({
                   {step.label}
                 </p>
 
+                <p className="mt-1 text-sm leading-5 text-gray-500">
+                  {step.description}
+                </p>
+
                 {step.current &&
                   !isCancelled &&
                   !isExpired && (
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-gray-700">
                       Current stage
                     </p>
                   )}

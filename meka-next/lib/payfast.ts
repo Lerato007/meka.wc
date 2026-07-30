@@ -62,15 +62,6 @@ export function generatePayFastSignature(
     ).replace(/%20/g, "+")}`
   }
 
-  console.log("====================================")
-console.log("PayFast parameter string:")
-console.log(parameterString)
-console.log("Generated signature:")
-console.log(
-  createHash("md5").update(parameterString).digest("hex")
-)
-console.log("====================================")
-
   return createHash("md5")
     .update(parameterString)
     .digest("hex")
@@ -112,11 +103,21 @@ export function createPayFastPaymentData(input: {
       ""
     )
 
+  const returnParameters = new URLSearchParams({
+    orderId: input.orderId,
+    order: input.orderNumber,
+  })
+
+  const cancelParameters = new URLSearchParams({
+    orderId: input.orderId,
+    order: input.orderNumber,
+  })
+
   const paymentData = {
     merchant_id: merchantId,
     merchant_key: merchantKey,
-    return_url: `${appUrl}/payment/success?order=${input.orderNumber}`,
-    cancel_url: `${appUrl}/payment/cancel?order=${input.orderNumber}`,
+    return_url: `${appUrl}/payment/success?${returnParameters.toString()}`,
+    cancel_url: `${appUrl}/payment/cancel?${cancelParameters.toString()}`,
     notify_url: `${appUrl}/api/payfast/notify`,
     name_first: input.firstName,
     name_last: input.lastName,

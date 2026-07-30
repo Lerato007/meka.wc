@@ -73,7 +73,6 @@ export default function OrderStatusForm({
       }
 
       setSuccessMessage("Order updated successfully.")
-
       router.refresh()
     } catch (error) {
       console.error("Order update failed:", error)
@@ -99,8 +98,7 @@ export default function OrderStatusForm({
         </h2>
 
         <p className="mt-1 text-sm text-gray-600">
-          Update the payment and fulfilment progress for this
-          order.
+          Update payment and local delivery progress for this order.
         </p>
       </div>
 
@@ -136,7 +134,7 @@ export default function OrderStatusForm({
             htmlFor="orderStatus"
             className="block text-sm font-semibold text-gray-800"
           >
-            Order status
+            Delivery progress
           </label>
 
           <select
@@ -150,12 +148,17 @@ export default function OrderStatusForm({
             disabled={isSubmitting}
             className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-gray-950 outline-none transition focus:border-gray-950 focus:ring-2 focus:ring-gray-200 disabled:cursor-not-allowed disabled:bg-gray-100"
           >
-            <option value="PENDING">Pending</option>
-            <option value="PROCESSING">Processing</option>
-            <option value="SHIPPED">Shipped</option>
+            <option value="PENDING">Order received</option>
+            <option value="PROCESSING">Preparing order</option>
+            <option value="SHIPPED">Out for delivery</option>
             <option value="DELIVERED">Delivered</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
+
+          <p className="mt-2 text-xs leading-5 text-gray-500">
+            “Out for delivery” uses the existing SHIPPED database
+            status, so no database change is required.
+          </p>
         </div>
       </div>
 
