@@ -1,9 +1,9 @@
 import { resend } from "@/lib/email/resend"
 import { getOrderForEmail } from "@/lib/email/order"
-import OrderConfirmationEmail from "@/lib/email/templates/order-confirmation"
+import ShippedEmail from "@/lib/email/templates/shipped"
 import { prisma } from "@/lib/prisma"
 
-type SendOrderConfirmationResult =
+type SendShippedEmailResult =
   | {
       success: true
       skipped: false
@@ -13,7 +13,7 @@ type SendOrderConfirmationResult =
       success: true
       skipped: true
       reason:
-        | "ORDER_NOT_PAID"
+        | "ORDER_NOT_SHIPPED"
         | "ALREADY_SENT"
     }
 
@@ -29,32 +29,32 @@ function getRequiredEnvironmentVariable(name: string) {
   return value
 }
 
-export async function sendOrderConfirmation(
+export async function sendShippedEmail(
   orderId: string
-): Promise<SendOrderConfirmationResult> {
+): Promise<SendShippedEmailResult> {
   const order = await getOrderForEmail(orderId)
 
   if (!order) {
     throw new Error(
-      `Cannot send confirmation email. Order ${orderId} was not found.`
+      `Cannot send shipping email. Order ${orderId} was not found.`
     )
   }
 
-  if (order.paymentStatus !== "PAID") {
+  if (order.orderStatus !== "SHIPPED") {
     console.log(
-      `Confirmation email skipped for ${order.orderNumber}: payment status is ${order.paymentStatus}.`
+      `Shipping email skipped for ${order.orderNumber}: order status is ${order.orderStatus}.`
     )
 
     return {
       success: true,
       skipped: true,
-      reason: "ORDER_NOT_PAID",
+      reason: "ORDER_NOT_SHIPPED",
     }
   }
 
-  if (order.confirmationEmailSentAt) {
+  if (order.shippedEmailSentAt) {
     console.log(
-      `Confirmation email already sent for ${order.orderNumber}.`
+      `Shipping email already sent for ${order.orderNumber}.`
     )
 
     return {
@@ -76,18 +76,18 @@ export async function sendOrderConfirmation(
   const { data, error } = await resend.emails.send({
     from: emailFrom,
     to: order.customer.email,
-    subject: `Order confirmed: ${order.orderNumber}`,
+    subject: `Your order has been shipped: ${order.orderNumber}`,
     react: (
-      <OrderConfirmationEmail
+      <ShippedEmail
         order={order}
-        orderUrl={`${appUrl}/orders/${order.id}`}
+        orderUrl={`${appUrl}/orders/${order.orderNumber}`}
       />
     ),
   })
 
   if (error) {
     throw new Error(
-      `Resend failed to send order confirmation: ${error.message}`
+      `Resend failed to send shipping email: ${error.message}`
     )
   }
 
@@ -96,12 +96,12 @@ export async function sendOrderConfirmation(
       id: order.id,
     },
     data: {
-      confirmationEmailSentAt: new Date(),
+      shippedEmailSentAt: new Date(),
     },
   })
 
   console.log(
-    `Confirmation email sent for ${order.orderNumber}.`,
+    `Shipping email sent for ${order.orderNumber}.`,
     {
       emailId: data?.id ?? null,
       recipient: order.customer.email,

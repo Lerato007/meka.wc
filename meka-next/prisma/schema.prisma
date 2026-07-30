@@ -147,9 +147,11 @@ model Order {
   paymentStatus PaymentStatus @default(PENDING)
   orderStatus   OrderStatus   @default(PENDING)
 
-  expiresAt           DateTime  @default(now())
-  inventoryReleasedAt DateTime?
-  confirmationEmailSentAt DateTime?
+  expiresAt                DateTime  @default(now())
+  inventoryReleasedAt      DateTime?
+  confirmationEmailSentAt  DateTime?
+  shippedEmailSentAt   DateTime?
+  deliveredEmailSentAt DateTime?
 
   items OrderItem[]
 

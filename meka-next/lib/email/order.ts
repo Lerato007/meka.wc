@@ -40,7 +40,10 @@ export type OrderEmailData = {
   orderStatus: string
 
   createdAt: Date
+
   confirmationEmailSentAt: Date | null
+  shippedEmailSentAt: Date | null
+  deliveredEmailSentAt: Date | null
 }
 
 /**
@@ -66,44 +69,47 @@ export async function getOrderForEmail(
       id: cleanOrderId,
     },
     select: {
-  id: true,
-  orderNumber: true,
-
-  firstName: true,
-  lastName: true,
-  email: true,
-  phone: true,
-
-  addressLine1: true,
-  addressLine2: true,
-  city: true,
-  province: true,
-  postalCode: true,
-
-  subtotal: true,
-  shipping: true,
-  total: true,
-
-  paymentStatus: true,
-  orderStatus: true,
-
-  createdAt: true,
-  confirmationEmailSentAt: true,
-
-  items: {
-    orderBy: {
-      createdAt: "asc",
-    },
-    select: {
       id: true,
-      productId: true,
-      name: true,
-      price: true,
-      quantity: true,
-      imageUrl: true,
+      orderNumber: true,
+
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+
+      addressLine1: true,
+      addressLine2: true,
+      city: true,
+      province: true,
+      postalCode: true,
+
+      subtotal: true,
+      shipping: true,
+      total: true,
+
+      paymentStatus: true,
+      orderStatus: true,
+
+      createdAt: true,
+
+      confirmationEmailSentAt: true,
+      shippedEmailSentAt: true,
+      deliveredEmailSentAt: true,
+
+      items: {
+        orderBy: {
+          createdAt: "asc",
+        },
+        select: {
+          id: true,
+          productId: true,
+          name: true,
+          price: true,
+          quantity: true,
+          imageUrl: true,
+        },
+      },
     },
-  },
-},
   })
 
   if (!order) {
@@ -154,7 +160,14 @@ export async function getOrderForEmail(
     orderStatus: order.orderStatus,
 
     createdAt: order.createdAt,
+
     confirmationEmailSentAt:
       order.confirmationEmailSentAt,
+
+    shippedEmailSentAt:
+      order.shippedEmailSentAt,
+
+    deliveredEmailSentAt:
+      order.deliveredEmailSentAt,
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
+import { sendShippedEmail } from "@/lib/email/send"
 
 const ORDER_STATUSES = [
   "PENDING",
@@ -153,6 +154,17 @@ export async function PATCH(
         updatedAt: true,
       },
     })
+
+    if (updatedOrder.orderStatus === "SHIPPED") {
+  try {
+    await sendShippedEmail(updatedOrder.id)
+  } catch (error) {
+    console.error(
+      "Failed to send shipping email:",
+      error
+    )
+  }
+}
 
     return NextResponse.json({
       success: true,
