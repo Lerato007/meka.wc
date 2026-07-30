@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
 import { getPayFastValidationUrl } from "@/lib/payfast"
+import { sendOrderConfirmation } from "@/lib/email/send"
 
 export const runtime = "nodejs"
 
@@ -345,32 +346,50 @@ export async function POST(request: Request) {
      * idempotent and prevents unnecessary updates.
      */
     if (order.paymentStatus === "PAID") {
-      console.log(
-        `Order ${order.orderNumber} is already marked as paid.`
-      )
+  console.log(
+    `Order ${order.orderNumber} is already marked as paid.`
+  )
 
-      return new NextResponse("OK", {
-        status: 200,
-      })
-    }
+  try {
+    await sendOrderConfirmation(order.id)
+  } catch (emailError) {
+    console.error(
+      `Confirmation email retry failed for ${order.orderNumber}:`,
+      emailError
+    )
+  }
+
+  return new NextResponse("OK", {
+    status: 200,
+  })
+}
 
     await prisma.order.update({
-      where: {
-        id: order.id,
-      },
-      data: {
-        paymentStatus: "PAID",
-        orderStatus: "PAID",
-      },
-    })
+  where: {
+    id: order.id,
+  },
+  data: {
+    paymentStatus: "PAID",
+    orderStatus: "PAID",
+  },
+})
 
-    console.log(
-      `Order ${order.orderNumber} marked as paid.`
-    )
+console.log(
+  `Order ${order.orderNumber} marked as paid.`
+)
 
-    return new NextResponse("OK", {
-      status: 200,
-    })
+try {
+  await sendOrderConfirmation(order.id)
+} catch (emailError) {
+  console.error(
+    `Order confirmation email failed for ${order.orderNumber}:`,
+    emailError
+  )
+}
+
+return new NextResponse("OK", {
+  status: 200,
+})
   } catch (error) {
     console.error(
       "PayFast ITN processing failed:",

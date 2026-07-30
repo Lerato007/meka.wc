@@ -98,6 +98,12 @@ export default function PaymentConfirmation({
     }
 
     try {
+        console.log("====================================")
+  console.log("Loading order:", orderId)
+  console.log(
+    "Fetching:",
+    `/api/orders/${encodeURIComponent(orderId)}`
+  )
       const response = await fetch(
         `/api/orders/${encodeURIComponent(orderId)}`,
         {
@@ -105,9 +111,16 @@ export default function PaymentConfirmation({
           cache: "no-store",
         }
       )
+      console.log(
+  "Response received:",
+  response.status,
+  response.statusText
+)
 
       const result =
         (await response.json()) as OrderResponse
+
+        console.log("API Response:", result)
 
       if (!response.ok || !result.success || !result.order) {
         throw new Error(
@@ -119,14 +132,16 @@ export default function PaymentConfirmation({
       setOrder(result.order)
       setError("")
     } catch (error) {
+  console.error("Payment confirmation failed:", error)
       setError(
         error instanceof Error
           ? error.message
           : "We could not retrieve your order."
       )
     } finally {
-      setIsLoading(false)
-    }
+  console.log("Finished loading order")
+  setIsLoading(false)
+}
   }, [orderId])
 
   useEffect(() => {

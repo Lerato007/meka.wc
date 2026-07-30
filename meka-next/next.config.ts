@@ -1,6 +1,10 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: [
+    "peroxide-museum-bottling.ngrok-free.dev",
+  ],
+
   experimental: {
     serverActions: {
       bodySizeLimit: "20mb",
