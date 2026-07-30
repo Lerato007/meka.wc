@@ -1,20 +1,75 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { ArrowLeft, MapPin } from "lucide-react"
 
+import { auth } from "@/auth"
 import AddressForm from "@/components/account/address-form"
+import { prisma } from "@/lib/prisma"
 
-import { createAddress } from "../actions"
+import { updateAddress } from "../../actions"
 
-type NewAddressPageProps = {
+type EditAddressPageProps = {
+  params: Promise<{
+    id: string
+  }>
   searchParams: Promise<{
     error?: string
   }>
 }
 
-export default async function NewAddressPage({
+export default async function EditAddressPage({
+  params,
   searchParams,
-}: NewAddressPageProps) {
+}: EditAddressPageProps) {
+  const { id } = await params
   const { error } = await searchParams
+
+  const session = await auth()
+
+  if (!session?.user?.email) {
+    redirect(
+      `/login?callbackUrl=${encodeURIComponent(
+        `/account/addresses/${id}/edit`
+      )}`
+    )
+  }
+
+  const customer = await prisma.user.findUnique({
+    where: {
+      email: session.user.email,
+    },
+    select: {
+      id: true,
+    },
+  })
+
+  if (!customer) {
+    redirect("/account/addresses")
+  }
+
+  const address = await prisma.address.findFirst({
+    where: {
+      id,
+      userId: customer.id,
+    },
+    select: {
+      label: true,
+      recipientName: true,
+      phone: true,
+      addressLine1: true,
+      addressLine2: true,
+      suburb: true,
+      city: true,
+      province: true,
+      postalCode: true,
+    },
+  })
+
+  if (!address) {
+    redirect("/account/addresses")
+  }
+
+  const updateAddressWithId = updateAddress.bind(null, id)
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -39,20 +94,21 @@ export default async function NewAddressPage({
               </p>
 
               <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-950">
-                Add a delivery address
+                Edit delivery address
               </h1>
 
               <p className="mt-2 text-sm leading-6 text-neutral-600">
-                Save an address to make future checkouts quicker.
+                Update the recipient and delivery information for this address.
               </p>
             </div>
           </div>
         </div>
 
         <AddressForm
-          action={createAddress}
-          mode="create"
+          action={updateAddressWithId}
+          mode="edit"
           error={error}
+          initialData={address}
         />
       </section>
     </main>

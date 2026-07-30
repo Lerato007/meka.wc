@@ -5,6 +5,8 @@ import { Home, MapPin, Plus } from "lucide-react"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
+import { deleteAddress, setDefaultAddress } from "./actions"
+
 export default async function AddressesPage() {
   const session = await auth()
 
@@ -85,79 +87,88 @@ export default async function AddressesPage() {
         </section>
       ) : (
         <section className="grid gap-5 md:grid-cols-2">
-          {customer.addresses.map((address) => (
-            <article
-              key={address.id}
-              className="relative rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-100">
-                    <Home className="h-5 w-5 text-neutral-700" />
-                  </div>
+          {customer.addresses.map((address) => {
+            const setDefaultAction = setDefaultAddress.bind(null, address.id)
+            const deleteAction = deleteAddress.bind(null, address.id)
 
-                  <div>
-                    <h2 className="font-semibold text-neutral-950">
-                      {address.label}
-                    </h2>
+            return (
+              <article
+                key={address.id}
+                className="relative rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-100">
+                      <Home className="h-5 w-5 text-neutral-700" />
+                    </div>
 
-                    {address.isDefault && (
-                      <span className="mt-1 inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">
-                        Default address
-                      </span>
-                    )}
+                    <div>
+                      <h2 className="font-semibold text-neutral-950">
+                        {address.label}
+                      </h2>
+
+                      {address.isDefault && (
+                        <span className="mt-1 inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">
+                          Default address
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-6 space-y-1 text-sm leading-6 text-neutral-600">
-                <p className="font-medium text-neutral-950">
-                  {address.recipientName}
-                </p>
-
-                <p>{address.phone}</p>
-
-                <div className="pt-3">
-                  <p>{address.addressLine1}</p>
-
-                  {address.addressLine2 && <p>{address.addressLine2}</p>}
-
-                  <p>{address.suburb}</p>
-
-                  <p>
-                    {address.city}, {address.province}
+                <div className="mt-6 space-y-1 text-sm leading-6 text-neutral-600">
+                  <p className="font-medium text-neutral-950">
+                    {address.recipientName}
                   </p>
 
-                  <p>{address.postalCode}</p>
+                  <p>{address.phone}</p>
+
+                  <div className="pt-3">
+                    <p>{address.addressLine1}</p>
+
+                    {address.addressLine2 && <p>{address.addressLine2}</p>}
+
+                    <p>{address.suburb}</p>
+
+                    <p>
+                      {address.city}, {address.province}
+                    </p>
+
+                    <p>{address.postalCode}</p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-6 flex flex-wrap gap-3 border-t border-neutral-100 pt-5">
-                <Link
-                  href={`/account/addresses/${address.id}/edit`}
-                  className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
-                >
-                  Edit
-                </Link>
-
-                {!address.isDefault && (
-                  <button
-                    type="button"
+                <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-neutral-100 pt-5">
+                  <Link
+                    href={`/account/addresses/${address.id}/edit`}
                     className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
                   >
-                    Set as default
-                  </button>
-                )}
+                    Edit
+                  </Link>
 
-                <button
-                  type="button"
-                  className="rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  Delete
-                </button>
-              </div>
-            </article>
-          ))}
+                  {!address.isDefault && (
+                    <form action={setDefaultAction}>
+                      <button
+                        type="submit"
+                        className="rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+                      >
+                        Set as default
+                      </button>
+                    </form>
+                  )}
+
+                  <form action={deleteAction}>
+                    <button
+                      type="submit"
+                      className="rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              </article>
+            )
+          })}
         </section>
       )}
     </main>

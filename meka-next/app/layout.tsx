@@ -1,28 +1,16 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
 
 import { CartProvider } from "@/components/cart/CartProvider"
 import Header from "@/components/layout/Header"
 
 import "./globals.css"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-})
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-})
-
 export const metadata: Metadata = {
   title: {
     default: "Meka.WC",
     template: "%s | Meka.WC",
   },
-  description:
-    "Shop clothing and lifestyle products from Meka.WC.",
+  description: "Shop clothing and lifestyle products from Meka.WC.",
 }
 
 type RootLayoutProps = Readonly<{
@@ -34,16 +22,12 @@ export default function RootLayout({
 }: RootLayoutProps) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-gray-50 antialiased`}
-      >
+      <body className="bg-gray-50 antialiased">
         <CartProvider>
           <div className="flex min-h-screen flex-col">
             <Header />
 
-            <main className="flex-1">
-              {children}
-            </main>
+            <main className="flex-1">{children}</main>
           </div>
         </CartProvider>
       </body>
