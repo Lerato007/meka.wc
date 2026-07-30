@@ -149,6 +149,7 @@ model Order {
 
   expiresAt           DateTime  @default(now())
   inventoryReleasedAt DateTime?
+  confirmationEmailSentAt DateTime?
 
   items OrderItem[]
 
