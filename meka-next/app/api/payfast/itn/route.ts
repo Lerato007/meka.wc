@@ -6,6 +6,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getPayFastValidationUrl } from "@/lib/payfast"
 import { sendOrderConfirmation } from "@/lib/email/send"
+import { sendNewOrderAdminEmail } from "@/lib/email/send/new-order-admin";
 
 export const runtime = "nodejs"
 
@@ -351,13 +352,14 @@ export async function POST(request: Request) {
   )
 
   try {
-    await sendOrderConfirmation(order.id)
-  } catch (emailError) {
-    console.error(
-      `Confirmation email retry failed for ${order.orderNumber}:`,
-      emailError
-    )
-  }
+  await sendOrderConfirmation(order.id)
+  await sendNewOrderAdminEmail(order.id)
+} catch (emailError) {
+  console.error(
+    `Email retry failed for ${order.orderNumber}:`,
+    emailError
+  )
+}
 
   return new NextResponse("OK", {
     status: 200,
@@ -380,9 +382,10 @@ console.log(
 
 try {
   await sendOrderConfirmation(order.id)
+  await sendNewOrderAdminEmail(order.id)
 } catch (emailError) {
   console.error(
-    `Order confirmation email failed for ${order.orderNumber}:`,
+    `Order email processing failed for ${order.orderNumber}:`,
     emailError
   )
 }

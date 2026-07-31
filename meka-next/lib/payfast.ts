@@ -118,7 +118,7 @@ export function createPayFastPaymentData(input: {
     merchant_key: merchantKey,
     return_url: `${appUrl}/payment/success?${returnParameters.toString()}`,
     cancel_url: `${appUrl}/payment/cancel?${cancelParameters.toString()}`,
-    notify_url: `${appUrl}/api/payfast/notify`,
+    notify_url: `${appUrl}/api/payfast/itn`,
     name_first: input.firstName,
     name_last: input.lastName,
     email_address: input.email,

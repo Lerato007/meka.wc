@@ -80,11 +80,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
-  orders    Order[]
-  wishlists Wishlist[]
-  reviews   Review[]
+  accounts             Account[]
+  sessions             Session[]
+  orders               Order[]
+  wishlists            Wishlist[]
+  reviews              Review[]
+  passwordResetTokens  PasswordResetToken[]
 }
 
 model Account {
@@ -123,11 +124,25 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 model Order {
-  id          String  @id @default(cuid())
-  orderNumber String  @unique
-  userId      String?
-  user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id          String @id @default(cuid())
+  orderNumber String @unique
+
+  userId String?
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   email     String
   firstName String
@@ -147,11 +162,13 @@ model Order {
   paymentStatus PaymentStatus @default(PENDING)
   orderStatus   OrderStatus   @default(PENDING)
 
-  expiresAt                DateTime  @default(now())
-  inventoryReleasedAt      DateTime?
-  confirmationEmailSentAt  DateTime?
-  shippedEmailSentAt   DateTime?
-  deliveredEmailSentAt DateTime?
+  expiresAt               DateTime @default(now())
+  inventoryReleasedAt     DateTime?
+  
+  confirmationEmailSentAt DateTime?
+  adminNotificationSentAt    DateTime?
+  shippedEmailSentAt      DateTime?
+  deliveredEmailSentAt    DateTime?
 
   items OrderItem[]
 
