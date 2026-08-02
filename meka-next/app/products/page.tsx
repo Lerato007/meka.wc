@@ -91,7 +91,7 @@ export default async function ProductsPage({
     Number.isInteger(parsedPage) && parsedPage > 0
       ? parsedPage
       : 1
-  const pageSize = 12
+  const pageSize = 3
 
   const session = await auth()
 

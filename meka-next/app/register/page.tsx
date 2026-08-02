@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -89,23 +90,35 @@ export default function RegisterPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-200">
+      <section className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
         <div className="mb-8 text-center">
-          <Link
-            href="/"
-            className="text-2xl font-bold tracking-tight text-gray-950"
-          >
-            Meka WC
-          </Link>
+  <Link
+    href="/"
+    aria-label="Return to Meka.WC home"
+    className="inline-flex flex-col items-center gap-3"
+  >
+    <Image
+      src="/mekalogo.png"
+      alt="Meka.WC logo"
+      width={72}
+      height={72}
+      priority
+      className="h-18 w-18 rounded-full object-contain"
+    />
 
-          <h1 className="mt-6 text-2xl font-semibold text-gray-950">
-            Create your account
-          </h1>
+    <span className="text-2xl font-bold tracking-tight text-gray-950">
+      Meka.WC
+    </span>
+  </Link>
 
-          <p className="mt-2 text-sm text-gray-600">
-            Sign up to start shopping.
-          </p>
-        </div>
+  <h1 className="mt-6 text-2xl font-semibold text-gray-950">
+    Create your account
+  </h1>
+
+  <p className="mt-2 text-sm text-gray-600">
+    Join Meka.WC and start shopping today.
+  </p>
+</div>
 
         {error && (
           <div
@@ -120,7 +133,7 @@ export default function RegisterPage() {
           type="button"
           onClick={handleGoogleRegister}
           disabled={isGoogleLoading || isSubmitting}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn-secondary w-full gap-3"
         >
           <span className="text-lg font-semibold">G</span>
 
@@ -157,7 +170,7 @@ export default function RegisterPage() {
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Your full name"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
+              className="form-input"
             />
           </div>
 
@@ -229,7 +242,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isSubmitting || isGoogleLoading}
-            className="w-full rounded-lg bg-gray-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="btn-primary w-full"
           >
             {isSubmitting ? "Creating account..." : "Create account"}
           </button>

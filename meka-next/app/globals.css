@@ -28,7 +28,6 @@ button {
 }
 
 a {
-  color: inherit;
   text-decoration: none;
 }
 
@@ -149,5 +148,99 @@ a {
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* ===========================
+     Buttons
+     =========================== */
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl
+    bg-slate-900 px-5 py-3 font-semibold text-white
+    transition-all duration-200
+    hover:bg-slate-800
+    active:scale-[0.98]
+    disabled:pointer-events-none
+    disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl
+    border border-slate-300 bg-white
+    px-5 py-3 font-semibold text-slate-900
+    transition-all duration-200
+    hover:bg-slate-100
+    active:scale-[0.98];
+  }
+
+  .btn-success {
+    @apply inline-flex items-center justify-center rounded-xl
+    bg-emerald-600 px-5 py-3
+    font-semibold text-white
+    transition-all duration-200
+    hover:bg-emerald-700
+    active:scale-[0.98];
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-xl
+    bg-red-600 px-5 py-3
+    font-semibold text-white
+    transition-all duration-200
+    hover:bg-red-700
+    active:scale-[0.98];
+  }
+
+  /* ===========================
+     Cards
+     =========================== */
+
+  .card {
+    @apply rounded-3xl border border-slate-200
+    bg-white shadow-sm;
+  }
+
+  /* ===========================
+     Inputs
+     =========================== */
+
+  .form-input {
+    @apply w-full rounded-xl border border-slate-300
+    bg-white px-4 py-3
+    transition
+    focus:border-slate-900
+    focus:ring-2
+    focus:ring-slate-900/10
+    outline-none;
+  }
+
+  /* ===========================
+     Badges
+     =========================== */
+
+  .badge-success {
+    @apply inline-flex rounded-full
+    bg-emerald-100
+    px-3 py-1
+    text-xs font-semibold
+    text-emerald-700;
+  }
+
+  .badge-warning {
+    @apply inline-flex rounded-full
+    bg-amber-100
+    px-3 py-1
+    text-xs font-semibold
+    text-amber-700;
+  }
+
+  .badge-danger {
+    @apply inline-flex rounded-full
+    bg-red-100
+    px-3 py-1
+    text-xs font-semibold
+    text-red-700;
   }
 }

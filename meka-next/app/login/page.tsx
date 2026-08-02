@@ -1,21 +1,28 @@
 "use client"
 
-import { FormEvent, Suspense, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
+import { FormEvent, Suspense, useState } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter, useSearchParams } from "next/navigation"
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation"
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const callbackUrl = searchParams.get("callbackUrl") || "/"
+  const callbackUrl =
+    searchParams.get("callbackUrl") || "/"
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] =
+    useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] =
+    useState(false)
 
   async function handleCredentialsLogin(
     event: FormEvent<HTMLFormElement>
@@ -33,7 +40,9 @@ function LoginForm() {
       })
 
       if (!result || result.error) {
-        setError("The email address or password is incorrect.")
+        setError(
+          "The email address or password is incorrect."
+        )
         return
       }
 
@@ -57,20 +66,34 @@ function LoginForm() {
         callbackUrl,
       })
     } catch {
-      setError("Google sign-in could not be started.")
+      setError(
+        "Google sign-in could not be started."
+      )
       setIsGoogleLoading(false)
     }
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-200">
+      <section className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
         <div className="mb-8 text-center">
           <Link
             href="/"
-            className="text-2xl font-bold tracking-tight text-gray-950"
+            aria-label="Return to Meka.WC home"
+            className="inline-flex flex-col items-center gap-3"
           >
-            Meka WC
+            <Image
+              src="/mekalogo.png"
+              alt="Meka.WC logo"
+              width={72}
+              height={72}
+              priority
+              className="h-18 w-18 rounded-full object-contain"
+            />
+
+            <span className="text-2xl font-bold tracking-tight text-gray-950">
+              Meka.WC
+            </span>
           </Link>
 
           <h1 className="mt-6 text-2xl font-semibold text-gray-950">
@@ -85,7 +108,7 @@ function LoginForm() {
         {error && (
           <div
             role="alert"
-            className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
           >
             {error}
           </div>
@@ -94,10 +117,14 @@ function LoginForm() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          disabled={isGoogleLoading || isSubmitting}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={
+            isGoogleLoading || isSubmitting
+          }
+          className="btn-secondary w-full gap-3"
         >
-          <span className="text-lg font-semibold">G</span>
+          <span className="text-lg font-semibold">
+            G
+          </span>
 
           {isGoogleLoading
             ? "Connecting to Google..."
@@ -133,19 +160,30 @@ function LoginForm() {
               autoComplete="email"
               required
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
               placeholder="you@example.com"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
+              className="form-input"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-medium text-gray-800"
-            >
-              Password
-            </label>
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-800"
+              >
+                Password
+              </label>
+
+              <Link
+                href="/forgot-password"
+                className="text-sm font-semibold text-slate-700 underline-offset-4 hover:text-slate-950 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
 
             <input
               id="password"
@@ -154,18 +192,24 @@ function LoginForm() {
               autoComplete="current-password"
               required
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
               placeholder="Enter your password"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-gray-950 focus:ring-1 focus:ring-gray-950"
+              className="form-input"
             />
           </div>
 
           <button
             type="submit"
-            disabled={isSubmitting || isGoogleLoading}
-            className="w-full rounded-lg bg-gray-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={
+              isSubmitting || isGoogleLoading
+            }
+            className="btn-primary w-full"
           >
-            {isSubmitting ? "Signing in..." : "Sign in"}
+            {isSubmitting
+              ? "Signing in..."
+              : "Sign in"}
           </button>
         </form>
 
@@ -186,10 +230,21 @@ function LoginForm() {
 function LoginPageFallback() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <section className="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-200">
-        <p className="text-center text-sm text-gray-600">
-          Loading sign-in page...
-        </p>
+      <section className="w-full max-w-md rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="flex flex-col items-center gap-4">
+          <Image
+            src="/mekalogo.png"
+            alt="Meka.WC logo"
+            width={64}
+            height={64}
+            priority
+            className="h-16 w-16 rounded-full object-contain"
+          />
+
+          <p className="text-center text-sm text-gray-600">
+            Loading sign-in page...
+          </p>
+        </div>
       </section>
     </main>
   )
