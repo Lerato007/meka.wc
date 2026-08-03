@@ -59,6 +59,14 @@ export default async function AccountLayout({
     )
   }
 
+  async function handleSignOut() {
+    "use server"
+
+    await signOut({
+      redirectTo: "/",
+    })
+  }
+
   return (
     <main className="min-h-screen bg-neutral-50 px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[250px_minmax(0,1fr)]">
@@ -92,15 +100,7 @@ export default async function AccountLayout({
             </div>
 
             <div className="border-t border-neutral-200 p-3">
-              <form
-                action={async () => {
-                  "use server"
-
-                  await signOut({
-                    redirectTo: "/",
-                  })
-                }}
-              >
+              <form action={handleSignOut}>
                 <button
                   type="submit"
                   className="w-full rounded-2xl px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
